@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/difi/dc16-oidc-proxy.png?label=ready&title=Ready)](https://waffle.io/difi/dc16-oidc-proxy)
 # DifiCamp 2016 Open ID Connect Proxy project
 
 [![Build Status](https://travis-ci.org/difi/dc16-oidc-proxy.svg?branch=master)](https://travis-ci.org/difi/dc16-oidc-proxy)
