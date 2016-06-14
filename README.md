@@ -1,5 +1,8 @@
 # DifiCamp 2016 Open ID Connect Proxy project
 
+[![Build Status](https://travis-ci.org/difi/dc16-oidc-proxy.svg?branch=master)](https://travis-ci.org/difi/dc16-oidc-proxy)
+[![Codecov](https://codecov.io/gh/difi/dc16-oidc-proxy/branch/master/graph/badge.svg)](https://codecov.io/gh/difi/dc16-oidc-proxy)
+
 Id-porten har implementert en «Proof of Concept» (PoC) for hvordan man kan ta i bruk Open ID Connect som teknologi for å håndtere integrasjonen mellom tjenester/applikasjoner og autentiseringsfunksjonen til id-porten.
 
 Oppgaven går ut på å lage en proxy/mellomvare som basert på konfigurasjon beskytter underliggende ressurser ved å kreve autentisering via id-porten. Tanken er å illustrere hvordan man oppnår løse koblinger mellom applikasjon og id-porten som tjeneste. I praksis skjer dette ved at man kommuniserer med underliggende programvare ved å legge til http-elementer som inneholder de data man får fra id-porten. Web-applikasjonen som benytter proxyen forholder seg bare til om disse http-variablene eksisterer eller ikke, ikke hvordan eller hvorfor de er der.
