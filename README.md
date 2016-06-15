@@ -1,8 +1,8 @@
-[![Stories in Ready](https://badge.waffle.io/difi/dc16-oidc-proxy.png?label=ready&title=Ready)](https://waffle.io/difi/dc16-oidc-proxy)
 # DifiCamp 2016 Open ID Connect Proxy project
 
 [![Build Status](https://travis-ci.org/difi/dc16-oidc-proxy.svg?branch=master)](https://travis-ci.org/difi/dc16-oidc-proxy)
 [![Codecov](https://codecov.io/gh/difi/dc16-oidc-proxy/branch/master/graph/badge.svg)](https://codecov.io/gh/difi/dc16-oidc-proxy)
+[![Stories in Ready](https://badge.waffle.io/difi/dc16-oidc-proxy.png?label=ready&title=Ready)](https://waffle.io/difi/dc16-oidc-proxy)
 
 Id-porten har implementert en «Proof of Concept» (PoC) for hvordan man kan ta i bruk Open ID Connect som teknologi for å håndtere integrasjonen mellom tjenester/applikasjoner og autentiseringsfunksjonen til id-porten.
 
