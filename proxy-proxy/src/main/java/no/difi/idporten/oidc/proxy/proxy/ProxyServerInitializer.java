@@ -12,6 +12,7 @@ public class ProxyServerInitializer extends ChannelInitializer<SocketChannel> {
         socketChannel.pipeline()
                 .addLast(new HttpRequestDecoder())
                 .addLast(new HttpResponseEncoder())
+                .addLast(new ProxyServerHandler())
         ;
     }
 }

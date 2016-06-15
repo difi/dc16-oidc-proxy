@@ -13,8 +13,12 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
+
+    private static Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String... args) throws InterruptedException {
         EventLoopGroup group = new NioEventLoopGroup();
@@ -25,9 +29,9 @@ public class Main {
                     .handler(new LoggingHandler(LogLevel.DEBUG))
                     .childHandler(new ProxyServerInitializer());
 
-            Channel channel = bootstrap.bind("127.0.0.1", 8080).sync().channel();
+            Channel channel = bootstrap.bind(8080).sync().channel();
 
-            System.out.println("Loaded.");
+            logger.info("Loaded.");
 
             channel.closeFuture().sync();
         } finally {
