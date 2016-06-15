@@ -12,6 +12,8 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Object> {
 
     private static Logger logger = LoggerFactory.getLogger(ProxyServerHandler.class);
 
+    private HttpRequest httpRequest;
+
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         ctx.flush();
@@ -22,19 +24,20 @@ public class ProxyServerHandler extends SimpleChannelInboundHandler<Object> {
         logger.info("Received ({}): {}", msg.getClass(), msg);
 
         if (msg instanceof HttpRequest) {
-            HttpRequest httpRequest = (HttpRequest) msg;
+            httpRequest = (HttpRequest) msg;
+        } else if (msg instanceof HttpContent) {
+            if (msg instanceof LastHttpContent) {
+                FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+                httpResponse.content().writeBytes(String.format("Hello %s!", httpRequest.uri()).getBytes());
 
-            // FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-            // context.write(httpResponse);
-
-            /* if (!HttpUtil.isKeepAlive(httpRequest)) {
+                context.write(httpResponse);
                 context.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-            } */
+            }
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
+        logger.error(cause.getMessage(), cause);
     }
 }
