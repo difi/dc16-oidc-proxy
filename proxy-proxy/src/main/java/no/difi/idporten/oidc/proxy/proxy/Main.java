@@ -2,6 +2,7 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -11,25 +12,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Main {
-
     private static Logger logger = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String... args) throws InterruptedException {
-        EventLoopGroup group = new NioEventLoopGroup();
+    public static void main(String args[]) throws Exception {
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
-            ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(group)
+            ServerBootstrap b = new ServerBootstrap();
+            b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
-                    .childHandler(new ProxyServerInitializer());
-
-            Channel channel = bootstrap.bind(8080).sync().channel();
-
-            logger.info("Loaded.");
-
-            channel.closeFuture().sync();
+                    .childHandler(new ProxyServerInitializer())
+                    .childOption(ChannelOption.AUTO_READ, false)
+                    .bind(8080).sync().channel().closeFuture().sync();
         } finally {
-            group.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
         }
     }
 }
