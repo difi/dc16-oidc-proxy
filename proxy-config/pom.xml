@@ -12,6 +12,18 @@
     <artifactId>proxy-config</artifactId>
 
     <dependencies>
+        <!-- Proxy -->
+        <dependency>
+            <groupId>no.difi.idporten.oidc</groupId>
+            <artifactId>proxy-api</artifactId>
+        </dependency>
+
+        <!-- Guice -->
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+        </dependency>
+
         <!-- Config -->
         <dependency>
             <groupId>com.typesafe</groupId>
