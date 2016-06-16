@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.slf4j.Logger;
@@ -20,8 +21,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    /**
+     * When this channel is activated, it starts an entire new eventloop to start a connection to a remote site.
+     * What happens with the remote site is handles by the ProxyServerHandler.
+     */
     public void channelActive(ChannelHandlerContext ctx) {
         final Channel inboundChannel = ctx.channel();
+        logger.debug(String.format("ProxyFrontendHandler activated with inbound channel %s", inboundChannel));
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop())
@@ -45,6 +51,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        logger.debug(String.format("ProxyFrontendHandler reading from channel %s", ctx.channel()));
+        logger.debug(String.format("Message type: %s", msg.getClass()));
         if (outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
                 @Override
@@ -61,6 +69,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        logger.debug("ProxyFrontendHandler deactivated");
         if (outboundChannel != null) {
             closeOnFlush(ctx.channel());
         }

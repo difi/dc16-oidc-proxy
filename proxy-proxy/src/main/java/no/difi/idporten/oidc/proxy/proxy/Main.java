@@ -25,6 +25,7 @@ public class Main {
                     .childHandler(new ProxyServerInitializer())
                     .childOption(ChannelOption.AUTO_READ, false)
                     .bind(8080).sync().channel().closeFuture().sync();
+            logger.info("Server bootstrapped");
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
