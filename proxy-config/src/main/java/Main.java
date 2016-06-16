@@ -1,5 +1,8 @@
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValue;
+
+import java.net.URL;
 
 /**
  * Created by camp-eul on 16.06.2016.
@@ -12,9 +15,13 @@ public class Main {
 
     }
 
-    public static Config parseUrl(String url) {
-        Config conf  = ConfigFactory.load();
-        return conf;
+    public static Config makeConfig(String hostname){
+
+
+        Config config = ConfigFactory.empty();
+        config.entrySet("Hostname",hostname);
+
+
     }
-    
+
     }
