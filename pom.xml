@@ -13,6 +13,7 @@
         <module>proxy-proxy</module>
         <module>proxy-idp</module>
         <module>proxy-api</module>
+        <module>proxy-config</module>
     </modules>
 
     <properties>
