@@ -1,8 +1,12 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.channel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
+    private static Logger logger = LoggerFactory.getLogger(ProxyServerHandler.class);
+
 
     private final Channel inboundChannel;
 
