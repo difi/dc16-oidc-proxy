@@ -20,4 +20,12 @@ public class AccessRequirement {
     public void setMinLevel(int minLevel){
         this.minLevel = minLevel;
     }
+
+    public Host getHost(){
+        return this.host;
+    }
+
+    public int getMinLevel(){
+        return this.minLevel;
+    }
 }
