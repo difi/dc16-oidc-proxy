@@ -15,4 +15,8 @@ public class Host {
         this.hostname = hostname;
     }
 
+    public String getHostname(){
+        return this.hostname;
+    }
+
 }
