@@ -4,6 +4,7 @@ import no.difi.idporten.oidc.proxy.api.ConfigProvider;
 import no.difi.idporten.oidc.proxy.model.AccessRequirement;
 import no.difi.idporten.oidc.proxy.model.Host;
 
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
 
@@ -16,33 +17,60 @@ public class StandardConfigProvider implements ConfigProvider {
     private Host host;
     private String path;
 
-    //List of hosts requiring level four clearance
+    //List of hosts requiring level four clearance and list of hosts just needing level two.
     private ArrayList<Host> levelFour;
+    private ArrayList<Host> levelTwo;
 
     //Add same for lower levels
 
     //List of paths requiring level four clearance
     private ArrayList<String> securePaths;
-    private int minLevel;
 
     public void addToHostList(Host host){
         this.levelFour.add(host);
     }
 
+    /**
+     * Constructor, takes the list of hosts requiring level four and the list of paths requiring level four
+     * @param levelFour
+     * @param securePaths
+     */
     public StandardConfigProvider(ArrayList<Host> levelFour, ArrayList<String> securePaths){
         this.levelFour = levelFour;
         this.securePaths = securePaths;
 
     }
 
+    /**
+     * Alternative constructor if we need to check against a leveltwo list as well.
+     * @param levelFour
+     * @param levelTwo
+     * @param securePaths
+     */
+    public StandardConfigProvider(ArrayList<Host> levelFour, ArrayList<Host> levelTwo, ArrayList<String> securePaths) {
+        this.levelFour = levelFour;
+        this.levelTwo = levelTwo;
+        this.securePaths = securePaths;
+    }
+
+    //Checking if the list of level two hosts contains this host
+    public boolean needsLevelTwo(Host host){
+        for (Host h: this.levelTwo) {
+            if(host.getHostname() == h.getHostname()){
+                return true;
+            }
+        }
+        return false;
+    }
+
     //Checking if the list of level four hosts contains this host
     public boolean needsLevelFour(Host host){
-        if(this.levelFour.contains(host))
-        {
-            return true;
-        } else {
-            return false;
+        for (Host h: this.levelFour) {
+            if(host.getHostname() == h.getHostname()){
+                return true;
+            }
         }
+        return false;
     }
 
     //Checking if the list of level four paths contains this path
@@ -54,10 +82,18 @@ public class StandardConfigProvider implements ConfigProvider {
         }
     }
 
-    //Finding and returning what host is needed for the accessrequirement
+    //Finding and returning the host access requirement
     public Host findHost(Host host){
-        //Host hostNeeded = new Host(host);
-        return host;
+
+        //Only test values here.
+        Host customHost = host;
+        if(host.getHostname() == "4"){
+            customHost = new Host("Default");
+        }
+        if(host.getHostname() == "5"){
+            customHost = new Host("Custom");
+        }
+        return customHost;
     }
 
     public Host getHost(){
@@ -68,27 +104,19 @@ public class StandardConfigProvider implements ConfigProvider {
         return this.path;
     }
 
-    private void findMinLeve(){
-        //What decides minLeve, host and path
-    }
 
-
+    /**
+     * Function returning an accessrequirement
+     * @param uri
+     * @return
+     */
     public AccessRequirement forUri(URI uri){
-
-        /** What we can add:
-         * - MinLevel has to be decided from uri
-         * - AccessRequirement must use path, not only host and 3
-         * - Perhaps: Add field port
-         * - Perhaps: Add scheme
-         */
 
         String hostString = uri.getHost();
         this.host = new Host(hostString);
         this.path = uri.getPath();
 
-        //Returns accessrequirement based on host, and min security level
-        //AccessRequirement accessRequirement = new AccessRequirement(host,3);
-
+        //Loop that returns AccessRequirement based on host, and minimum security level
         if(needsLevelFour(host)){
             Host hostRequirement = findHost(host);
             AccessRequirement accessRequirement = new AccessRequirement(hostRequirement,4);
