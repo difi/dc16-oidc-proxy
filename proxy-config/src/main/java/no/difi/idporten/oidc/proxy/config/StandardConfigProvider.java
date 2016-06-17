@@ -19,6 +19,8 @@ public class StandardConfigProvider implements ConfigProvider {
     //List of hosts requiring level four clearance
     private ArrayList<Host> levelFour;
 
+    //Add same for lower levels
+
     //List of paths requiring level four clearance
     private ArrayList<String> securePaths;
     private int minLevel;
