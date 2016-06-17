@@ -112,13 +112,6 @@ public class StandardConfigProvider implements ConfigProvider {
      */
     public AccessRequirement forUri(URI uri){
 
-        /** What we can add:
-         * - MinLevel has to be decided from uri
-         * - AccessRequirement must use path, not only host and 3
-         * - Perhaps: Add field port
-         * - Perhaps: Add scheme
-         */
-
         String hostString = uri.getHost();
         this.host = new Host(hostString);
         this.path = uri.getPath();
