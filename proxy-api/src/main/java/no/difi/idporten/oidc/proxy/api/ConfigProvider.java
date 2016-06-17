@@ -6,6 +6,7 @@ import java.net.URI;
 
 public interface ConfigProvider {
 
+    //Return different access requirements based on URI
     AccessRequirement forUri(URI uri);
 
 }

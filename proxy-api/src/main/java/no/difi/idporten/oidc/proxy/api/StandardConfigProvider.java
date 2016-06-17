@@ -11,7 +11,9 @@ public class StandardConfigProvider implements ConfigProvider {
         Host host = new Host(uri.getHost());
         String path = uri.getPath();
 
-        AccessRequirement accessRequirement = new AccessRequirement(host,3);
+
+        AccessRequirement accessRequirement = new AccessRequirement(host,3); //Returns accessrequirement based on host, and min security level
+        //Return accessRequirement based on path
         return accessRequirement;
     }
 }
