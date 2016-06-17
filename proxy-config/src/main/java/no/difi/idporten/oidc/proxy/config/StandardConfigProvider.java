@@ -86,13 +86,13 @@ public class StandardConfigProvider implements ConfigProvider {
     public Host findHost(Host host){
 
         //Only test values here.
-        Host customHost = host;
-        if(host.getHostname() == "4"){
+       Host customHost = host;
+        /*if(host.getHostname() == "4"){
             customHost = new Host("Default");
         }
         if(host.getHostname() == "5"){
             customHost = new Host("Custom");
-        }
+        }*/
         return customHost;
     }
 
@@ -113,7 +113,7 @@ public class StandardConfigProvider implements ConfigProvider {
     public AccessRequirement forUri(URI uri){
 
         String hostString = uri.getHost();
-        this.host = new Host(hostString);
+        this.host = new Host();
         this.path = uri.getPath();
 
         //Loop that returns AccessRequirement based on host, and minimum security level

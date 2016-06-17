@@ -1,22 +1,27 @@
 package no.difi.idporten.oidc.proxy.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Host {
 
     //field hostName
-    private String hostname;
-
-    //Constructor, sets hostname
-    public Host(String hostname){
-        this.hostname = hostname;
-    }
+    private List<String> hostname = new ArrayList<>();
 
     //Setter for hostName
-    public void setHostname(String hostname){
-        this.hostname = hostname;
+    public void addHostname(String hostname) {
+        this.hostname.add(hostname);
     }
 
-    public String getHostname(){
+    public List<String> getHostname(){
         return this.hostname;
     }
 
+
+    @Override
+    public String toString() {
+        return "Host{" +
+                "hostname=" + hostname +
+                '}';
+    }
 }

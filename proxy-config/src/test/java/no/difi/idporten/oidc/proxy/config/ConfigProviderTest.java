@@ -4,17 +4,14 @@ import no.difi.idporten.oidc.proxy.model.Host;
 
 import java.util.ArrayList;
 
-/**
- * Created by camp-nto on 17.06.2016.
- */
 public class ConfigProviderTest {
 
     public static void main(String [] args){
         ArrayList<Host> levelFourHosts = new ArrayList<>(); //Hosts needing level 4 clearance
         ArrayList<String> securePaths = new ArrayList<>(); //Paths needing level 4 clearance
 
-        Host host1 = new Host("default/test/");
-        Host host2 = new Host("default2");
+        Host host1 = null; // new Host("default/test/");
+        Host host2 = null; // new Host("default2");
 
         securePaths.add("/test/");
         levelFourHosts.add(host1);

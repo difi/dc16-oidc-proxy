@@ -12,6 +12,7 @@ public class ConfigModuleTest {
     public void providesConfigProvider() {
         Injector injector = Guice.createInjector(new ConfigModule());
         Assert.assertNotNull(injector.getBinding(ConfigProvider.class));
-    }
 
+        injector.getInstance(ConfigProvider.class);
+    }
 }
