@@ -27,6 +27,12 @@ public class StandardConfigProvider implements ConfigProvider {
         this.levelFour.add(host);
     }
 
+    public StandardConfigProvider(ArrayList<Host> levelFour, ArrayList<String> securePaths){
+        this.levelFour = levelFour;
+        this.securePaths = securePaths;
+
+    }
+
     //Checking if the list of level four hosts contains this host
     public boolean needsLevelFour(Host host){
         if(this.levelFour.contains(host))
