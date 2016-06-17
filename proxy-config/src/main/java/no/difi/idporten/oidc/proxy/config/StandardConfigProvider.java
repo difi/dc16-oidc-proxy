@@ -21,6 +21,7 @@ public class StandardConfigProvider implements ConfigProvider {
 
     //List of paths requiring level four clearance
     private ArrayList<String> securePaths;
+    private int minLevel;
 
     public void addToHostList(Host host){
         this.levelFour.add(host);
@@ -51,12 +52,26 @@ public class StandardConfigProvider implements ConfigProvider {
         return host;
     }
 
+    public Host getHost(){
+        return this.host;
+    }
+
+    public String getPath(){
+        return this.path;
+    }
+
+    private void findMinLeve(){
+        //What decides minLeve, host and path
+    }
+
+
     public AccessRequirement forUri(URI uri){
 
         /** What we can add:
          * - MinLevel has to be decided from uri
          * - AccessRequirement must use path, not only host and 3
-         * - 
+         * - Perhaps: Add field port
+         * - Perhaps: Add scheme
          */
 
         String hostString = uri.getHost();
@@ -81,6 +96,5 @@ public class StandardConfigProvider implements ConfigProvider {
         }
 
 
-        //Return accessRequirement based on path
     }
 }
