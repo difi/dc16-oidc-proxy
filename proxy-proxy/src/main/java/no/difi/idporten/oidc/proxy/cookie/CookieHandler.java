@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.cookie;
 
+import io.netty.handler.codec.http.HttpResponse;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.model.Cookie;
 
@@ -49,7 +50,7 @@ public class CookieHandler implements CookieStorage {
     }
 
     @Override
-    public void expandCookieExpiry(String uuid){
+    public void extendCookieExpiry(String uuid){
         // The cookie's 'lastUpdated' variable is automatically updated in the Cookie object
         Cookie cookie = findCookie(uuid);
         if (cookie != null){
@@ -82,12 +83,17 @@ public class CookieHandler implements CookieStorage {
         return false; // Besides throwing exception, is there a better way to handle cookie == null?
     }
 
+
+
+
     public String toString(){
         String print = "";
         for (Cookie cookie : cookies){
             print += String.format( "%-65s %30s %n", cookie.toString(), cookie.getExpiry() );
         } return print;
     }
+
+
 
     public String toString(List<Cookie> c){
         String print = "";
