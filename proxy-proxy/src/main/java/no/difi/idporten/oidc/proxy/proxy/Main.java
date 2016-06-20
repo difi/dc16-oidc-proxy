@@ -5,22 +5,23 @@ import org.littleshoot.proxy.impl.DefaultHttpProxyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.util.HashSet;
 
 public class Main {
     private static Logger logger = LoggerFactory.getLogger(Main.class);
 
-    private static String hostName;
-    private static int outboundPort = 80;
     private static int inboundPort = 8080;
+
+    private static HashSet<String> approvedHostNames = new HashSet<String>();
 
 
     public static void main(String args[]) throws Exception {
 
-        Logger logger = LoggerFactory.getLogger(Main.class);
+        approvedHostNames.add("www.example.com");
+        approvedHostNames.add("www.vg.no");
+        approvedHostNames.add("www.ntnu.no");
+        approvedHostNames.add("www.ap.no");
+        approvedHostNames.add("www.xkcd.no");
 
         /**
          * Using LittleProxy which is a library for Netty (https://github.com/adamfisk/LittleProxy)
