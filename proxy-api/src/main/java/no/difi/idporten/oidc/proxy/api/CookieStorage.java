@@ -12,6 +12,7 @@ public interface CookieStorage {
     int expandSessionPeriod = 15; // The amount of time (in minutes) expiry is expanded for, with every login within its valid period
     List<Cookie> cookies = new ArrayList<Cookie>(); // Contains all cookies created in the class implementing this interface
 
+
     // Creates a new Cookie object with these attributes; universally unique identifier (UUID) [String],
     // host [String], expiry [Date], maxExpiry [Date], created [Date] and lastUpdated [Date]. Returns UUID as a string.
     String generateCookie(String host);
@@ -36,5 +37,8 @@ public interface CookieStorage {
 
     // Remove all expired cookies in 'cookies' list, by mutating the list
     void removeExpiredCookies();
+
+    // Check if cookie's host is equal to the one given
+    boolean hasHost(String uuid, String host);
 
 }
