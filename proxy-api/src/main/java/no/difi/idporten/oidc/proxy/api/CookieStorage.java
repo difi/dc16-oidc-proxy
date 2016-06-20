@@ -32,11 +32,4 @@ public interface CookieStorage {
      */
     void removeExpiredCookies();
 
-    default String indexValue(Cookie cookie) {
-        return cookie.toString();
-    }
-
-    default String indexValue(String uuid, String host) {
-        return String.format("%s@%s", uuid, host);
-    }
 }

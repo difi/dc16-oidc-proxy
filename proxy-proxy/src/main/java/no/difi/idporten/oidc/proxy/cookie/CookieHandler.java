@@ -20,7 +20,7 @@ public class CookieHandler implements CookieStorage {
         Date maxExpiry = new Date(new Date().getTime() + maxValidPeriod * MINUTE);
 
         Cookie cookie = new Cookie(UUID.randomUUID().toString(), host, expiry, maxExpiry);
-        cookies.put(indexValue(cookie), cookie);
+        cookies.put(indexValue(cookie.getUuid(), host), cookie);
 
         return cookie.getUuid();
     }
@@ -52,5 +52,9 @@ public class CookieHandler implements CookieStorage {
         return cookies.values().stream()
             .map(cookie -> String.format("%-65s %30s %n", cookie.toString(), cookie.getExpiry()))
             .collect(Collectors.joining(", "));
+    }
+
+    private String indexValue(String uuid, String host) {
+        return String.format("%s@%s", uuid, host);
     }
 }
