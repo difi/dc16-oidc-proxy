@@ -6,7 +6,7 @@ import java.util.List;
 public class Host {
 
     //field hostName
-    private List<String> hostname = new ArrayList<>();
+    private List<String> hostname = new ArrayList<String>();
 
     //Setter for hostName
     public void addHostname(String hostname) {
