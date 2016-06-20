@@ -72,6 +72,22 @@
                 <version>1.7.21</version>
             </dependency>
 
+            <!-- http://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.1.0</version>
+            </dependency>
+
+            <!-- http://mvnrepository.com/artifact/org.hsqldb/hsqldb -->
+            <dependency>
+                <groupId>org.hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+                <version>2.3.4</version>
+            </dependency>
+
+
+
         </dependencies>
     </dependencyManagement>
 
