@@ -6,7 +6,7 @@ import java.util.List;
 public class Path {
 
     private List<String> paths = new ArrayList<String>();
-
+    private int minValue;
 
 
     public void addPath(String path){

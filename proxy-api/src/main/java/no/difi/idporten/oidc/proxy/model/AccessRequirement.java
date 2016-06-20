@@ -8,11 +8,11 @@ public class AccessRequirement {
     private String idp;
 
     //Constructor, set host and minimum level of security
-    public AccessRequirement(Host host, int minLevel, Path path){
+    public AccessRequirement(Host host, int minLevel, Path path, String idp){
         this.host = host;
         this.minLevel = minLevel;
         this.path = path;
-
+        this.idp = idp;
     }
 
     //Setter for host
@@ -31,6 +31,9 @@ public class AccessRequirement {
 
     public Path getPath() {
         return this.path;
+    }
+    public String getIdp(){
+        return this.idp;
     }
 
     public int getMinLevel(){
