@@ -36,24 +36,37 @@ public class TypesafeConfigProvider implements ConfigProvider {
             config.getStringList(String.format("host.%s.hostname", key)).stream()
                     .peek(hostname -> hostHostname.put(hostname, host))
                     .forEach(host::addHostname);
-            hosts.add(host);
 
 
-            List<Integer> securityList = config.getIntList(String.format("host.%s.security", key));
+            //hosts.add(host);
 
-            for(Integer a : securityList){
-                Host hostTarget = hosts.get(securityList.indexOf(a));
-                hostSecurity.put(hostTarget.getHostname().get(0),a);
+            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(0).toConfig().getString("path"));
+            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(0).toConfig().getString("security"));
+            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(0).toConfig().getString("idp"));
 
-            }
 
-            Path path = new Path();
+            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(1).toConfig().getString("path"));
 
-            config.getStringList(String.format("host.%s.path",key)).stream()
-                    .peek(pathname -> pathPathnames.put(pathname,path))
-                    .forEach(path::addPath);
 
-            paths.add(path);
+            config.getObjectList(String.format("host.%s.paths",key)).stream();
+
+            //config.getStringList(String.format("host.%s.paths.path",key)).stream()
+             //       .forEach(host::addPathname);
+                    //.forEach(host::setIdp);
+
+
+
+
+            //config.getStringList(String.format("host.%s.paths",key));
+
+
+
+            //String newString = config.getString(String.format("host.%s.paths.path",key));
+
+
+            //System.out.println(newString);
+            //List<Integer> securityList = config.getIntList(String.format("host.%s.security", key));
+
 
 
 
