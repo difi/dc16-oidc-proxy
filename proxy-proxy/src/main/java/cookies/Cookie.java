@@ -1,8 +1,11 @@
 package cookies;
 
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class Cookie {
 
@@ -27,7 +30,7 @@ public class Cookie {
     }
 
 
-    public boolean checkHeaderForCookie(HttpHeaders httpHeaders, String cookieValue, String headerField){
+    public boolean checkHeaderForCookie(HttpHeaders httpHeaders, String cookieValue, String headerField) throws SQLException{
         if (httpHeaders.contains(headerField)){
             if (httpHeaders.get(headerField).contains(cookieValue)){
                 return true;

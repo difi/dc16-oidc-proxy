@@ -8,9 +8,9 @@ import java.util.List;
 public interface CookieStorage {
     int MINUTE = 60*1000;         // Convert from milliseconds
     int initialValidPeriod = 30;  // The amount of time (in minutes) a session is initially validated for
-    int maxValidPeriod = 120;     // The maximum amount of time (in minutes) a sesion is valid for
+    int maxValidPeriod = 120;     // The maximum amount of time (in minutes) a session is valid for
     int expandSessionPeriod = 15; // The amount of time (in minutes) expiry is expanded for, with every login within its valid period
-    List<Cookie> cookies = new ArrayList<>(); // Contains all cookies created in the class implementing this interface
+    List<Cookie> cookies = new ArrayList<Cookie>(); // Contains all cookies created in the class implementing this interface
 
     // Creates a new Cookie object with these attributes; universally unique identifier (UUID) [String],
     // host [String], expiry [Date], maxExpiry [Date], created [Date] and lastUpdated [Date]. Returns UUID as a string.

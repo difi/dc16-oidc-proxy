@@ -21,6 +21,7 @@ import io.netty.handler.traffic.TrafficCounter;
 import io.netty.util.CharsetUtil;
 
 import java.net.InetSocketAddress;
+import java.sql.SQLException;
 import java.util.*;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
@@ -65,12 +66,13 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         }
     }
 
-    private static void sendInfo(ChannelHandlerContext ctx) {
+    private static void sendInfo(ChannelHandlerContext ctx) throws SQLException {
         Cookie c = new Cookie(new UUID(123, 123).toString(), "IDPortenProxy");
-        Cookie co = new Cookie(new UUID(1233234245674346723l, 1223).toString(), "DIFITest");
+        Cookie co = new Cookie(new UUID(1233234245674346723l, 2093485720934384577l).toString(), "DIFITest");
         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
         response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
         c.insertCookieIntoHeader(response);
+        c.checkHeaderForCookie(response.headers(), "IDPortenProxy", "response");
         co.insertCookieIntoHeader(response);
         StringBuilder buf = new StringBuilder();
 
