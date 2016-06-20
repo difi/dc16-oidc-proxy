@@ -14,9 +14,9 @@ public class CookieInHeader {
     }
 
     //Checks either e response or a request for a specific cookie.
-    public boolean checkHeaderForCookie(HttpHeaders httpHeaders, String cookieValue, String headerField){
+    public boolean checkHeaderForCookie(HttpHeaders httpHeaders, String sessionID, String headerField){
         if (httpHeaders.contains(headerField)){
-            if (httpHeaders.get(headerField).contains(cookieValue)){
+            if (httpHeaders.get(headerField).contains(sessionID)){
                 return true;
             }
         }
