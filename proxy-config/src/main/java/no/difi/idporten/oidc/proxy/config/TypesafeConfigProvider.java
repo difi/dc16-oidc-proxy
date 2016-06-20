@@ -7,7 +7,6 @@ import no.difi.idporten.oidc.proxy.api.ConfigProvider;
 import no.difi.idporten.oidc.proxy.model.AccessRequirement;
 import no.difi.idporten.oidc.proxy.model.Host;
 import no.difi.idporten.oidc.proxy.model.Path;
-import no.difi.idporten.oidc.proxy.model.Security;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ public class TypesafeConfigProvider implements ConfigProvider {
     private Config config;
 
     private List<Host> hosts = new ArrayList<>();
-    private List<Security> securities = new ArrayList<>();
     private List<Path> paths = new ArrayList<>();
 
     private Map<String, Host> hostHostname = new HashMap<>();
@@ -40,12 +38,14 @@ public class TypesafeConfigProvider implements ConfigProvider {
                     .forEach(host::addHostname);
             hosts.add(host);
 
-            Security security = new Security();
 
-            config.getIntList(String.format("host.%s.security", key)).stream()
-                    .peek(securitylevel -> hostSecurity.put("test", security.getSecurityLevel()))
-                    .forEach(security::setSecurityLevel);
-            securities.add(security);
+            List<Integer> securityList = config.getIntList(String.format("host.%s.security", key));
+
+            for(Integer a : securityList){
+                Host hostTarget = hosts.get(securityList.indexOf(a));
+                hostSecurity.put(hostTarget.getHostname().get(0),a);
+
+            }
 
             Path path = new Path();
 
@@ -63,7 +63,11 @@ public class TypesafeConfigProvider implements ConfigProvider {
 
     @Override
     public AccessRequirement forUri(URI uri) {
-        return new AccessRequirement(hostHostname.get(uri.getHost()),3,pathPathnames.get(uri.getPath()));
+        int minSecurityLevel = 4;
+        if(hostSecurity.get(uri.getHost()) != null){
+            minSecurityLevel = hostSecurity.get(uri.getHost());
+        }
+        return new AccessRequirement(hostHostname.get(uri.getHost()),minSecurityLevel,pathPathnames.get(uri.getPath()));
 
     }
 }

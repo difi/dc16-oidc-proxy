@@ -22,7 +22,7 @@ public class TypesafeConfigProviderTest {
         Assert.assertNotNull(accessRequirement);
 
         Assert.assertNotNull(accessRequirement.getHost());
-        Assert.assertEquals(accessRequirement.getMinLevel(), 3);
+        Assert.assertEquals(accessRequirement.getMinLevel(), 5);
 
         //Assert.assertEquals(accessRequirement.getPath(),"/sample/");
         Assert.assertNotNull(accessRequirement.getPath());
