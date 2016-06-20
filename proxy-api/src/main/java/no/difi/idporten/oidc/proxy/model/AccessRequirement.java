@@ -15,27 +15,26 @@ public class AccessRequirement {
         this.idp = idp;
     }
 
-    //Setter for host
+    //Setters for the class variables
     public void setHost(Host host){
         this.host = host;
     }
     public void setIdp(String idp) { this.idp = idp;}
-    //Setter for min security level
     public void setMinLevel(int minLevel){
         this.minLevel = minLevel;
     }
     public void setPath(Path path) { this.path = path;}
+
+    //Getters
     public Host getHost(){
         return this.host;
     }
-
     public Path getPath() {
         return this.path;
     }
     public String getIdp(){
         return this.idp;
     }
-
     public int getMinLevel(){
         return this.minLevel;
     }

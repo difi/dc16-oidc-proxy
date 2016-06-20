@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Host {
 
-    //field hostName
+    //Idp is identityprovider, minLevel is the minimum security level
     private List<String> hostname = new ArrayList<String>();
     private List<Path> paths = new ArrayList<Path>();
     private String idp;
@@ -19,7 +19,6 @@ public class Host {
     public void setIdp(String idp) { this.idp = idp ;}
 
     public String getIdp() { return this.idp;}
-
     public List<String> getHostname(){
         return this.hostname;
     }

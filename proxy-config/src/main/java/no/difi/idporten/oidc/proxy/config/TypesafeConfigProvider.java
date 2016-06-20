@@ -36,41 +36,38 @@ public class TypesafeConfigProvider implements ConfigProvider {
 
         for (String key : config.getObject("host").keySet()) {
 
+            //New host object.
             Host host = new Host();
+
+            //Adds all the different hostnames belonging to the host object.
             config.getStringList(String.format("host.%s.hostname", key)).stream()
                     .peek(hostname -> hostHostname.put(hostname, host))
                     .forEach(host::addHostname);
 
-
-            //hosts.add(host);
-
-            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(0).toConfig().getString("path"));
-            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(0).toConfig().getString("security"));
-            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(0).toConfig().getString("idp"));
-            System.out.println(config.getObjectList(String.format("host.%s.paths",key)).get(1).toConfig().getString("path"));
-
-
+            //Iterates over the different path objects found from the configuration file
             for(ConfigObject a : config.getObjectList(String.format("host.%s.paths",key))){
+                //Converting the ConfigObject to a config file
                 Config newConfig = a.toConfig();
                 host.setIdp(newConfig.getString("idp"));
-                //host.addPathname(newConfig.getString("path"));
+
+                //New path object that will belong to a host
                 Path path = new Path();
                 path.addPath(newConfig.getString("path"));
                 host.addPathname(path);
+
+                //Making the map between paths and security level.
                 hostSecurity.put(newConfig.getString("path"),newConfig.getInt("security"));
                 //pathPathnames.put(host.getHostname(),newConfig.getString("path"));
             }
             hosts.add(host);
-
-
-
-
-
-
-
         }
     }
 
+    /**
+     * Returns an AccessRequirement object by finding the appropriate matches using mappings.
+     * @param uri
+     * @return
+     */
     @Override
     public AccessRequirement forUri(URI uri) {
         int minSecurityLevel = 0;
