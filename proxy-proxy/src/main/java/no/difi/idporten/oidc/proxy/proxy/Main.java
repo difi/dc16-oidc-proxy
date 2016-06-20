@@ -14,19 +14,31 @@ import org.slf4j.LoggerFactory;
 public class Main {
     private static Logger logger = LoggerFactory.getLogger(Main.class);
 
+    private static String hostName;
+    private static int outboundPort = 80;
+    private static int inboundPort = 8080;
+
+
+
     public static void main(String args[]) throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        if (args.length > 0) {
+            hostName = args[0];
+        } else {
+            hostName = "www.ntnu.no";
+        }
+
+
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1); // argument is number of threads for this loop
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
-                    .childHandler(new ProxyServerInitializer())
+                    .childHandler(new ProxyServerInitializer(hostName, outboundPort))
                     .childOption(ChannelOption.AUTO_READ, false)
-                    .bind(8080).sync().channel().closeFuture().sync();
+                    .bind(inboundPort).sync().channel().closeFuture().sync();
             logger.info("Server bootstrapped");
-
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();

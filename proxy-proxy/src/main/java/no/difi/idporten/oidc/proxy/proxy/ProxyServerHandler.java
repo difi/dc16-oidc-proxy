@@ -27,6 +27,12 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
         ctx.read();
     }
 
+    /**
+     * This is where the handler reads incoming messages from the remote site and writes them to the inbound channel
+     *
+     * @param ctx
+     * @param msg
+     */
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) {
         logger.debug("ProxyServerHandler reading");
@@ -35,6 +41,7 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {
                 if (channelFuture.isSuccess()) {
+                    logger.debug(String.format("Reading from outbound channel %s", ctx.channel()));
                     ctx.channel().read();
                 } else {
                     channelFuture.channel().close();

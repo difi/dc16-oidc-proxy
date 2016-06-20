@@ -1,0 +1,22 @@
+<assembly>
+    <id>full</id>
+    <formats>
+        <format>dir</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>src/main/assembly/full</directory>
+            <outputDirectory></outputDirectory>
+            <excludes>
+                <exclude>*/**/.gitkeep</exclude>
+                <exclude>*/**/.gitignore</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+        </dependencySet>
+    </dependencySets>
+</assembly>
