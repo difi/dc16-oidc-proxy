@@ -4,11 +4,13 @@ public class AccessRequirement {
 
     private Host host;
     private int minLevel;
+    private Path path;
 
     //Constructor, set host and minimum level of security
-    public AccessRequirement(Host host, int minLevel){
+    public AccessRequirement(Host host, int minLevel, Path path){
         this.host = host;
         this.minLevel = minLevel;
+        this.path = path;
     }
 
     //Setter for host
@@ -20,9 +22,13 @@ public class AccessRequirement {
     public void setMinLevel(int minLevel){
         this.minLevel = minLevel;
     }
-
+    public void setPath(Path path) { this.path = path;}
     public Host getHost(){
         return this.host;
+    }
+
+    public Path getPath() {
+        return this.path;
     }
 
     public int getMinLevel(){
