@@ -1,4 +1,4 @@
-package no.difi.idporten.oidc.proxy.cookie;
+package no.difi.idporten.oidc.proxy.storage;
 
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.model.Cookie;

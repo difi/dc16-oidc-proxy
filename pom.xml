@@ -15,6 +15,7 @@
         <module>proxy-api</module>
         <module>proxy-config</module>
         <module>proxy-distribution</module>
+        <module>proxy-storage</module>
 
     </modules>
 

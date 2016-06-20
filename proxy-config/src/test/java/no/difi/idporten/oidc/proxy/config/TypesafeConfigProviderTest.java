@@ -31,9 +31,5 @@ public class TypesafeConfigProviderTest {
         pathAccessRequirement = configProvider.forUri(URI.create("http://www.difi.no/app5/"));
         Assert.assertEquals(pathAccessRequirement.getMinLevel(),2);
         //Assert.assertNotNull(accessRequirement.getPath());
-
-
-
-
     }
 }

@@ -1,7 +1,6 @@
-package no.difi.idporten.oidc.proxt;
+package no.difi.idporten.oidc.proxy.storage;
 
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.cookie.CookieHandler;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

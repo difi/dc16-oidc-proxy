@@ -11,9 +11,19 @@ import no.difi.idporten.oidc.proxy.api.ConfigProvider;
  */
 public class ConfigModule extends AbstractModule {
 
+    private String identifier;
+
+    public ConfigModule() {
+        this("application");
+    }
+
+    public ConfigModule(String identifier) {
+        this.identifier = identifier;
+    }
+
     @Override
     protected void configure() {
-        bind(Config.class).toInstance(ConfigFactory.load());
+        bind(Config.class).toInstance(ConfigFactory.load(identifier));
         bind(ConfigProvider.class).to(TypesafeConfigProvider.class).in(Singleton.class);
         
     }
