@@ -49,7 +49,7 @@ public class CookieHandler implements CookieStorage {
     }
 
     @Override
-    public void expandCookieExpiry(String uuid){
+    public void extendCookieExpiry(String uuid){
         // The cookie's 'lastUpdated' variable is automatically updated in the Cookie object
         Cookie cookie = findCookie(uuid);
         if (cookie != null){

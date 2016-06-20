@@ -21,7 +21,7 @@ public interface CookieStorage {
     // 'expiry' is not reached. Expands 'expiry' with the amount of time in 'expandSessionPeriod', if
     // it does not surpass 'maxExpiry'. If cookie is still valid, but expanding 'expiry' will surpass
     // 'maxExpiry', 'expiry' is set to 'maxExpiry'.
-    void expandCookieExpiry(String uuid);
+    void extendCookieExpiry(String uuid);
 
     // Returns true if cookie has expired or if cookie doesn't exist (most likely because it was deleted after expiry)
     boolean hasExpired(String uuid);
