@@ -17,6 +17,9 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
+            <excludes>
+                <exclude>no.difi.idporten.oidc:proxy-distribution</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 </assembly>
