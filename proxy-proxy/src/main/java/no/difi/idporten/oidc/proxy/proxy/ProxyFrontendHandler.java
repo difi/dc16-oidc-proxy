@@ -1,7 +1,6 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.slf4j.Logger;
@@ -78,7 +77,6 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        logger.debug("ProxyFrontendHandler deactivated");
         if (outboundChannel != null) {
             closeOnFlush(ctx.channel());
         }
