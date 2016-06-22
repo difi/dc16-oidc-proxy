@@ -25,6 +25,5 @@ public class ConfigModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(ConfigFactory.load(identifier));
         bind(ConfigProvider.class).to(TypesafeConfigProvider.class).in(Singleton.class);
-        
     }
 }

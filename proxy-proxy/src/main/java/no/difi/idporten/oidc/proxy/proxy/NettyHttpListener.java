@@ -1,10 +1,12 @@
-package no.difi.idporten.oidc.proxy.proxy;/*
-/**
+package no.difi.idporten.oidc.proxy.proxy;
+/*
 * Thanks to https://github.com/sandamal/NettyRP and
 * https://github.com/carrot-garden/net_netty/tree/master/example/src/main/java/io/netty/example/proxy for providing
 * the skeleton for this code.
 */
 
+import com.google.inject.Inject;
+import com.typesafe.config.Config;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -12,7 +14,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.ssl.SslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,85 +23,54 @@ import java.net.SocketAddress;
 /**
  * Start ServerBootStrap in a given port for http inbound connections
  */
-public class NettyHttpListener {
+public class NettyHttpListener implements Runnable {
+
     private static Logger logger = LoggerFactory.getLogger(NettyHttpListener.class);
 
+    private static int HOST_PORT = 80;
+    private static String host = "www.ulv.no";
 
-    private int port;
-    private EventLoopGroup bossGroup;
-    private EventLoopGroup workerGroup;
-
-    private static String host;
-
-    private static int HOST_PORT;
-
-    private int bossGroupSize;
-    private int workerGroupSize;
-
-    private int maxConnectionsQueued;
-
-    private boolean SSL;
-
-    private EventLoopGroup commonEventLoopGroup;
-
-    public NettyHttpListener(int port) {
-        this.port = port;
-    }
-
-    public NettyHttpListener() {
-        /* Backend Address */
-        //host = "10.243.220.64";
-        host = "www.ulv.no";
-        HOST_PORT = 80;
-
-        /* Reverse Proxy port */
-        this.port = 8080;
-
-        SSL = false;
-        port = SSL ? 8443 : port;
-
-        this.bossGroupSize = 1;
-        this.workerGroupSize = 8;
-
-        this.maxConnectionsQueued = 64;
+    protected static SocketAddress getTargetSocketAddress() {
+        return new InetSocketAddress(host, HOST_PORT);
     }
 
     public static void setHost(String host) {
         NettyHttpListener.host = host;
     }
 
-    protected static SocketAddress getTargetSocketAddress() {
-        return new InetSocketAddress(host, HOST_PORT);
+
+    private int port = 8080;
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
+
+    private int bossGroupSize = 1;
+    private int workerGroupSize = 8;
+
+    private int maxConnectionsQueued = 64;
+
+    private EventLoopGroup commonEventLoopGroup;
+
+    @Inject
+    private NettyHttpListener(Config config) {
+        port = config.getInt("listen.port");
     }
 
-    public void start() {
+    public NettyHttpListener() {
+        // No action.
+    }
 
-        System.out.println("Starting the server...");
-        System.out.println("Starting Inbound Http Listener on Port " + this.port);
-
-        // Configure SSL.
-        SslContext sslCtx = null;
-        /*
-        if (SSL) {
-            try {
-                SelfSignedCertificate ssc = new SelfSignedCertificate();
-                sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
-            } catch (CertificateException ex) {
-                Logger.getLogger(NettyHttpListener.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SSLException ex) {
-                Logger.getLogger(NettyHttpListener.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        */
+    public void run() {
+        logger.info("Starting the server...");
+        logger.info("Starting Inbound Http Listener on port {}.", this.port);
 
         commonEventLoopGroup = new NioEventLoopGroup(bossGroupSize);
-//        bossGroup = new NioEventLoopGroup(bossGroupSize);
-//        workerGroup = new NioEventLoopGroup(workerGroupSize);
+//      bossGroup = new NioEventLoopGroup(bossGroupSize);
+//      workerGroup = new NioEventLoopGroup(workerGroupSize);
 
         try {
             ServerBootstrap b = new ServerBootstrap();
 
-//            b.commonEventLoopGroup(bossGroup, workerGroup)
+//          b.commonEventLoopGroup(bossGroup, workerGroup)
             b.group(commonEventLoopGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new TransportFrontendInitializer(maxConnectionsQueued))
@@ -121,18 +91,18 @@ public class NettyHttpListener {
 
             b.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
 
-            Channel ch = null;
             try {
-                ch = b.bind(port).sync().channel();
-                ch.closeFuture().sync();
-                System.out.println("Inbound Listener Started");
+                Channel channel = b.bind(port).sync().channel();
+                channel.closeFuture().sync();
+
+                logger.info("Inbound listener started");
             } catch (InterruptedException e) {
-                System.out.println("Exception caught");
+                logger.info("Interuption received.");
             }
         } finally {
-            logger.info("Shutting down");
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+            logger.info("Shutting down.");
+            // bossGroup.shutdownGracefully();
+            // workerGroup.shutdownGracefully();
         }
     }
 
@@ -140,13 +110,5 @@ public class NettyHttpListener {
 //        bossGroup.shutdownGracefully();
 //        workerGroup.shutdownGracefully();
         commonEventLoopGroup.shutdownGracefully();
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
     }
 }

@@ -12,6 +12,7 @@
     <artifactId>proxy-distribution</artifactId>
 
     <dependencies>
+        <!-- Proxy -->
         <dependency>
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-idp</artifactId>
@@ -19,6 +20,12 @@
         <dependency>
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-proxy</artifactId>
+        </dependency>
+
+        <!-- Args4J -->
+        <dependency>
+            <groupId>args4j</groupId>
+            <artifactId>args4j</artifactId>
         </dependency>
     </dependencies>
 
@@ -55,7 +62,7 @@
                             <outputDirectory>../target</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${build.directory}/${build.finalName}-full</directory>
+                                    <directory>${project.build.directory}/${project.build.finalName}-full</directory>
                                     <filtering>false</filtering>
                                 </resource>
                             </resources>
