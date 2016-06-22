@@ -46,6 +46,24 @@
             <artifactId>hsqldb</artifactId>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client -->
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-java6</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-jetty</artifactId>
+        </dependency>
+
+
+
+
+
 
     </dependencies>
 

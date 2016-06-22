@@ -100,6 +100,25 @@
                 <version>2.3.4</version>
             </dependency>
 
+            <!-- https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client -->
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client</artifactId>
+                <version>1.22.0</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.google.api-client/google-api-client -->
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client-java6</artifactId>
+                <version>1.20.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client-jetty</artifactId>
+                <version>1.20.0</version>
+            </dependency>
+
+
 
 
         </dependencies>
