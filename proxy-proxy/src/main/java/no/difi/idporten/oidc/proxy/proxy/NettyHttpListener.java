@@ -149,9 +149,4 @@ public class NettyHttpListener {
     public void setPort(int port) {
         this.port = port;
     }
-
-    public static void main(String[] args) {
-        NettyHttpListener inboundHttpListener = new NettyHttpListener();
-        inboundHttpListener.start();
-    }
 }
