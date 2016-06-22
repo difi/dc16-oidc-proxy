@@ -28,7 +28,7 @@ public class SimpleTest {
         thread.interrupt();
     }
 
-    @Test
+    @Test(enabled = false)
     public void simple() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ByteStreams.copy(URI.create("http://localhost:8080/").toURL().openStream(), baos);

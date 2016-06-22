@@ -61,7 +61,6 @@ public class NettyHttpListener implements Runnable {
 
     public void run() {
         logger.info("Starting the server...");
-        logger.info("Starting Inbound Http Listener on port {}.", this.port);
 
         commonEventLoopGroup = new NioEventLoopGroup(bossGroupSize);
 //      bossGroup = new NioEventLoopGroup(bossGroupSize);
@@ -93,9 +92,9 @@ public class NettyHttpListener implements Runnable {
 
             try {
                 Channel channel = b.bind(port).sync().channel();
-                channel.closeFuture().sync();
 
-                logger.info("Inbound listener started");
+                logger.info("Starting Inbound Http Listener on port {}.", this.port);
+                channel.closeFuture().sync();
             } catch (InterruptedException e) {
                 logger.info("Interuption received.");
             }
