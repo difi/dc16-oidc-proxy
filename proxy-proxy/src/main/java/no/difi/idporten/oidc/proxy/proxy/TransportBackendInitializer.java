@@ -25,6 +25,7 @@ public class TransportBackendInitializer extends ChannelInitializer<SocketChanne
 
         //Enable HTTPS if necessary.
         p.addLast("codec", new HttpClientCodec(102400, 102400, 102400));
+        p.addLast(new HttpResponseHandler());
         p.addLast(new TransportBackendHandler(inbound));
     }
 }
