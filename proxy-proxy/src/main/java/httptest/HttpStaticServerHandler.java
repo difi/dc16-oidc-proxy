@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.*;
+import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -46,25 +46,31 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         ChannelTrafficShapingHandler trafficHandler = (ChannelTrafficShapingHandler) ctx.pipeline().get("channelTraffic");
         TrafficCounter trafficCounter = trafficHandler.trafficCounter();
         IdportenIdentityProvider idp = new IdportenIdentityProvider();
-        if (request.headers().contains("Referer")){
-            idp.getToken(URI.create(request.headers().get("Referer")));
 
-        }
-        for (Map.Entry<String, String> s:request.headers()) {
-            System.out.println(s.toString());
 
-        }
-        if (!request.getDecoderResult().isSuccess()) {
-            sendError(ctx, BAD_REQUEST);
-            return;
-        }
+        if (request.uri().contains("code=")){
+            idp.getToken(URI.create(request.uri().toString()));
+            wait();
 
-        if (request.getMethod() != GET) {
+        } else {
+            for (Map.Entry<String, String> s:request.headers()) {
+                System.out.println(s.toString());
+
+            }
+            System.out.println();
+            if (!request.getDecoderResult().isSuccess()) {
+                sendError(ctx, BAD_REQUEST);
+                return;
+            }
+
+/*        if (request.getMethod() != GET) {
             sendError(ctx, METHOD_NOT_ALLOWED);
             return;
-        }
+        }*/
 
-        sendInfo(ctx);
+            sendInfo(ctx);
+
+        }
 
         synchronized (HttpStaticServer.channelsInfo) {
             HttpStaticServer.channelsInfo.add(new ChannelInfo(request.getUri(),
@@ -82,13 +88,17 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
 
     private static void sendInfo(ChannelHandlerContext ctx) throws SQLException, IOException {
         IdportenIdentityProvider g = new IdportenIdentityProvider();
-        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-            response.headers().set(LOCATION, g.generateURI());
-            response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND);
 
+        response.headers().set(HttpHeaderNames.LOCATION, g.generateURI());
+        response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
 
-        //response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
-        //
+        for (Map.Entry<String, String> s: response.headers()) {
+            System.out.println(s.toString());
+
+        }
+
         StringBuilder buf = new StringBuilder();
 
         Calendar timeNow = Calendar.getInstance();
@@ -144,7 +154,6 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         buf.append("</table></body></html>");
 
         response.content().writeBytes(Unpooled.copiedBuffer(buf, CharsetUtil.UTF_8));
-        System.out.println(response);
 
         // Close the connection as soon as the error message is sent.
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

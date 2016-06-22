@@ -31,19 +31,20 @@ public class IdportenIdentityProvider implements IdentityProvider {
 
 
     public String getToken(URI uri) throws Exception{
-        String s = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
-        String d = "grant_type=authorization_code&redirect_uri=http%3A%2F%2localhost%3A%2Fdificamp%2Fauthorize%2Fresponse&code=";
-        String a = uri.toString().split("=|&|\\)")[1];
-        String urlParameters = d+a;
+        String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
+        String parameters = "grant_type=authorization_code&redirect_uri=http%3A%2F%2localhost%3A%2Fdificamp%2Fauthorize%2Fresponse&code=";
+        String code = uri.toString().split("=|&|\\)")[1];
+        String urlParameters = parameters+code;
 
-        URL url = new URL(s);
+        URL url = new URL(baseURL);
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
 
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
         con.setRequestProperty("Authorization", "Basic ZGlmaWNhbXA6cGFzc3dvcmQ=");
-
-
+        /*System.out.println(Base64.getUrlEncoder().encode("dificamp:password".getBytes()) + " BASE64");*/
+        /*ZGlmaWNhbXA6cGFzc3dvcmQ=*/
+        /*Base64.getUrlEncoder().encode("dificamp:password".getBytes())*/
 
 
         con.setDoOutput(true);
@@ -52,11 +53,11 @@ public class IdportenIdentityProvider implements IdentityProvider {
         wr.flush();
         wr.close();
 
-        int responseCode = con.getResponseCode();
+/*        int responseCode = con.getResponseCode();
         System.out.println("\nSending 'POST' request to URL : " + url);
         System.out.println("Post parameters : " + urlParameters);
         System.out.println("Response Code : " + responseCode);
-        System.out.println("Response message : " + con.getResponseMessage());
+        System.out.println("Response message : " + con.getResponseMessage());*/
 
         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         System.out.println(in);
