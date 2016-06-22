@@ -7,4 +7,6 @@ RUN cd $MAVEN_HOME \
  && mv $MAVEN_HOME/target /oidc-proxy \
  && rm -r $MAVEN_HOME
 
+EXPOSE 8080
+
 ENTRYPOINT ["sh", "/oidc-proxy/bin/run.sh"]
