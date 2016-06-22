@@ -39,7 +39,6 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
     private static final long MEGABYTE = 1024L * 1024L;
-    private static String token;
 
 
     @Override
@@ -48,10 +47,9 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         TrafficCounter trafficCounter = trafficHandler.trafficCounter();
         IdportenIdentityProvider idp = new IdportenIdentityProvider();
         if (request.headers().contains("Referer")){
-            token = idp.getToken(URI.create(request.headers().get("Referer")));
+            idp.getToken(URI.create(request.headers().get("Referer")));
 
         }
-        //System.out.println(request.headers().get("Referer") + "wololo");
         for (Map.Entry<String, String> s:request.headers()) {
             System.out.println(s.toString());
 
@@ -85,14 +83,9 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
     private static void sendInfo(ChannelHandlerContext ctx) throws SQLException, IOException {
         IdportenIdentityProvider g = new IdportenIdentityProvider();
         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-        if (token == null){
             response.headers().set(LOCATION, g.generateURI());
             response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-        }
-        else if (token!=null){
-            response.headers().set(LOCATION, "http://www.ntnu.no"/*g.getToken(URI.create(token)*/);
-            response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-        }
+
 
         //response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
         //
