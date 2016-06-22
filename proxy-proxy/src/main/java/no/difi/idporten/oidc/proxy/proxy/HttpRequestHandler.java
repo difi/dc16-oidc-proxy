@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 /**
  * The first handler that can manipulate incoming HTTP messages and change the remote address we send the request to.
  */
-public class HttpHandler extends SimpleChannelInboundHandler<HttpMessage> {
-    private static Logger logger = LoggerFactory.getLogger(HttpHandler.class);
+public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage> {
+    private static Logger logger = LoggerFactory.getLogger(HttpRequestHandler.class);
 
 
     private final int maxConnectionsQueued;
 
-    public HttpHandler(int maxConnectionsQueued) {
+    public HttpRequestHandler(int maxConnectionsQueued) {
         this.maxConnectionsQueued = maxConnectionsQueued;
     }
 
@@ -36,7 +36,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<HttpMessage> {
      */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpMessage msg) throws Exception {
-        logger.debug(String.format("HttpHandler reading message: %s", msg));
+        logger.debug(String.format("HttpRequestHandler reading message: %s", msg));
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
             String host = request.headers().get(HttpHeaderNames.HOST).replaceAll(":\\d+", "").trim();

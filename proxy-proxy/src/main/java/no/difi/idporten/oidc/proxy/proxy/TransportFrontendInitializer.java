@@ -48,7 +48,7 @@ public class TransportFrontendInitializer extends ChannelInitializer<SocketChann
 
         p.addLast(new HttpServerCodec(102400, 102400, 102400));
         //   p.addLast(new HttpObjectAggregator(Constants.MAXIMUM_CHUNK_SIZE_AGGREGATOR));
-        p.addLast(new HttpHandler(connections));
+        p.addLast(new HttpRequestHandler(connections));
         p.addLast(new TransportFrontendHandler(connections));
     }
 }
