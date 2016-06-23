@@ -93,7 +93,7 @@ public class IdportenIdentityProvider implements IdentityProvider {
     }
 
     public String decodeIDToken(String id_token)throws Exception{
-        id_token = JWTParser.parse(id_token).getJWTClaimsSet().toString();
+        id_token = JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
         for (String param : id_token.split(",")) {
             System.out.println(param);
         }
