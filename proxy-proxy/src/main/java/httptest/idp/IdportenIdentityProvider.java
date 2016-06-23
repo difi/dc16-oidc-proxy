@@ -14,6 +14,8 @@ import java.util.Base64;
 public class IdportenIdentityProvider implements IdentityProvider {
 
 
+
+    //Uses the IdportenUrl class to generate a url.
     public IdportenUrl generateURI(){
         IdportenUrl url = new IdportenUrl("https://eid-exttest.difi.no/opensso/oauth2/authorize");
         url.setScope("openid");
@@ -23,8 +25,7 @@ public class IdportenIdentityProvider implements IdentityProvider {
         return url;
     }
 
-
-
+    //
     public String getToken(URI uri) throws Exception{
         String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
         String parameters = "grant_type=authorization_code&redirect_uri=http%3A%2F%2localhost%3A%2Fdificamp%2Fauthorize%2Fresponse&code=";

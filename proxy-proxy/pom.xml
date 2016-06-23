@@ -54,13 +54,7 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
-        <!-- http://mvnrepository.com/artifact/org.hsqldb/hsqldb -->
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client -->
+        <!-- Google-Oauth-Client -->
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
@@ -73,11 +67,6 @@
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-jetty</artifactId>
         </dependency>
-
-
-
-
-
 
     </dependencies>
 

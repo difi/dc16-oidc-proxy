@@ -5,6 +5,11 @@ import com.google.api.client.util.Key;
 
 public class IdportenUrl extends GenericUrl {
 
+    //Assisting class for IdportenIdentityProvider.
+    //Creates a url given url-string, and a set of parameters.
+
+
+    //The @Keys functions as parameters for the url. It is possible to add several other keys.
     @Key
     private String scope;
     @Key
