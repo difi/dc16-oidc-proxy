@@ -57,7 +57,6 @@ public class HttpStaticServer {
             Desktop.getDesktop().browse(new URI("http://www.localhost:8080"));
         }
         new HttpStaticServer(port).run();
-        System.out.println("fuj");
     }
 
     public static int getPort(){

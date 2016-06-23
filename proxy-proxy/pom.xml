@@ -68,6 +68,13 @@
             <artifactId>google-oauth-client-jetty</artifactId>
         </dependency>
 
+        <!-- JWT -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+
+
     </dependencies>
 
 </project>

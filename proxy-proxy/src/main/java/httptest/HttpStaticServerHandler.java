@@ -46,11 +46,10 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
             idp.getToken(request.uri());
         }
         else {
-            for (Map.Entry<String, String> s:request.headers()) {
-                System.out.println(s.toString());
+            for (Map.Entry<String, String> headers:request.headers()) {
+                System.out.println(headers.toString());
 
             }
-            System.out.println();
             if (!request.decoderResult().isSuccess()) {
                 sendError(ctx, BAD_REQUEST);
                 return;
@@ -88,8 +87,8 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
 
 
-        for (Map.Entry<String, String> s: response.headers()) {
-            System.out.println(s.toString());
+        for (Map.Entry<String, String> headers: response.headers()) {
+            System.out.println(headers.toString());
 
         }
 

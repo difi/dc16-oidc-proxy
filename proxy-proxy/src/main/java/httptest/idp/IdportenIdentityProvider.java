@@ -1,5 +1,8 @@
 package httptest.idp;
 
+import com.google.api.client.json.webtoken.JsonWebToken;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 import com.sun.javafx.tools.packager.Param;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
@@ -72,18 +75,30 @@ public class IdportenIdentityProvider implements IdentityProvider {
         StringBuffer response = new StringBuffer();
 
         while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine+"\nlklklk");
+            response.append(inputLine);
         }
         in.close();
 
         //print result
-        System.out.println(response.toString());
+        String[] tokens = response.toString().split(",");
+        String id_token;
+        for (String token: tokens) {
+            if (token.contains("id_token")){
+                id_token = decodeIDToken(token.split(":")[1].replace("\"", ""));
+            }
+        }
 
         return response.toString();
 
     }
 
+    public String decodeIDToken(String id_token)throws Exception{
+        id_token = JWTParser.parse(id_token).getJWTClaimsSet().toString();
+        for (String param : id_token.split(",")) {
+            System.out.println(param);
+        }
+        return id_token;
 
-
+    }
 
 }
