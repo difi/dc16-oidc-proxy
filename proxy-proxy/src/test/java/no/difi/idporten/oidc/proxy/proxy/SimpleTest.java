@@ -17,10 +17,12 @@ public class SimpleTest {
     private Thread thread;
 
     @BeforeClass
-    public void beforeClass() {
+    public void beforeClass() throws Exception {
         Injector injector = Guice.createInjector(new ConfigModule(), new ProxyModule());
         thread = new Thread(injector.getInstance(NettyHttpListener.class));
         thread.start();
+
+        Thread.sleep(1_000);
     }
 
     @AfterClass
@@ -28,7 +30,7 @@ public class SimpleTest {
         thread.interrupt();
     }
 
-    @Test(enabled = false)
+    @Test
     public void simple() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ByteStreams.copy(URI.create("http://localhost:8080/").toURL().openStream(), baos);

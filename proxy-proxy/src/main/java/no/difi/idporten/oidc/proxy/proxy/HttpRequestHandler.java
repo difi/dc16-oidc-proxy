@@ -39,16 +39,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
         logger.debug(String.format("HttpRequestHandler reading message: %s", msg));
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
-            String host = request.headers().get(HttpHeaderNames.HOST).replaceAll(":\\d+", "").trim();
+            String host = request.headers().getAsString(HttpHeaderNames.HOST);
             logger.debug(String.format("Trimmed host name: %s", host));
-            if (host.equals("www.xkcd.com")) {
-                logger.debug("Host equals www.xkcd.com - changing connection to xkcd's IP address.");
-                NettyHttpListener.setHost("23.235.37.67");
-            } else if (host.equals("localhost")) {
-                logger.debug("Host equals localhost - changing connection to xkcd's IP address.");
-                msg.headers().set(HttpHeaderNames.HOST, "www.xkcd.com");
-                NettyHttpListener.setHost("23.235.37.67");
-            }
         }
 
         // This notifies the next handler in the pipeline that this message is read and ready to move on

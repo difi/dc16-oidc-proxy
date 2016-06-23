@@ -7,6 +7,7 @@ public class ProxyModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(InboundInitializer.class).in(Singleton.class);
         bind(NettyHttpListener.class).in(Singleton.class);
     }
 }
