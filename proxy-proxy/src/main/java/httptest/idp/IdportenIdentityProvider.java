@@ -1,9 +1,5 @@
 package httptest.idp;
 
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -13,8 +9,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.Base64;
-import java.util.Map;
-import java.util.Scanner;
+
 
 public class IdportenIdentityProvider implements IdentityProvider {
 
@@ -41,10 +36,9 @@ public class IdportenIdentityProvider implements IdentityProvider {
 
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        con.setRequestProperty("Authorization", "Basic ZGlmaWNhbXA6cGFzc3dvcmQ=");
-        /*System.out.println(Base64.getUrlEncoder().encode("dificamp:password".getBytes()) + " BASE64");*/
-        /*ZGlmaWNhbXA6cGFzc3dvcmQ=*/
-        /*Base64.getUrlEncoder().encode("dificamp:password".getBytes())*/
+        con.setRequestProperty("Authorization", "Basic " + Base64.getUrlEncoder().encodeToString("dificamp:password".getBytes()));
+
+
 
 
         con.setDoOutput(true);
@@ -53,11 +47,10 @@ public class IdportenIdentityProvider implements IdentityProvider {
         wr.flush();
         wr.close();
 
-/*        int responseCode = con.getResponseCode();
         System.out.println("\nSending 'POST' request to URL : " + url);
         System.out.println("Post parameters : " + urlParameters);
-        System.out.println("Response Code : " + responseCode);
-        System.out.println("Response message : " + con.getResponseMessage());*/
+        System.out.println("Response Code : " + con.getResponseCode());
+        System.out.println("Response message : " + con.getResponseMessage());
 
         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         System.out.println(in);
@@ -76,11 +69,6 @@ public class IdportenIdentityProvider implements IdentityProvider {
         return null;
 
     }
-
-    public static void main(String[] args) throws Exception {
-        new IdportenIdentityProvider().getToken(URI.create("fukboi.com"));
-    }
-
 
 
 

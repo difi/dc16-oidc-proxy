@@ -18,18 +18,13 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.handler.traffic.TrafficCounter;
 import io.netty.util.CharsetUtil;
-import no.difi.idporten.oidc.proxy.openid.OpenIdConnecter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static io.netty.handler.codec.http.HttpMethod.GET;
@@ -63,10 +58,10 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
                 return;
             }
 
-/*        if (request.getMethod() != GET) {
+       if (request.getMethod() != GET) {
             sendError(ctx, METHOD_NOT_ALLOWED);
             return;
-        }*/
+        }
 
             sendInfo(ctx);
 
