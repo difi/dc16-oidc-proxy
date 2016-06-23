@@ -17,11 +17,25 @@
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>no.difi.idporten.oidc</groupId>
+            <artifactId>proxy-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>no.difi.idporten.oidc</groupId>
+            <artifactId>proxy-storage</artifactId>
+        </dependency>
 
         <!-- Netty -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
+        </dependency>
+
+        <!-- Guice -->
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
         </dependency>
 
         <!-- Logging -->
@@ -34,7 +48,7 @@
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
-        <!-- http://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+        <!-- Servlets -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>

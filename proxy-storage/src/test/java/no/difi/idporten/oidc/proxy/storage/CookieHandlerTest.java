@@ -1,14 +1,23 @@
 package no.difi.idporten.oidc.proxy.storage;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class CookieHandlerTest {
 
+    private Injector injector;
+
+    @Test
+    public void beforeClass() {
+        injector = Guice.createInjector(new StorageModule());
+    }
+
     @Test
     public void simple() {
-        CookieStorage cookieStorage = new CookieHandler();
+        CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
         String identifier = cookieStorage.generateCookie("example.com");
         Assert.assertNotNull(identifier);
