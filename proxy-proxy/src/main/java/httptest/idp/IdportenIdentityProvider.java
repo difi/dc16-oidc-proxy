@@ -5,6 +5,7 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.sun.javafx.tools.packager.Param;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
+import no.difi.idporten.oidc.proxy.model.UserData;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
@@ -81,12 +82,14 @@ public class IdportenIdentityProvider implements IdentityProvider {
 
         //print result
         String[] tokens = response.toString().split(",");
-        String id_token;
+        String id_token = "";
         for (String token: tokens) {
             if (token.contains("id_token")){
                 id_token = decodeIDToken(token.split(":")[1].replace("\"", ""));
             }
         }
+        UserData data = new UserData(id_token);
+        System.out.println(data);
 
         return response.toString();
 
@@ -94,9 +97,7 @@ public class IdportenIdentityProvider implements IdentityProvider {
 
     public String decodeIDToken(String id_token)throws Exception{
         id_token = JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
-        for (String param : id_token.split(",")) {
-            System.out.println(param);
-        }
+
         return id_token;
 
     }

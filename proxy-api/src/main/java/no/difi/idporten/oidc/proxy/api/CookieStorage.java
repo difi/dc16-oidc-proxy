@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.api;
 import no.difi.idporten.oidc.proxy.model.Cookie;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +13,7 @@ public interface CookieStorage {
      * Creates a new Cookie object with these attributes; universally unique identifier (UUID) [String],
      * host [String], expiry [Date] and maxExpiry [Date]. Returns UUID as a string.
      */
-    String generateCookie(String host);
+    String generateCookie(String host, HashMap<String, String> userData);
 
     /**
      * When the user logs in again, the session's cookie 'expiry' is expanded, but only if the cookie's

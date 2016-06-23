@@ -6,7 +6,7 @@ import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class CookieHandlerTest {
+public class InMemoryCookieStorageTest {
 
     private Injector injector;
 

@@ -1,16 +1,19 @@
 package no.difi.idporten.oidc.proxy.model;
 
 import java.util.Date;
+import java.util.HashMap;
 
 public class Cookie {
 
     private String uuid, host;
+    private HashMap<String, String> userData;
     private Date expiry;
     private Date lastUpdated = new Date();
     private final Date created = new Date();
     private final Date maxExpiry;
 
-    public Cookie(String uuid, String host, Date expiry, Date maxExpiry) {
+    public Cookie(String uuid, String host, Date expiry, Date maxExpiry, HashMap<String, String> userData) {
+        this.userData = userData;
         this.uuid = uuid; // Universally unique identifier
         this.host = host; // Hostname (e.g. 'nav.no')
         this.expiry = expiry;
