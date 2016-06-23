@@ -3,6 +3,8 @@ package httptest.idp;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.util.Key;
 
+import java.util.Map;
+
 public class IdportenUrl extends GenericUrl {
 
     //Assisting class for IdportenIdentityProvider.
@@ -10,6 +12,7 @@ public class IdportenUrl extends GenericUrl {
 
 
     //The @Keys functions as parameters for the url. It is possible to add several other keys.
+
     @Key
     private String scope;
     @Key

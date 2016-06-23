@@ -1,5 +1,6 @@
 package httptest.idp;
 
+import com.sun.javafx.tools.packager.Param;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -27,11 +28,16 @@ public class IdportenIdentityProvider implements IdentityProvider {
         return url;
     }
 
-    //
-    public String getToken(URI uri) throws Exception{
+    /**Get token using the code from the log in at IDporten
+    * @Param uri
+    */
+    public String getToken(String uri) throws Exception{
+        //The base-url used to make a POST request
         String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
+        //Parameteres used in the POST request
         String parameters = "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F&code=";
-        String code = uri.toString().split("=|&|\\)")[1];
+        //Code from the URI
+        String code = uri.split("=|&|\\)")[1];
         System.out.println(code);
 
         String urlParameters = parameters+code;
@@ -43,41 +49,37 @@ public class IdportenIdentityProvider implements IdentityProvider {
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
         con.setRequestProperty("Authorization", "Basic " + Base64.getUrlEncoder().encodeToString("dificamp:password".getBytes()));
 
-
-
-
         con.setDoOutput(true);
         DataOutputStream wr = new DataOutputStream(con.getOutputStream());
         wr.writeBytes(urlParameters);
         wr.flush();
         wr.close();
 
-
         System.out.println("\nSending 'POST' request to URL : " + url);
         System.out.println("Post parameters : " + urlParameters);
         System.out.println("Response Code : " + con.getResponseCode());
         System.out.println("Response message : " + con.getResponseMessage());
 
-        InputStream connectionIn = null;
+        InputStream connectionIn;
         if (con.getResponseCode() == 200){
             connectionIn = con.getInputStream();
         }else{
             connectionIn = con.getErrorStream();
         }
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(connectionIn));
         String inputLine;
         StringBuffer response = new StringBuffer();
 
         while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine+"\n");
+            response.append(inputLine+"\nlklklk");
         }
         in.close();
 
         //print result
-        System.out.println(response);
+        System.out.println(response.toString());
 
-        return null;
+        return response.toString();
 
     }
 

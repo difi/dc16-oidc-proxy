@@ -42,24 +42,21 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         TrafficCounter trafficCounter = trafficHandler.trafficCounter();
         IdportenIdentityProvider idp = new IdportenIdentityProvider();
 
-
         if (request.uri().contains("code=")){
-            idp.getToken(URI.create(request.uri().toString()));
-
-
-
-        } else {
+            idp.getToken(request.uri());
+        }
+        else {
             for (Map.Entry<String, String> s:request.headers()) {
                 System.out.println(s.toString());
 
             }
             System.out.println();
-            if (!request.getDecoderResult().isSuccess()) {
+            if (!request.decoderResult().isSuccess()) {
                 sendError(ctx, BAD_REQUEST);
                 return;
             }
 
-       if (request.getMethod() != GET) {
+       if (request.method() != GET) {
             sendError(ctx, METHOD_NOT_ALLOWED);
             return;
         }
