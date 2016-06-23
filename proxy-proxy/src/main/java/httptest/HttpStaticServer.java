@@ -14,7 +14,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
+import java.awt.*;
+import java.net.URI;
 import java.util.*;
+import java.util.List;
 
 public class HttpStaticServer {
 
@@ -47,9 +50,14 @@ public class HttpStaticServer {
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
         } else {
-            port = 8081;
+            port = 8080;
+        }
+        if(Desktop.isDesktopSupported())
+        {
+            Desktop.getDesktop().browse(new URI("http://www.localhost:8080"));
         }
         new HttpStaticServer(port).run();
+        System.out.println("fuj");
     }
 
     public static int getPort(){

@@ -45,7 +45,8 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
 
         if (request.uri().contains("code=")){
             idp.getToken(URI.create(request.uri().toString()));
-            wait();
+
+
 
         } else {
             for (Map.Entry<String, String> s:request.headers()) {
@@ -88,6 +89,7 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
         response.headers().set(HttpHeaderNames.LOCATION, g.generateURI());
         response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
+
 
         for (Map.Entry<String, String> s: response.headers()) {
             System.out.println(s.toString());

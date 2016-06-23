@@ -5,10 +5,12 @@ import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.Base64;
+import java.util.Map;
 
 
 public class IdportenIdentityProvider implements IdentityProvider {
@@ -28,8 +30,10 @@ public class IdportenIdentityProvider implements IdentityProvider {
     //
     public String getToken(URI uri) throws Exception{
         String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
-        String parameters = "grant_type=authorization_code&redirect_uri=http%3A%2F%2localhost%3A%2Fdificamp%2Fauthorize%2Fresponse&code=";
+        String parameters = "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F&code=";
         String code = uri.toString().split("=|&|\\)")[1];
+        System.out.println(code);
+
         String urlParameters = parameters+code;
 
         URL url = new URL(baseURL);
@@ -48,24 +52,30 @@ public class IdportenIdentityProvider implements IdentityProvider {
         wr.flush();
         wr.close();
 
+
         System.out.println("\nSending 'POST' request to URL : " + url);
         System.out.println("Post parameters : " + urlParameters);
         System.out.println("Response Code : " + con.getResponseCode());
         System.out.println("Response message : " + con.getResponseMessage());
 
+        InputStream connectionIn = null;
+        if (con.getResponseCode() == 200){
+            connectionIn = con.getInputStream();
+        }else{
+            connectionIn = con.getErrorStream();
+        }
+
         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        System.out.println(in);
         String inputLine;
         StringBuffer response = new StringBuffer();
 
         while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
+            response.append(inputLine+"\n");
         }
         in.close();
 
         //print result
-        System.out.println(response.toString());
-
+        System.out.println(response);
 
         return null;
 
