@@ -3,7 +3,15 @@ package no.difi.idporten.oidc.proxy.idp;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.util.Key;
 
+import java.util.Map;
+
 public class IdportenUrl extends GenericUrl {
+
+    //Assisting class for IdportenIdentityProvider.
+    //Creates a url given url-string, and a set of parameters.
+
+
+    //The @Keys functions as parameters for the url. It is possible to add several other keys.
 
     @Key
     private String scope;
@@ -27,22 +35,24 @@ public class IdportenUrl extends GenericUrl {
         this.scope = scope;
     }
 
+    public String getClient_id(){
+        return client_id;
+    }
+
     public void setClient_id(String client_id){
         this.client_id = client_id;
     }
 
-    public String getClient_id(){
-        return client_id;
-    }
-    public String getRedirect_uri() {
-        return redirect_uri;
+    public String getResponse_type() {
+        return response_type;
     }
 
     public void setRedirect_uri(String redirect_uri) {
         this.redirect_uri = redirect_uri;
     }
-    public String getResponse_type() {
-        return response_type;
+
+    public String getRedirect_uri() {
+        return redirect_uri;
     }
 
     public void setResponse_type(String response_type) {
@@ -50,15 +60,6 @@ public class IdportenUrl extends GenericUrl {
     }
 
 
-    public static void main(String[] args) {
-        IdportenUrl u = new IdportenUrl("https://eid-exttest.difi.no/opensso/oauth2/authorize");
-        u.setClient_id("dificamp");
-        u.setScope("openid");
-        u.setResponse_type("code");
-        u.setRedirect_uri("http://localhost:8080/");
-        System.out.println(u);
-        System.out.println("https://eid-exttest.difi.no/opensso/oauth2/authorize?client_id=dificamp&scope=openid&response_type=code&redirect_uri=http://localhost:8080/");
-    }
 
 
 }

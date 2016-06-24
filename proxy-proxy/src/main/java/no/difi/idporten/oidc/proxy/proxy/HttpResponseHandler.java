@@ -21,8 +21,8 @@ public class HttpResponseHandler extends ChannelInboundHandlerAdapter {
         logger.info(String.format("Reading incoming response %s", msg.getClass()));
         if (msg instanceof HttpResponse) {
             HttpResponse response = (HttpResponse) msg;
-            // logger.info(String.format("Message is HttpResponse\n%s", response));
-            CookieInHeader.insertCookieIntoHeader(response, "This is a session ID", "This is a UUID");
+            //logger.info(String.format("Message is HttpResponse\n%s", response));
+            //CookieInHeader.insertCookieIntoHeader(response, "ProxyID", );
         }
         super.channelRead(ctx, msg);
     }
