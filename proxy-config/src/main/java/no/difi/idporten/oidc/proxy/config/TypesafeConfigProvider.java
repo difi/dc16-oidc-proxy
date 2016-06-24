@@ -19,10 +19,12 @@ public class TypesafeConfigProvider implements ConfigProvider {
 
     @Inject
     public TypesafeConfigProvider(Config config) {
+
         for (String key : config.getObject("host").keySet()) {
 
             //New host object.
             Host host = new Host();
+
 
             //Adds all the different hostnames belonging to the host object.
             config.getStringList(String.format("host.%s.hostname", key)).stream()
@@ -37,7 +39,7 @@ public class TypesafeConfigProvider implements ConfigProvider {
 
                 //New path object that will belong to a host
                 Path path = new Path();
-                path.addPath(newConfig.getString("path"));
+                //path.addPath(newConfig.getString("path"));
                 host.addPathname(path);
 
                 //Making the map between paths and security level.
