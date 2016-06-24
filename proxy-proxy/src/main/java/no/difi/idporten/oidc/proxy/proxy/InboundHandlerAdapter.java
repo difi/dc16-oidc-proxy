@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
@@ -15,15 +14,15 @@ import java.net.InetSocketAddress;
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
  */
-public class InboundHandler extends ChannelInboundHandlerAdapter {
+public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
-    private static Logger logger = LoggerFactory.getLogger(InboundHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(InboundHandlerAdapter.class);
 
     private volatile Channel outboundChannel;
 
     private SecurityConfigProvider securityConfigProvider;
 
-    public InboundHandler(SecurityConfigProvider securityConfigProvider) {
+    public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
     }
 
@@ -124,20 +123,5 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
         if (outboundChannel != null) {
             closeOnFlush(outboundChannel);
         }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
-        closeOnFlush(ctx.channel());
-    }
-
-    /**
-     * Closes the specified channel after all queued write requests are flushed.
-     */
-    static void closeOnFlush(Channel ch) {
-        if (ch.isActive())
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                    .addListener(ChannelFutureListener.CLOSE);
     }
 }

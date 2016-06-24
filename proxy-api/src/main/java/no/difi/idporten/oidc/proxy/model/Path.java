@@ -1,7 +1,5 @@
 package no.difi.idporten.oidc.proxy.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class Path {
@@ -11,13 +9,8 @@ public class Path {
     private String scope;
     private Map<String, String> additional;
 
-    public Path() {
-        this("/", "", "");
-    }
-
     public Path(String path) {
         this(path, "", "");
-
     }
 
     public Path(String path, String redirectUri, String scope) {

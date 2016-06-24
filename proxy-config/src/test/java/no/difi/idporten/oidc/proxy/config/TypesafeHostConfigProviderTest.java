@@ -21,11 +21,6 @@ public class TypesafeHostConfigProviderTest {
     }
 
     @Test
-    public void testCanInitiate() {
-        Assert.assertNotNull(provider);
-    }
-
-    @Test
     public void testCanReturnKnownHostConfig() {
         Assert.assertNotNull(provider.getByHostname(DIFIHOSTNAME));
     }

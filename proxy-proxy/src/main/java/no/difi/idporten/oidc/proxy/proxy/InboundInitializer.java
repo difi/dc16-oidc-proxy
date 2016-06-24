@@ -25,7 +25,7 @@ public class InboundInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline()
                 .addLast(new HttpServerCodec(102400, 102400, 102400))
                 .addLast(new HttpRequestHandler(connections))
-                .addLast(new InboundHandler(securityConfigProvider))
+                .addLast(new InboundHandlerAdapter(securityConfigProvider))
         ;
     }
 }
