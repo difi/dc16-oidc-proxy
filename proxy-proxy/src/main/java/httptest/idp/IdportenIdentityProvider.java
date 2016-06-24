@@ -1,9 +1,6 @@
 package httptest.idp;
 
-import com.google.api.client.json.webtoken.JsonWebToken;
-import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
-import com.sun.javafx.tools.packager.Param;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.model.UserData;
 
@@ -12,13 +9,13 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.net.URL;
 import java.util.Base64;
-import java.util.Map;
 
 
 public class IdportenIdentityProvider implements IdentityProvider {
+
+    private UserData userData;
 
 
 
@@ -35,7 +32,7 @@ public class IdportenIdentityProvider implements IdentityProvider {
     /**Get token using the code from the log in at IDporten
     * @Param uri
     */
-    public String getToken(String uri) throws Exception{
+    public UserData getToken(String uri) throws Exception{
         //The base-url used to make a POST request
         String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
         //Parameteres used in the POST request
@@ -81,6 +78,7 @@ public class IdportenIdentityProvider implements IdentityProvider {
         in.close();
 
         //print result
+        System.out.println(response.toString());
         String[] tokens = response.toString().split(",");
         String id_token = "";
         for (String token: tokens) {
@@ -88,18 +86,15 @@ public class IdportenIdentityProvider implements IdentityProvider {
                 id_token = decodeIDToken(token.split(":")[1].replace("\"", ""));
             }
         }
-        UserData data = new UserData(id_token);
-        System.out.println(data);
-
-        return response.toString();
-
+        System.out.println("end here?");
+        return this.userData = new UserData(id_token);
     }
 
-    public String decodeIDToken(String id_token)throws Exception{
-        id_token = JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
-
-        return id_token;
-
+    private String decodeIDToken(String id_token)throws Exception{
+        return JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
     }
 
+    public UserData getUserData() {
+        return userData;
+    }
 }

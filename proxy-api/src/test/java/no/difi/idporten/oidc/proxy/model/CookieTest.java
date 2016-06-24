@@ -10,7 +10,7 @@ public class CookieTest {
     @Test
     public void simple() {
         String identifier = UUID.randomUUID().toString();
-        Cookie cookie = new Cookie(identifier, "domain.com", null, null);
+        Cookie cookie = new Cookie(identifier, "domain.com", null, null, null);
 
         Assert.assertEquals(cookie.getUuid(), identifier);
 

@@ -18,10 +18,12 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.handler.traffic.TrafficCounter;
 import io.netty.util.CharsetUtil;
+import no.difi.idporten.oidc.proxy.model.UserData;
+import no.difi.idporten.oidc.proxy.proxy.CookieInHeader;
+import no.difi.idporten.oidc.proxy.storage.InMemoryCookieStorage;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Map;
@@ -34,16 +36,19 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
     private static final long MEGABYTE = 1024L * 1024L;
+    private static UserData userData;
 
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+        System.out.println("new request");
         ChannelTrafficShapingHandler trafficHandler = (ChannelTrafficShapingHandler) ctx.pipeline().get("channelTraffic");
         TrafficCounter trafficCounter = trafficHandler.trafficCounter();
         IdportenIdentityProvider idp = new IdportenIdentityProvider();
 
         if (request.uri().contains("code=")){
-            idp.getToken(request.uri());
+            userData = idp.getToken(request.uri());
+
         }
         else {
             for (Map.Entry<String, String> headers:request.headers()) {
@@ -55,19 +60,19 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
                 return;
             }
 
-       if (request.method() != GET) {
-            sendError(ctx, METHOD_NOT_ALLOWED);
-            return;
-        }
+            if (request.method() != GET) {
+                sendError(ctx, METHOD_NOT_ALLOWED);
+                return;
+            }
 
-            sendInfo(ctx);
 
         }
+        sendInfo(ctx);
 
         synchronized (HttpStaticServer.channelsInfo) {
-            HttpStaticServer.channelsInfo.add(new ChannelInfo(request.getUri(),
+            HttpStaticServer.channelsInfo.add(new ChannelInfo(request.uri(),
                     trafficCounter.cumulativeWrittenBytes(), trafficCounter.cumulativeReadBytes(), (InetSocketAddress)ctx.channel().remoteAddress()));
-        }
+            }
     }
 
     @Override
@@ -79,12 +84,25 @@ public class HttpStaticServerHandler extends SimpleChannelInboundHandler<FullHtt
     }
 
     private static void sendInfo(ChannelHandlerContext ctx) throws SQLException, IOException {
-        IdportenIdentityProvider g = new IdportenIdentityProvider();
+        String uuid = "";
+        System.out.println("New response");
+        CookieInHeader cookieInHeader = new CookieInHeader();
+        IdportenIdentityProvider idp  = new IdportenIdentityProvider();
         FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND);
+        InMemoryCookieStorage inMemoryCookieStorage = new InMemoryCookieStorage();
+        if (userData == null){
+            response.headers().set(HttpHeaderNames.LOCATION, idp.generateURI());
+            response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+            response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
 
-        response.headers().set(HttpHeaderNames.LOCATION, g.generateURI());
-        response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-        response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
+        }
+        else if (userData != null){
+            response.headers().set(HttpHeaderNames.HOST, "localhost:8080");
+            System.out.println(userData.getUserData());
+            uuid = inMemoryCookieStorage.generateCookie("localhost", userData.getUserData());
+            cookieInHeader.insertCookieIntoHeader(response, "ProxyID", uuid);
+        }
+        System.out.println(inMemoryCookieStorage.findCookie(uuid, "localhost").toString() + "found");
 
 
         for (Map.Entry<String, String> headers: response.headers()) {

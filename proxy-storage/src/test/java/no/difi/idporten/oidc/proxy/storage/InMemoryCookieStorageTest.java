@@ -19,7 +19,7 @@ public class InMemoryCookieStorageTest {
     public void simple() {
         CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
-        String identifier = cookieStorage.generateCookie("example.com");
+        String identifier = cookieStorage.generateCookie("example.com", null);
         Assert.assertNotNull(identifier);
 
         Assert.assertTrue(cookieStorage.findCookie(identifier, "example.com").isPresent());
