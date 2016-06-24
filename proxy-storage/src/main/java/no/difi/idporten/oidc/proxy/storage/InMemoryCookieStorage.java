@@ -6,7 +6,7 @@ import no.difi.idporten.oidc.proxy.model.Cookie;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CookieHandler implements CookieStorage {
+public class InMemoryCookieStorage implements CookieStorage {
 
     private Map<String, Cookie> cookies = new HashMap<>();
     private static final int MINUTE = 60 * 1000;
@@ -15,11 +15,11 @@ public class CookieHandler implements CookieStorage {
     private int maxValidPeriod = 120;
 
     @Override
-    public String generateCookie(String host) {
+    public String generateCookie(String host, HashMap<String, String> userData) {
         Date expiry = new Date(new Date().getTime() + initialValidPeriod * MINUTE);
         Date maxExpiry = new Date(new Date().getTime() + maxValidPeriod * MINUTE);
 
-        Cookie cookie = new Cookie(UUID.randomUUID().toString(), host, expiry, maxExpiry);
+        Cookie cookie = new Cookie(UUID.randomUUID().toString(), host, expiry, maxExpiry, userData);
         cookies.put(indexValue(cookie.getUuid(), host), cookie);
 
         return cookie.getUuid();

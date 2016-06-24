@@ -28,7 +28,7 @@
 
         <!-- Netty -->
         <dependency>
-        <groupId>io.netty</groupId>
+            <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
         </dependency>
 
@@ -53,6 +53,14 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
+
+        <!-- Proxy-IDP -->
+        <dependency>
+            <groupId>no.difi.idporten.oidc</groupId>
+            <artifactId>proxy-idp</artifactId>
+        </dependency>
+
+
     </dependencies>
 
 </project>

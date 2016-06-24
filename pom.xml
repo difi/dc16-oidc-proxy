@@ -109,6 +109,22 @@
                 <artifactId>args4j</artifactId>
                 <version>2.33</version>
             </dependency>
+
+            <!-- Google-OAuth-Client -->
+            <dependency>
+                <groupId>com.google.oauth-client</groupId>
+                <artifactId>google-oauth-client</artifactId>
+                <version>1.22.0</version>
+            </dependency>
+
+            <!-- JWT -->
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>4.19</version>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 

@@ -6,7 +6,7 @@ import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class CookieHandlerTest {
+public class InMemoryCookieStorageTest {
 
     private Injector injector;
 
@@ -19,7 +19,7 @@ public class CookieHandlerTest {
     public void simple() {
         CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
-        String identifier = cookieStorage.generateCookie("example.com");
+        String identifier = cookieStorage.generateCookie("example.com", null);
         Assert.assertNotNull(identifier);
 
         Assert.assertTrue(cookieStorage.findCookie(identifier, "example.com").isPresent());

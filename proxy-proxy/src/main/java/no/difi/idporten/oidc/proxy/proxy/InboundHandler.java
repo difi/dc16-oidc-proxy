@@ -101,7 +101,7 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.debug(String.format("Reading incoming request: %s", msg.getClass()));
 
-        // First messgae is always HttpRequest, use it to bootstrap outbound channel.
+        // First message is always HttpRequest, use it to bootstrap outbound channel.
         if (msg instanceof HttpRequest) {
             bootstrapBackendChannel(ctx, (HttpRequest) msg);
         } else if (outboundChannel.isActive()) {
