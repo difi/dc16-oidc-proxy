@@ -34,7 +34,7 @@ public class IdportenIdentityProvider implements IdentityProvider {
      * @Param uri
      *
      */
-    public UserData getToken(String uri) throws Exception{
+    public UserData getToken(String uri)throws Exception{
         //The base-url used to make a POST request
         String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
         //Parameteres used in the POST request
