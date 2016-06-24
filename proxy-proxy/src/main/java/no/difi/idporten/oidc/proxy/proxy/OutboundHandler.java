@@ -22,16 +22,16 @@ import org.slf4j.LoggerFactory;
 /**
  * This handles incoming responses from the outbound server.
  */
-public class TransportBackendHandler extends ChannelInboundHandlerAdapter {
+public class OutboundHandler extends ChannelInboundHandlerAdapter {
 
     private final Channel inboundChannel; // Inbound channel on which to write responses
-    private static Logger logger = LoggerFactory.getLogger(TransportBackendHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(OutboundHandler.class);
 
     /**
      *
      * @param inboundChannel Channel on which to write responses
      */
-    public TransportBackendHandler(Channel inboundChannel) {
+    public OutboundHandler(Channel inboundChannel) {
         logger.info(String.format("Initializing target pool with inbound channel %s", inboundChannel));
         this.inboundChannel = inboundChannel;
     }
@@ -60,12 +60,12 @@ public class TransportBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        TransportFrontendHandler.closeOnFlush(inboundChannel);
+        InboundHandler.closeOnFlush(inboundChannel);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
-        TransportFrontendHandler.closeOnFlush(ctx.channel());
+        InboundHandler.closeOnFlush(ctx.channel());
     }
 }

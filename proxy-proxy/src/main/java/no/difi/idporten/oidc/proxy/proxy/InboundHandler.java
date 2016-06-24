@@ -1,47 +1,34 @@
-package no.difi.idporten.oidc.proxy.proxy;/*
- *  Licensed to the Apache Software Foundation (ASF) under one
- *  or more contributor license agreements.  See the NOTICE file
- *  distributed with this work for additional information
- *  regarding copyright ownership.  The ASF licenses this file
- *  to you under the Apache License, Version 2.0 (the
- *  "License"); you may not use this file except in compliance
- *  with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
+package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
+import no.difi.idporten.oidc.proxy.api.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
  */
-public class TransportFrontendHandler extends ChannelInboundHandlerAdapter {
+public class InboundHandler extends ChannelInboundHandlerAdapter {
+
+    private static Logger logger = LoggerFactory.getLogger(InboundHandler.class);
 
     private volatile Channel outboundChannel;
-    private final int maxConnectionsQueued;
 
-    private static Logger logger = LoggerFactory.getLogger(TransportFrontendHandler.class);
+    private ConfigProvider configProvider;
 
-    public TransportFrontendHandler(int maxConnectionsQueued) {
-        this.maxConnectionsQueued = maxConnectionsQueued;
+    public InboundHandler(ConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     /**
      * Only activates the channel and starts the first incoming read which is necessary.
-     * @param ctx
-     * @throws Exception
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -53,16 +40,18 @@ public class TransportFrontendHandler extends ChannelInboundHandlerAdapter {
      * Bootstraps the backend channel which is the one connected to the outbound server. If the connection is
      * successful, it writes the first message to the outbound server and starts reading the first response back to the
      * source client.
-     * @param ctx
-     * @param firstMsg
      */
-    private void bootstrapBackendChannel(ChannelHandlerContext ctx, Object firstMsg) {
+    private void bootstrapBackendChannel(ChannelHandlerContext ctx, HttpRequest httpRequest) {
+        logger.info("BOOTSTRAP FOR '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
+
+        // TODO Use ConfigProvider.
+
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new TransportBackendInitializer(inboundChannel))
+        b.handler(new OutboundInitializer(inboundChannel))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
@@ -72,8 +61,7 @@ public class TransportFrontendHandler extends ChannelInboundHandlerAdapter {
         b.option(ChannelOption.SO_SNDBUF, 1048576);
         b.option(ChannelOption.SO_RCVBUF, 1048576);
 
-
-        ChannelFuture f = b.connect(NettyHttpListener.getTargetSocketAddress());
+        ChannelFuture f = b.connect(new InetSocketAddress("23.235.37.67", 80));
 
         outboundChannel = f.channel();
         logger.debug(String.format("Made outbound channel: %s", outboundChannel));
@@ -84,7 +72,7 @@ public class TransportFrontendHandler extends ChannelInboundHandlerAdapter {
                 if (future.isSuccess()) {
                     // connection complete start to read first data
                     logger.debug("Outbound channel operation success");
-                    outboundChannel.writeAndFlush(firstMsg).addListener(new ChannelFutureListener() {
+                    outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             if (future.isSuccess()) {
@@ -108,24 +96,21 @@ public class TransportFrontendHandler extends ChannelInboundHandlerAdapter {
     /**
      * Reading incoming messages from the local client. The first message for a new incoming connection will bootstrap
      * the outbound channel. The next messages will just be written to the outbound channel.
-     * @param ctx
-     * @param msg
-     * @throws Exception
      */
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.debug(String.format("Reading incoming request: %s", msg.getClass()));
-        if (outboundChannel == null) bootstrapBackendChannel(ctx, msg);
-        if (outboundChannel.isActive()) {
-            outboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    if (future.isSuccess()) {
-                        // was able to flush out data, start to read the next chunk
-                        ctx.channel().read();
-                    } else {
-                        future.channel().close();
-                    }
+
+        // First messgae is always HttpRequest, use it to bootstrap outbound channel.
+        if (msg instanceof HttpRequest) {
+            bootstrapBackendChannel(ctx, (HttpRequest) msg);
+        } else if (outboundChannel.isActive()) {
+            outboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
+                if (future.isSuccess()) {
+                    // was able to flush out data, start to read the next chunk
+                    ctx.channel().read();
+                } else {
+                    future.channel().close();
                 }
             });
         } else {
@@ -151,8 +136,8 @@ public class TransportFrontendHandler extends ChannelInboundHandlerAdapter {
      * Closes the specified channel after all queued write requests are flushed.
      */
     static void closeOnFlush(Channel ch) {
-        if (ch.isActive()) {
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
+        if (ch.isActive())
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER)
+                    .addListener(ChannelFutureListener.CLOSE);
     }
 }

@@ -1,9 +1,4 @@
 package no.difi.idporten.oidc.proxy.proxy;
-/*
-* Thanks to https://github.com/sandamal/NettyRP and
-* https://github.com/carrot-garden/net_netty/tree/master/example/src/main/java/io/netty/example/proxy for providing
-* the skeleton for this code.
-*/
 
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
@@ -17,27 +12,12 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-
 /**
  * Start ServerBootStrap in a given port for http inbound connections
  */
 public class NettyHttpListener implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(NettyHttpListener.class);
-
-    private static int HOST_PORT = 80;
-    private static String host = "www.ulv.no";
-
-    protected static SocketAddress getTargetSocketAddress() {
-        return new InetSocketAddress(host, HOST_PORT);
-    }
-
-    public static void setHost(String host) {
-        NettyHttpListener.host = host;
-    }
-
 
     private int port = 8080;
     private EventLoopGroup bossGroup;
@@ -50,11 +30,16 @@ public class NettyHttpListener implements Runnable {
 
     private EventLoopGroup commonEventLoopGroup;
 
+    private InboundInitializer inboundInitializer;
+
     @Inject
-    private NettyHttpListener(Config config) {
+    private NettyHttpListener(Config config, InboundInitializer inboundInitializer) {
+        this.inboundInitializer = inboundInitializer;
+
         port = config.getInt("listen.port");
     }
 
+    @Deprecated
     public NettyHttpListener() {
         // No action.
     }
@@ -72,7 +57,7 @@ public class NettyHttpListener implements Runnable {
 //          b.commonEventLoopGroup(bossGroup, workerGroup)
             b.group(commonEventLoopGroup)
                     .channel(NioServerSocketChannel.class)
-                    .childHandler(new TransportFrontendInitializer(maxConnectionsQueued))
+                    .childHandler(inboundInitializer)
                     .childOption(ChannelOption.AUTO_READ, false);
 
             b.option(ChannelOption.TCP_NODELAY, true);
