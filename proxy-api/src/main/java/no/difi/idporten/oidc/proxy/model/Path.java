@@ -2,26 +2,41 @@ package no.difi.idporten.oidc.proxy.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Path {
 
-    private List<String> paths = new ArrayList<String>();
-    private int minValue;
+    private String path;
+    private String redirectUri;
+    private String scope;
+    private Map<String, String> additional;
 
+    public Path() {
+        this("/", "", "");
+    }
 
-    public void addPath(String path){
-        paths.add(path);
+    public Path(String path) {
+        this(path, "", "");
 
     }
 
-    public List<String> getPaths(){
-        return this.paths;
+    public Path(String path, String redirectUri, String scope) {
+        this.path = path;
+        this.redirectUri = redirectUri;
+        this.scope = scope;
     }
+
+    public String getPath() {
+        return path;
+    }
+
     @Override
     public String toString() {
-        return "Host{" +
-                "pathname=" + paths +
+        return "Path{" +
+                "path='" + path + '\'' +
+                ", redirectUri='" + redirectUri + '\'' +
+                ", scope='" + scope + '\'' +
+                ", additional=" + additional +
                 '}';
     }
-
 }
