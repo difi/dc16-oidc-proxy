@@ -6,7 +6,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-import no.difi.idporten.oidc.proxy.api.ConfigProvider;
+import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +21,10 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
 
     private volatile Channel outboundChannel;
 
-    private ConfigProvider configProvider;
+    private SecurityConfigProvider securityConfigProvider;
 
-    public InboundHandler(ConfigProvider configProvider) {
-        this.configProvider = configProvider;
+    public InboundHandler(SecurityConfigProvider securityConfigProvider) {
+        this.securityConfigProvider = securityConfigProvider;
     }
 
     /**
@@ -44,7 +44,7 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
     private void bootstrapBackendChannel(ChannelHandlerContext ctx, HttpRequest httpRequest) {
         logger.info("BOOTSTRAP FOR '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        // TODO Use ConfigProvider.
+        // TODO Use SecurityConfigProvider.
 
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
