@@ -1,12 +1,13 @@
 package no.difi.idporten.oidc.proxy.model;
 
+import java.net.InetSocketAddress;
 import java.util.Optional;
 
 public interface HostConfig {
 
     String getHostname();
 
-    Optional<Path> getForPath(String path);
+    Optional<Path> getPathFor(String path);
 
-    String getBackend();
+    InetSocketAddress getBackend();
 }

@@ -1,44 +1,50 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.ConfigFactory;
-import no.difi.idporten.oidc.proxy.model.HostConfig;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class TypesafeHostConfigTest {
 
-    private static final String patternIp = "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}";
+    private TypesafeHostConfig config;
 
-    private HostConfig config;
-
-    @BeforeClass
+    @BeforeTest
     public void injectHostConfigProvider() {
         this.config = new TypesafeHostConfig(ConfigFactory.parseReader(new InputStreamReader(getClass().getResourceAsStream("/hostConfig/simple.conf"))));
     }
 
     @Test
-    public void returnBackendRouting() {
-        Assert.assertTrue(config.getBackend().matches(patternIp));
-        Assert.assertTrue(config.getBackend().matches(patternIp));
-        Assert.assertTrue(config.getBackend().matches(patternIp));
+    public void returnBackendRouting() throws Exception {
+        Assert.assertNotNull(config.getBackend());
+        Assert.assertNotNull(config.getBackend());
+
+        Field field = TypesafeHostConfig.class.getDeclaredField("backendIndex");
+        field.setAccessible(true);
+        AtomicInteger atomicInteger = (AtomicInteger) field.get(config);
+        atomicInteger.addAndGet(Integer.MAX_VALUE);
+
+        Assert.assertNotNull(config.getBackend());
+        Assert.assertNotNull(config.getBackend());
     }
 
     @Test
     public void returnPath() {
-        Assert.assertTrue(config.getForPath("/app1/test").isPresent());
-        Assert.assertTrue(config.getForPath("/app1/").isPresent());
-        Assert.assertTrue(config.getForPath("/app1").isPresent());
+        Assert.assertTrue(config.getPathFor("/app1/test").isPresent());
+        Assert.assertTrue(config.getPathFor("/app1/").isPresent());
+        Assert.assertTrue(config.getPathFor("/app1").isPresent());
 
-        Assert.assertTrue(config.getForPath("/app2/test").isPresent());
-        Assert.assertTrue(config.getForPath("/app2/").isPresent());
-        Assert.assertTrue(config.getForPath("/app2").isPresent());
+        Assert.assertTrue(config.getPathFor("/app2/test").isPresent());
+        Assert.assertTrue(config.getPathFor("/app2/").isPresent());
+        Assert.assertTrue(config.getPathFor("/app2").isPresent());
 
-        Assert.assertFalse(config.getForPath("/app3").isPresent());
-        Assert.assertFalse(config.getForPath("/").isPresent());
-        Assert.assertFalse(config.getForPath("/about/").isPresent());
+        Assert.assertFalse(config.getPathFor("/app3").isPresent());
+        Assert.assertFalse(config.getPathFor("/").isPresent());
+        Assert.assertFalse(config.getPathFor("/about/").isPresent());
     }
 }
