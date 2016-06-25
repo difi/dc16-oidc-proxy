@@ -26,11 +26,21 @@ import java.util.stream.Collectors;
 
 public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
+    private String url;
+
+    public IdportenIdentityProvider(String url) {
+        this.url = url;
+    }
+
+    public IdportenIdentityProvider() {
+        this("https://eid-exttest.difi.no");
+    }
+
     @Override
     public String generateURI() throws IdentityProviderException {
         try {
-            // return new URIBuilder("https://eid-exttest.difi.no/opensso/oauth2/authorize")
-            return new URIBuilder("https://eid-exttest.difi.no/idporten-oidc-provider/authorize")
+            // return new URIBuilder(url + "/opensso/oauth2/authorize")
+            return new URIBuilder(url + "/idporten-oidc-provider/authorize")
                     .addParameter("scope", "openid")
                     .addParameter("client_id", "dificamp")
                     .addParameter("response_type", "code")
@@ -47,9 +57,9 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     @Override
     public UserData getToken(String uri) throws IdentityProviderException {
         try {
-            //The base-url used to make a POST request
-            // String baseURL = "https://eid-exttest.difi.no/opensso/oauth2/access_token";
-            String baseURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
+            // The base-url used to make a POST request
+            // String baseURL = url + "/opensso/oauth2/access_token";
+            String baseURL = url + "/idporten-oidc-provider/token";
 
             // Parsing parameters in provided uri
             Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()

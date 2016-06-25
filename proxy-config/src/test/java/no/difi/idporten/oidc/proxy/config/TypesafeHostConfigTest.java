@@ -1,14 +1,15 @@
-package no.difi.idporten.oidc.proxy.model;
+package no.difi.idporten.oidc.proxy.config;
 
+import com.typesafe.config.ConfigFactory;
+import no.difi.idporten.oidc.proxy.model.HostConfig;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.io.InputStreamReader;
 
 
-public class HostConfigTest {
+public class TypesafeHostConfigTest {
 
     private static final String patternIp = "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}";
 
@@ -16,7 +17,7 @@ public class HostConfigTest {
 
     @BeforeClass
     public void injectHostConfigProvider() {
-        config = new HostConfig(Arrays.asList("127.0.0.1:80", "127.0.1.1:80"), Arrays.asList(new Path("/app1"), new Path("/app2")));
+        this.config = new TypesafeHostConfig(ConfigFactory.parseReader(new InputStreamReader(getClass().getResourceAsStream("/hostConfig/simple.conf"))));
     }
 
     @Test

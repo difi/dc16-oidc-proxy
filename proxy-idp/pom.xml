@@ -16,12 +16,6 @@
             <artifactId>proxy-api</artifactId>
         </dependency>
 
-        <!-- Google-OAuth-Client -->
-        <!-- <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client</artifactId>
-        </dependency> -->
-
         <!-- Gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -39,6 +33,7 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
         </dependency>
+
     </dependencies>
 
 
