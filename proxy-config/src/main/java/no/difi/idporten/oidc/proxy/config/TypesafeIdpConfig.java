@@ -4,7 +4,7 @@ import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 
 
-import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TypesafeIdpConfig implements IdpConfig {
@@ -15,7 +15,7 @@ public class TypesafeIdpConfig implements IdpConfig {
     private String password;
     private String scope;
     private String redirect_uri;
-    private List<String> parameters;
+    private Map<String, String> parameters;
 
     public TypesafeIdpConfig(Config idpConfig){
         this.identifier = idpConfig.getString("identifier");
@@ -24,9 +24,10 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
         this.redirect_uri = idpConfig.getString("redirect_uri");
-        this.parameters = idpConfig.getConfigList("parameters").stream()
-                .map(c -> c.getString("quality"))
-                .collect(Collectors.toList());
+        this.parameters = idpConfig.getObjectList("parameters").stream()
+                .collect(Collectors.toMap(
+                e -> e.unwrapped().keySet().toString().replaceAll("[\\[\\]]", ""),
+                p -> p.unwrapped().entrySet().toString().split("=")[1].replace("]", "")));
     }
 
     @Override
@@ -50,7 +51,7 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public String getRedriect_Uri() {
+    public String getRedirect_Uri() {
         return this.redirect_uri;
     }
 
@@ -60,7 +61,12 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public List<String> getParameters() {
-        return this.parameters;
+    public Map<String, String> getParameters() {
+        return parameters;
+    }
+
+    @Override
+    public String getValueFromParametersWithKey(String key) {
+        return parameters.get(key);
     }
 }

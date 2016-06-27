@@ -20,19 +20,14 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
                 .map(key -> config.getConfig(String.format("idp.%s", key)))
                 .map(TypesafeIdpConfig::new)
                 .collect(Collectors.toMap(IdpConfig::getIdentifier, Function.identity()));
-        System.out.println(idps.keySet());
         }
 
 
     @Override
     public IdpConfig getByIdentifier(String identifier) {
-        System.out.println(idps.get(identifier).getParameters());
         return idps.get(identifier);
     }
 
-    public static void main(String[] args) {
-        new TypesafeIdpConfigProvider(ConfigFactory.load()).getByIdentifier("idporten");
-    }
 
 
 }
