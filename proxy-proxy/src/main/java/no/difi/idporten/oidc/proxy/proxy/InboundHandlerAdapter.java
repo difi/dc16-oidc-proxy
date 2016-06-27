@@ -2,11 +2,10 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-import no.difi.idporten.oidc.proxy.api.ConfigProvider;
+import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,16 +14,16 @@ import java.net.InetSocketAddress;
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
  */
-public class InboundHandler extends ChannelInboundHandlerAdapter {
+public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
-    private static Logger logger = LoggerFactory.getLogger(InboundHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(InboundHandlerAdapter.class);
 
     private volatile Channel outboundChannel;
 
-    private ConfigProvider configProvider;
+    private SecurityConfigProvider securityConfigProvider;
 
-    public InboundHandler(ConfigProvider configProvider) {
-        this.configProvider = configProvider;
+    public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
+        this.securityConfigProvider = securityConfigProvider;
     }
 
     /**
@@ -44,7 +43,7 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
     private void bootstrapBackendChannel(ChannelHandlerContext ctx, HttpRequest httpRequest) {
         logger.info("BOOTSTRAP FOR '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        // TODO Use ConfigProvider.
+        // TODO Use SecurityConfigProvider.
 
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
@@ -124,20 +123,5 @@ public class InboundHandler extends ChannelInboundHandlerAdapter {
         if (outboundChannel != null) {
             closeOnFlush(outboundChannel);
         }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
-        closeOnFlush(ctx.channel());
-    }
-
-    /**
-     * Closes the specified channel after all queued write requests are flushed.
-     */
-    static void closeOnFlush(Channel ch) {
-        if (ch.isActive())
-            ch.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                    .addListener(ChannelFutureListener.CLOSE);
     }
 }

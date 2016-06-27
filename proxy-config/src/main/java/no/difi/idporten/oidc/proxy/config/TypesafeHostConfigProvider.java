@@ -5,16 +5,24 @@ import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.model.HostConfig;
 
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 public class TypesafeHostConfigProvider implements HostConfigProvider {
+
+    private Map<String, HostConfig> hosts;
 
     @Inject
     public TypesafeHostConfigProvider(Config config) {
-        // TODO Initiate cache.
+        hosts = config.getObject("host").keySet().stream()
+                .map(key -> config.getConfig(String.format("host.%s", key)))
+                .map(TypesafeHostConfig::new)
+                .collect(Collectors.toMap(HostConfig::getHostname, Function.identity()));
     }
 
     @Override
     public HostConfig getByHostname(String hostname) {
-        // TODO Implement this.
-        return null;
+        return hosts.get(hostname);
     }
 }

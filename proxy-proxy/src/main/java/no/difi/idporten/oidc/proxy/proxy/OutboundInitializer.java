@@ -20,7 +20,7 @@ public class OutboundInitializer extends ChannelInitializer<SocketChannel> {
                 //Enable HTTPS if necessary.
                 .addLast("codec", new HttpClientCodec(102400, 102400, 102400))
                 .addLast(new HttpResponseHandler())
-                .addLast(new OutboundHandler(inbound))
+                .addLast(new OutboundHandlerAdapter(inbound))
         ;
     }
 }
