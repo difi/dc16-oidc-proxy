@@ -1,7 +1,6 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import com.google.inject.Inject;
-import com.sun.istack.internal.NotNull;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
@@ -22,7 +21,7 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
     private IdpConfigProvider idpConfigProvider;
 
     @Inject
-    public DefaultSecurityConfigProvider(@NotNull HostConfigProvider hostConfigProvider, @NotNull IdpConfigProvider idpConfigProvider) {
+    public DefaultSecurityConfigProvider(HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
         this.hostConfigProvider = hostConfigProvider;
         this.idpConfigProvider = idpConfigProvider;
     }
