@@ -2,12 +2,10 @@ package no.difi.idporten.oidc.proxy.config;
 
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
-import no.difi.idporten.oidc.proxy.model.HostConfig;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,7 +23,6 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
 
-
     public String getHostname() {
         return this.hostname;
     }
@@ -35,11 +32,10 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     public String getSecurity() {
-        if (PATH.get().getSecurity() != null){
+        if (PATH.get().getSecurity() != null) {
             return PATH.get().getSecurity();
-        }
-        else{
-            if (getParameters().keySet().contains("security")){
+        } else {
+            if (getParameters().keySet().contains("security")) {
                 return getParameters().get("security");
             }
         }
