@@ -21,21 +21,10 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
     @Override
     public SecurityConfig getConfig(String hostname, String path) {
-        if (hostConfigProvider.getByHostname(hostname) != null){
-
+        if (hostConfigProvider.getByHostname(hostname) != null) {
+            return new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider);
         }
-
-        //System.out.println(idpConfigProvider.getByIdentifier(hostConfigProvider.getByHostname(hostname).getPathFor(path).get().getIdp()).toString());
-
-
-
-        // TODO Implement this.
         return null;
     }
 
-    public static void main(String[] args) {
-        HostConfigProvider hs = new TypesafeHostConfigProvider(ConfigFactory.load());
-        IdpConfigProvider is = new TypesafeIdpConfigProvider(ConfigFactory.load());
-        new DefaultSecurityConfigProvider(hs, is).getConfig("www.xkcd.com", "/");
-    }
 }

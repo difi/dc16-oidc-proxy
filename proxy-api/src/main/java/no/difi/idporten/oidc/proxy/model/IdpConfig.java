@@ -12,7 +12,7 @@ public interface IdpConfig {
 
     String getScope();
 
-    String getRedirect_Uri();
+    String getRedirect_uri();
 
     String getClient_Id();
 

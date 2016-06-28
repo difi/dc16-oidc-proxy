@@ -51,7 +51,7 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public String getRedirect_Uri() {
+    public String getRedirect_uri() {
         return this.redirect_uri;
     }
 
