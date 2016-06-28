@@ -7,7 +7,7 @@ import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.model.HostConfig;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
-import no.difi.idporten.oidc.proxy.model.Path;
+import no.difi.idporten.oidc.proxy.model.PathConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
         HostConfig hostConfig = hostConfigProvider.getByHostname(hostname);
         if (hostConfig == null)
             return Optional.empty();
-        Optional<Path> pathOptional = hostConfig.getPathFor(path);
+        Optional<PathConfig> pathOptional = hostConfig.getPathFor(path);
         IdpConfig idpConfig;
         if (pathOptional.isPresent()) {
             idpConfig = idpConfigProvider.getByIdentifier(pathOptional.get().getIdp());

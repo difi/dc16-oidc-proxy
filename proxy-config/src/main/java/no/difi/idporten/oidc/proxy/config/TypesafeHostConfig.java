@@ -2,7 +2,9 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.HostConfig;
-import no.difi.idporten.oidc.proxy.model.Path;
+import no.difi.idporten.oidc.proxy.model.PathConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -14,9 +16,11 @@ public class TypesafeHostConfig implements HostConfig {
 
     private static final AtomicInteger backendIndex = new AtomicInteger();
 
+    private static Logger logger = LoggerFactory.getLogger(TypesafeHostConfig.class);
+
     private String hostname;
     private List<InetSocketAddress> backends;
-    private List<Path> paths;
+    private List<PathConfig> paths;
 
     public TypesafeHostConfig(Config hostConfig) {
         this.hostname = hostConfig.getString("hostname");
@@ -28,7 +32,6 @@ public class TypesafeHostConfig implements HostConfig {
                 .collect(Collectors.toList());
 
         this.paths = hostConfig.getConfigList("paths").stream()
-                .map(c -> c.getString("path"))
                 .map(Path::new)
                 .collect(Collectors.toList());
     }
@@ -39,7 +42,9 @@ public class TypesafeHostConfig implements HostConfig {
     }
 
     @Override
-    public Optional<Path> getPathFor(String path) {
+    public Optional<PathConfig> getPathFor(String path) {
+        logger.debug("Getting path object for {}{}", hostname, path);
+        logger.debug("All paths:\n{}", paths);
         return paths.stream()
                 .filter(p -> path.startsWith(p.getPath()))
                 .findFirst();
