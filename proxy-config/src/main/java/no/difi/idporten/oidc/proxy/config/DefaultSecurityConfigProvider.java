@@ -9,6 +9,8 @@ import no.difi.idporten.oidc.proxy.model.HostConfig;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 
+import java.util.Optional;
+
 public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
     private HostConfigProvider hostConfigProvider;
@@ -20,11 +22,14 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
         this.idpConfigProvider = idpConfigProvider;
     }
 
+
     @Override
-    public TypesafeSecurityConfig getConfig(String hostname, String path) {
-        HostConfig hostConfig = hostConfigProvider.getByHostname(hostname);
-        // or else should maybe give default config?
-        IdpConfig idpConfig = idpConfigProvider.getByIdentifier("idporten");
-        return new TypesafeSecurityConfig(idpConfig, hostConfig);
+    public Optional<SecurityConfig> getConfig(String hostname, String path) {
+            HostConfig hostConfig = hostConfigProvider.getByHostname(hostname);
+            if (hostConfig == null)
+                return Optional.empty();
+            // or else should maybe give default config?
+            IdpConfig idpConfig = idpConfigProvider.getByIdentifier("idporten");
+            return Optional.of(new TypesafeSecurityConfig(idpConfig, hostConfig));
     }
 }

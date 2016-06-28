@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
+import java.util.Optional;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -45,7 +46,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      *
      * @return
      */
-    private static FullHttpResponse generateRedirectResponse(IdentityProvider identityProvider) {
+    private static void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
         try {
             String redirectUrl = identityProvider.generateURI();
             StringBuilder content = new StringBuilder(redirectUrl);
@@ -54,34 +55,32 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
             result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
             logger.debug(String.format("Created redirect response:\n%s", result));
-            return result;
+            ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
         } catch (IdentityProviderException exc) {
             exc.printStackTrace();
-            return generateDefaultResponse();
+            generateDefaultResponse(ctx, "");
         }
     }
 
     /**
      * Default response for when nothing is configured for the host
-     *
-     * @return
      */
-    private static FullHttpResponse generateDefaultResponse() {
+    private static void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
         StringBuilder content = new StringBuilder();
-        content.append("no cannot");
-        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
-        result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-        result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        logger.debug(String.format("Created default response:\n%s", result));
-        return result;
+        content.append(String.format("no cannot use %s", host));
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        logger.debug(String.format("Created default response:\n%s", response));
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    private static FullHttpResponse generateJWTResponse(String content) {
+    private static void generateJWTResponse(ChannelHandlerContext ctx, String content) {
         FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
         logger.debug(String.format("Created JWT response:\n%s", result));
-        return result;
+        ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
@@ -95,73 +94,83 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         // TODO Use SecurityConfigProvider.
         String uri = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
-        host = "www.difi.no"; // just setting host to idp because we want to test that now
-        SecurityConfig securityConfig = securityConfigProvider.getConfig(host, uri);
-        logger.debug("Has security config: {}", securityConfig);
-        IdentityProvider idp = securityConfig.getIdp(uri);
-        logger.debug("Has identity provider: {}", idp);
-        SocketAddress outboundAddress = securityConfig.getBackend();
+        host = "www.difi.no"; // just setting host difi because we want to test that now
 
+        Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, uri);
 
-        if (httpRequest.uri().contains("?code=")) {
-            // need to get token here
-            try {
-                ctx.writeAndFlush(generateJWTResponse(new Gson().toJson(idp.getToken(uri).getUserData()))).addListener(ChannelFutureListener.CLOSE);
-            } catch (IdentityProviderException exc) {
-                exc.printStackTrace();
-                ctx.writeAndFlush(generateJWTResponse("no cannot")).addListener(ChannelFutureListener.CLOSE);
-            }
-        } else {
-            // redirect response
-            outboundAddress = securityConfig.getBackend();
-            ctx.writeAndFlush(generateRedirectResponse(idp)).addListener(ChannelFutureListener.CLOSE);
-            // should not continue life of request after this
+        if (!securityConfigOptional.isPresent()) {
+            logger.debug("Could not get SecurityConfig of host {}", host);
+            generateDefaultResponse(ctx, host);
         }
+        securityConfigOptional.ifPresent(securityConfig -> {
+            // do this if security config is present (not null)
+            logger.debug("Has security config: {}", securityConfig);
+
+            IdentityProvider idp = securityConfig.getIdp(uri);
+            logger.debug("Has identity provider: {}", idp);
+            SocketAddress outboundAddress = securityConfig.getBackend();
 
 
-        logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
-        final Channel inboundChannel = ctx.channel();
-
-        Bootstrap b = new Bootstrap();
-        b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel))
-                .option(ChannelOption.AUTO_READ, false);
-
-        b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
-        b.option(ChannelOption.TCP_NODELAY, true);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000);
-
-        b.option(ChannelOption.SO_SNDBUF, 1048576);
-        b.option(ChannelOption.SO_RCVBUF, 1048576);
-
-        ChannelFuture f = b.connect(outboundAddress);
-
-        outboundChannel = f.channel();
-        logger.debug(String.format("Made outbound channel: %s", outboundChannel));
-        f.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                logger.debug("Outbound channel operation complete");
-                if (future.isSuccess()) {
-                    // connection complete start to read first data
-                    logger.debug("Outbound channel operation success");
-                    outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) {
-                                // was able to flush out data, start to read the next chunk
-                                ctx.channel().read();
-                            } else {
-                                future.channel().close();
-                            }
-                        }
-                    });
-                } else {
-                    // Close the connection if the connection attempt has failed.
-                    logger.debug("Outbound channel operation failure");
-                    inboundChannel.close();
+            if (httpRequest.uri().contains("?code=")) {
+                // need to get token here
+                try {
+                    generateJWTResponse(ctx, new Gson().toJson(idp.getToken(uri).getUserData()));
+                } catch (IdentityProviderException exc) {
+                    exc.printStackTrace();
+                    generateDefaultResponse(ctx, "no cannot");
                 }
+            } else {
+                // redirect response
+                outboundAddress = securityConfig.getBackend();
+                generateRedirectResponse(ctx, idp);
+                // should not continue life of request after this
             }
+
+
+            logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
+            final Channel inboundChannel = ctx.channel();
+
+            Bootstrap b = new Bootstrap();
+            b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
+            b.handler(new OutboundInitializer(inboundChannel))
+                    .option(ChannelOption.AUTO_READ, false);
+
+            b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+            b.option(ChannelOption.TCP_NODELAY, true);
+            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000);
+
+            b.option(ChannelOption.SO_SNDBUF, 1048576);
+            b.option(ChannelOption.SO_RCVBUF, 1048576);
+
+            ChannelFuture f = b.connect(outboundAddress);
+
+            outboundChannel = f.channel();
+            logger.debug(String.format("Made outbound channel: %s", outboundChannel));
+            f.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    logger.debug("Outbound channel operation complete");
+                    if (future.isSuccess()) {
+                        // connection complete start to read first data
+                        logger.debug("Outbound channel operation success");
+                        outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
+                            @Override
+                            public void operationComplete(ChannelFuture future) throws Exception {
+                                if (future.isSuccess()) {
+                                    // was able to flush out data, start to read the next chunk
+                                    ctx.channel().read();
+                                } else {
+                                    future.channel().close();
+                                }
+                            }
+                        });
+                    } else {
+                        // Close the connection if the connection attempt has failed.
+                        logger.debug("Outbound channel operation failure");
+                        inboundChannel.close();
+                    }
+                }
+            });
         });
     }
 
