@@ -2,11 +2,10 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.HostConfig;
-import no.difi.idporten.oidc.proxy.model.Path;
+import no.difi.idporten.oidc.proxy.model.PathConfig;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -16,9 +15,11 @@ public class TypesafeHostConfig implements HostConfig {
 
     private String hostname;
     private List<InetSocketAddress> backends;
-    private List<Path> paths;
+    private List<PathConfig> paths;
+
 
     public TypesafeHostConfig(Config hostConfig) {
+
         this.hostname = hostConfig.getString("hostname");
 
         this.backends = hostConfig.getStringList("backends").stream()
@@ -27,10 +28,11 @@ public class TypesafeHostConfig implements HostConfig {
                 .map(b -> new InetSocketAddress(b[0], Integer.parseInt(b[1])))
                 .collect(Collectors.toList());
 
-        this.paths = hostConfig.getConfigList("paths").stream()
-                .map(c -> c.getString("path"))
+        this.paths = hostConfig.getConfigList("paths")
+                .stream()
                 .map(Path::new)
                 .collect(Collectors.toList());
+
     }
 
     @Override
@@ -39,7 +41,7 @@ public class TypesafeHostConfig implements HostConfig {
     }
 
     @Override
-    public Optional<Path> getPathFor(String path) {
+    public Optional<PathConfig> getPathFor(String path) {
         return paths.stream()
                 .filter(p -> path.startsWith(p.getPath()))
                 .findFirst();

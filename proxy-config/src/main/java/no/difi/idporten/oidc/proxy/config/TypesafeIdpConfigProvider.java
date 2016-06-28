@@ -22,7 +22,6 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
                 .collect(Collectors.toMap(IdpConfig::getIdentifier, Function.identity()));
         }
 
-
     @Override
     public IdpConfig getByIdentifier(String identifier) {
         return idps.get(identifier);
