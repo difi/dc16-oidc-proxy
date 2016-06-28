@@ -26,8 +26,8 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.redirect_uri = idpConfig.getString("redirect_uri");
         this.parameters = idpConfig.getObjectList("parameters").stream()
                 .collect(Collectors.toMap(
-                e -> e.unwrapped().keySet().toString().replaceAll("[\\[\\]]", ""),
-                p -> p.unwrapped().entrySet().toString().split("=")[1].replace("]", "")));
+                e -> e.keySet().toString().replaceAll("[\\[\\]]", ""),
+                p -> p.entrySet().toString().split("=")[1].replace("]", "")));
     }
 
     @Override
