@@ -19,7 +19,10 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
     @Override
     public SecurityConfig getConfig(String hostname, String path) {
-        // TODO Implement this.
+        if (hostConfigProvider.getByHostname(hostname) != null) {
+            return new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider);
+        }
         return null;
     }
+
 }
