@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 
 
@@ -24,10 +25,8 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
         this.redirect_uri = idpConfig.getString("redirect_uri");
-        this.parameters = idpConfig.getObjectList("parameters").stream()
-                .collect(Collectors.toMap(
-                k -> k.keySet().toString().replaceAll("[\\[\\]]", ""),
-                v -> v.entrySet().toString().split("=")[1].replace("]", "")));
+        this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
     }
 
     @Override
@@ -69,4 +68,5 @@ public class TypesafeIdpConfig implements IdpConfig {
     public String getValueFromParametersWithKey(String key) {
         return parameters.get(key);
     }
+
 }
