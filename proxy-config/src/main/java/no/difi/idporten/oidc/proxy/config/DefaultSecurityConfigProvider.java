@@ -8,18 +8,19 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 
 public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
-    private HostConfigProvider hostConfigProvider;
-    private IdpConfigProvider idpConfigProvider;
+    private HostConfigProvider hostConfigProvider; //Interface hostConfigProvider
+    private IdpConfigProvider idpConfigProvider; //Interface idpConfigProvider
 
     @Inject
     public DefaultSecurityConfigProvider(HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
-        this.hostConfigProvider = hostConfigProvider;
-        this.idpConfigProvider = idpConfigProvider;
+        this.hostConfigProvider = hostConfigProvider; //Setters
+        this.idpConfigProvider = idpConfigProvider;   //Setters
     }
 
     @Override
     public SecurityConfig getConfig(String hostname, String path) {
-        // TODO Implement this.
-        return null;
+        SecurityConfig securityConfig = new SecurityConfig();
+        return securityConfig.getConfig(hostname, path);
+        // TODO Implement this. Make SecurityConfig getConfig()-method return something other then null
     }
 }

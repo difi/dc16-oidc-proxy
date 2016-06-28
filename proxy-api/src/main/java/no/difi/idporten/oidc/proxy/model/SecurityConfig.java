@@ -6,25 +6,9 @@ public class SecurityConfig {
     private HostConfig hostConfig;
 
 
-
-
-
-
-
-
-
-
     public SecurityConfig getConfig(String hostname, String path){
-
-
-
-
-
-
-
-
-
         return null;
+        //TODO implement this
     }
 
 

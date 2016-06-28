@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public interface HostConfig {
 
-    String getHostname();
+    String getHostname(); //?
 
     Optional<Path> getPathFor(String path);
 
