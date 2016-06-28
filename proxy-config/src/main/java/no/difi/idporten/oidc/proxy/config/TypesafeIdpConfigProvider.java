@@ -25,6 +25,8 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
 
     @Override
     public IdpConfig getByIdentifier(String identifier) {
+        System.out.println("Getting idp by identifier: " + identifier);
+        System.out.println(idps);
         return idps.get(identifier);
     }
 
