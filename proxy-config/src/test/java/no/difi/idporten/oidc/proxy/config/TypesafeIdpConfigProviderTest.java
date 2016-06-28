@@ -3,8 +3,8 @@ package no.difi.idporten.oidc.proxy.config;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
-import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class TypesafeIdpConfigProviderTest {
