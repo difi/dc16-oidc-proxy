@@ -23,7 +23,7 @@ public class TypesafeHostConfigProvider implements HostConfigProvider {
     }
 
     @Override
-    public HostConfig getByHostname(String hostname) {
+    public HostConfig getByHostname(String hostname) { //Returns hostConfig based on hostName
         return hosts.get(hostname);
     }
 
