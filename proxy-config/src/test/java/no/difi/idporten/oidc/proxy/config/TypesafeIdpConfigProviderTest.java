@@ -21,7 +21,7 @@ public class TypesafeIdpConfigProviderTest {
 
     @Test
     public void testCanReturnKnownIdpConfig(){
-        Assert.assertNotNull(provider.getByIdentifier(IDPORTENIDENTIFIER).toString());
+        Assert.assertNotNull(provider.getByIdentifier(IDPORTENIDENTIFIER));
     }
 
     @Test
