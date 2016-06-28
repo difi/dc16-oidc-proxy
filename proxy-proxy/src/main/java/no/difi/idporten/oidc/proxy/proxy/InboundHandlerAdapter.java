@@ -91,12 +91,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private void bootstrapBackendChannel(ChannelHandlerContext ctx, HttpRequest httpRequest) {
         logger.info("BOOTSTRAP FOR '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        // TODO Use SecurityConfigProvider.
-        String uri = httpRequest.uri();
+        String path = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
-        host = "www.difi.no"; // just setting host difi because we want to test that now
 
-        Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, uri);
+        //host = "www.difi.no"; // edit host here if you want to test different configurations
+
+        Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
         if (!securityConfigOptional.isPresent()) {
             logger.debug("Could not get SecurityConfig of host {}", host);
@@ -106,7 +106,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            IdentityProvider idp = securityConfig.getIdp(uri);
+            IdentityProvider idp = securityConfig.getIdp(path);
             logger.debug("Has identity provider: {}", idp);
             SocketAddress outboundAddress = securityConfig.getBackend();
 
@@ -114,7 +114,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             if (httpRequest.uri().contains("?code=")) {
                 // need to get token here
                 try {
-                    generateJWTResponse(ctx, new Gson().toJson(idp.getToken(uri).getUserData()));
+                    generateJWTResponse(ctx, new Gson().toJson(idp.getToken(path).getUserData()));
                 } catch (IdentityProviderException exc) {
                     exc.printStackTrace();
                     generateDefaultResponse(ctx, "no cannot");
