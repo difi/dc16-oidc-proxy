@@ -6,7 +6,6 @@ import com.google.inject.Injector;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
