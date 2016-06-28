@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import com.google.inject.Inject;
+import com.sun.istack.internal.NotNull;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
@@ -14,7 +15,7 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
     private IdpConfigProvider idpConfigProvider;
 
     @Inject
-    public DefaultSecurityConfigProvider(HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
+    public DefaultSecurityConfigProvider(@NotNull HostConfigProvider hostConfigProvider, @NotNull IdpConfigProvider idpConfigProvider) {
         this.hostConfigProvider = hostConfigProvider;
         this.idpConfigProvider = idpConfigProvider;
     }
@@ -23,7 +24,7 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
     public TypesafeSecurityConfig getConfig(String hostname, String path) {
         HostConfig hostConfig = hostConfigProvider.getByHostname(hostname);
         // or else should maybe give default config?
-        IdpConfig idpConfig = idpConfigProvider.getByIdentifier(hostConfig.getPathFor(path).orElseGet(null).getIdp());
+        IdpConfig idpConfig = idpConfigProvider.getByIdentifier("idporten");
         return new TypesafeSecurityConfig(idpConfig, hostConfig);
     }
 }
