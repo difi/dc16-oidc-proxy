@@ -94,7 +94,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         String path = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
-        host = "www.difi.no"; // edit host here if you want to test different configurations
+        // host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
@@ -109,7 +109,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             IdentityProvider idp = securityConfig.createIdentityProvider();
             logger.debug("Has identity provider: {}", idp);
 
-            if (securityConfig.isSecured(path)) {
+            if (!securityConfig.getSecurity().equals("0")) {
                 logger.debug("{} is secured");
                 if (path.contains("?code=")) {
                     logger.debug("Path contains code: {}", path);

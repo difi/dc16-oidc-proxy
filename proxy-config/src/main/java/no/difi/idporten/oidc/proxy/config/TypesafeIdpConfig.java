@@ -30,8 +30,6 @@ public class TypesafeIdpConfig implements IdpConfig {
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
     }
 
-
-
     @Override
     public String getIdentifier() {
         return this.identifier;

@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.idp;
 import com.google.gson.JsonObject;
 import com.nimbusds.jwt.JWTParser;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -22,18 +23,15 @@ import java.util.List;
 
 public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
-    private String url;
+    private final SecurityConfig securityConfig;
+    private final String url = "https://www.googleapis.com";
 
     // Currently just something Viktor made on his Google account
     private static String DIFICLIENTID = "1063910224877-dhqd36c09sitf9alq3jb0rfsfmebe35o.apps.googleusercontent.com";
     private static String DIFICLIENTSECRET = "MiUsgGqAUFPVoqjIDifJS-Rj";
 
-    public GoogleIdentityProvider(String url) {
-        this.url = url;
-    }
-
-    public GoogleIdentityProvider() {
-        this("https://www.googleapis.com");
+    public GoogleIdentityProvider(SecurityConfig securityConfig) {
+        this.securityConfig = securityConfig;
     }
 
     @Override
