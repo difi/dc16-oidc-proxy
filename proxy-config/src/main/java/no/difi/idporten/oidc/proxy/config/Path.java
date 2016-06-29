@@ -3,19 +3,19 @@ package no.difi.idporten.oidc.proxy.config;
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
 
-public class Path implements PathConfig{
+public class Path implements PathConfig {
 
     private String path, security, redirect_uri, scope, idp;
 
-    public Path(Config config){
+    public Path(Config config) {
         this.path = config.getString("path");
         this.idp = config.getString("idp");
 
-        if (checkForStringInConfig("security", config)){
+        if (checkForStringInConfig("security", config)) {
             this.security = config.getString("security");
         }
 
-        if (checkForStringInConfig("redirect_uri", config)){
+        if (checkForStringInConfig("redirect_uri", config)) {
             this.redirect_uri = config.getString("redirect_uri");
         }
 
@@ -26,7 +26,7 @@ public class Path implements PathConfig{
 
     }
 
-    private boolean checkForStringInConfig(String stringToBeChecked, Config config){
+    private boolean checkForStringInConfig(String stringToBeChecked, Config config) {
         return (config.entrySet().toString().contains(stringToBeChecked));
     }
 
@@ -35,7 +35,8 @@ public class Path implements PathConfig{
         return this.path;
     }
 
-    public String getIdp(){
+    @Override
+    public String getIdp() {
         return this.idp;
     }
 
