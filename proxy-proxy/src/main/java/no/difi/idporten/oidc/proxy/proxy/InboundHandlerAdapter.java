@@ -94,7 +94,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         String path = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
-        //host = "www.difi.no"; // edit host here if you want to test different configurations
+        host = "localhost:8080"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 

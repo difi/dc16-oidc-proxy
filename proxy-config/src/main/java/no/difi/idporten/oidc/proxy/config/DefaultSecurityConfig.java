@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.config;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
+import no.difi.idporten.oidc.proxy.model.HostConfig;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
@@ -15,11 +16,13 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private String hostname, path;
     private final Optional<PathConfig> PATH;
+    private final HostConfig HOST;
     private final IdpConfig IDP;
 
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
         this.path = path;
         this.hostname = hostname;
+        this.HOST = hostConfigProvider.getByHostname(hostname);
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
     }
@@ -27,12 +30,12 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public IdentityProvider getIdp(String path) {
-        return null;
+        return IDP.getIdp(path);
     }
 
     @Override
     public SocketAddress getBackend() {
-        return null;
+        return this.HOST.getBackend();
     }
 
     public String getHostname() {
