@@ -15,6 +15,11 @@
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>no.difi.idporten.oidc</groupId>
+            <artifactId>proxy-idp</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Guice -->
         <dependency>

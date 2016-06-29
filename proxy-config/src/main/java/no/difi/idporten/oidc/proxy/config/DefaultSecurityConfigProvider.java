@@ -4,7 +4,10 @@ import com.google.inject.Inject;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
+import no.difi.idporten.oidc.proxy.model.PathConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
+
+import java.util.Optional;
 
 public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
@@ -17,9 +20,22 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
         this.idpConfigProvider = idpConfigProvider;
     }
 
+
     @Override
-    public SecurityConfig getConfig(String hostname, String path) {
-        // TODO Implement this.
-        return null;
+    public Optional<SecurityConfig> getConfig(String hostname, String path) {
+        if (hostConfigProvider.getByHostname(hostname) == null) {
+            return Optional.empty();
+        }
+        Optional<PathConfig> pathOptional = hostConfigProvider.getByHostname(hostname).getPathFor(path);
+        if (pathOptional.isPresent()) {
+            if (idpConfigProvider.getByIdentifier(pathOptional.get().getIdp()) == null) {
+                return Optional.empty();
+            } else {
+                return Optional.of(new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider));
+            }
+        } else {
+            return Optional.empty();
+
+        }
     }
 }

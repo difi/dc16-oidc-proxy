@@ -1,15 +1,21 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
+import com.google.gson.Gson;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.*;
+import io.netty.util.CharsetUtil;
+import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
+import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Optional;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -36,15 +42,98 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     }
 
     /**
+     * Generates redirect response for initial request to server. This is the response containing idp, scope, client_id etc.
+     *
+     * @return
+     */
+    private static void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
+        try {
+            String redirectUrl = identityProvider.generateURI();
+            StringBuilder content = new StringBuilder(redirectUrl);
+            FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+            result.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
+            result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
+            result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+            logger.debug(String.format("Created redirect response:\n%s", result));
+            ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
+        } catch (IdentityProviderException exc) {
+            exc.printStackTrace();
+            generateDefaultResponse(ctx, "");
+        }
+    }
+
+    /**
+     * Default response for when nothing is configured for the host
+     */
+    private static void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
+        StringBuilder content = new StringBuilder();
+        content.append(String.format("no cannot use %s", host));
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        logger.debug(String.format("Created default response:\n%s", response));
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    private static void generateJWTResponse(ChannelHandlerContext ctx, String content) {
+        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+        result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
+        result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        logger.debug(String.format("Created JWT response:\n%s", result));
+        ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    /**
      * Bootstraps the backend channel which is the one connected to the outbound server. If the connection is
      * successful, it writes the first message to the outbound server and starts reading the first response back to the
      * source client.
      */
-    private void bootstrapBackendChannel(ChannelHandlerContext ctx, HttpRequest httpRequest) {
-        logger.info("BOOTSTRAP FOR '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
+    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) {
+        logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        // TODO Use SecurityConfigProvider.
+        String path = httpRequest.uri();
+        String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
+        // host = "www.difi.no"; // edit host here if you want to test different configurations
+
+        Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
+
+        if (!securityConfigOptional.isPresent()) {
+            logger.debug("Could not get SecurityConfig of host {}", host);
+            generateDefaultResponse(ctx, host);
+        }
+        securityConfigOptional.ifPresent(securityConfig -> {
+            // do this if security config is present (not null)
+            logger.debug("Has security config: {}", securityConfig);
+
+            IdentityProvider idp = securityConfig.createIdentityProvider();
+            logger.debug("Has identity provider: {}", idp);
+
+            if (!securityConfig.getSecurity().equals("0")) {
+                logger.debug("{} is secured");
+                if (path.contains("?code=")) {
+                    logger.debug("Path contains code: {}", path);
+                    // need to get token here
+                    try {
+                        generateJWTResponse(ctx, new Gson().toJson(idp.getToken(path).getUserData()));
+                    } catch (IdentityProviderException exc) {
+                        exc.printStackTrace();
+                        generateDefaultResponse(ctx, "no cannot");
+                    }
+                } else {
+                    // redirect response
+                    generateRedirectResponse(ctx, idp);
+                    // should not continue life of request after this
+                }
+            } else {
+                // path is not secured
+                logger.debug("Path is not secured: {}{}", host, path);
+                bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
+            }
+        });
+    }
+
+    private void bootstrapOutboundChannel(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest) {
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
@@ -60,7 +149,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         b.option(ChannelOption.SO_SNDBUF, 1048576);
         b.option(ChannelOption.SO_RCVBUF, 1048576);
 
-        ChannelFuture f = b.connect(new InetSocketAddress("23.235.37.67", 80));
+        ChannelFuture f = b.connect(outboundAddress);
 
         outboundChannel = f.channel();
         logger.debug(String.format("Made outbound channel: %s", outboundChannel));
@@ -102,8 +191,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         // First message is always HttpRequest, use it to bootstrap outbound channel.
         if (msg instanceof HttpRequest) {
-            bootstrapBackendChannel(ctx, (HttpRequest) msg);
-        } else if (outboundChannel.isActive()) {
+            handleHttpRequest(ctx, (HttpRequest) msg);
+        } else if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {
                     // was able to flush out data, start to read the next chunk
