@@ -8,11 +8,21 @@ import org.testng.annotations.Test;
 
 public class IdportenIdentityProviderTest {
 
+
     @Test(enabled = false)
     public void testingGenerateURI() throws IdentityProviderException {
         IdentityProvider identityProvider = new IdportenIdentityProvider(null);
 
         Assert.assertTrue(identityProvider.generateURI().contains("difi.no"));
         Assert.assertTrue(identityProvider.generateURI().startsWith("https://"));
+
+
     }
+
+    //@Test
+    //public void testingUserData() throws IdentityProviderException {
+    //    IdentityProvider identityProvider = new IdportenIdentityProvider();
+    //    identityProvider.
+    //}
+
 }

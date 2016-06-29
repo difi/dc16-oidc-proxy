@@ -36,6 +36,7 @@ public class Cookie {
     public void setExpiry(Date expiry) {
         // If expiry.compareTo(maxExpiry) equals -1, expiry Date is before maxExpiry Date
         // If expiry.compareTo(maxExpiry) equals 0, expiry Date equals maxExpiry Date
+        System.out.println(expiry.compareTo(maxExpiry));
         if (expiry.compareTo(maxExpiry) < 1){
             this.expiry = expiry;
             touch();

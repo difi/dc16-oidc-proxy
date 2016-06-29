@@ -16,6 +16,7 @@ public class TypesafeHostConfigProvider implements HostConfigProvider {
 
     @Inject
     public TypesafeHostConfigProvider(Config config) {
+        System.out.println(config.toString());
         hosts = config.getObject("host").keySet().stream()
                 .map(key -> config.getConfig(String.format("host.%s", key)))
                 .map(TypesafeHostConfig::new)
