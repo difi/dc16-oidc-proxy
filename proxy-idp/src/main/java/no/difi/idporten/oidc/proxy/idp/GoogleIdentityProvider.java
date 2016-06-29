@@ -45,7 +45,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
                     .addParameter("response_type", "code")
                     .addParameter("access_type", "offline")
                     .addParameter("approval_prompt", "force")
-                    .addParameter("redirect_uri", "http://localhost:8080/")
+                    .addParameter("redirect_uri", "http://localhost:8080/google")
                     .build().toString();
         } catch (URISyntaxException e) {
             throw new IdentityProviderException(e.getMessage(), e);
@@ -65,7 +65,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
             HttpPost postRequest = new HttpPost(baseURL);
             List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("code", code));
-            params.add(new BasicNameValuePair("redirect_uri", "http://localhost:8080/"));
+            params.add(new BasicNameValuePair("redirect_uri", "http://localhost:8080/google"));
             params.add(new BasicNameValuePair("client_id", DIFICLIENTID));
             params.add(new BasicNameValuePair("client_secret", DIFICLIENTSECRET));
             params.add(new BasicNameValuePair("scope", ""));
