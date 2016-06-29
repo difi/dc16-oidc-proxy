@@ -3,13 +3,13 @@ package no.difi.idporten.oidc.proxy.config;
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-import no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider;
 
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TypesafeIdpConfig implements IdpConfig {
+
 
     private String identifier;
     private String idpclass;
@@ -19,8 +19,8 @@ public class TypesafeIdpConfig implements IdpConfig {
     private String redirect_uri;
     private Map<String, String> parameters;
 
-    public TypesafeIdpConfig(Config idpConfig) {
-        this.identifier = idpConfig.getString("identifier");
+    public TypesafeIdpConfig(String identifier, Config idpConfig) {
+        this.identifier = identifier;
         this.idpclass = idpConfig.getString("class");
         this.client_id = idpConfig.getString("client_id");
         this.password = idpConfig.getString("password");
@@ -28,27 +28,9 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.redirect_uri = idpConfig.getString("redirect_uri");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-
     }
 
-    private static IdentityProvider getIdpByIdentifier(String identifier) {
-        switch (identifier) {
-            case "idporten":
-                return new IdportenIdentityProvider();
-            default:
-                // return default idp
-                return null;
-        }
-    }
 
-    public IdentityProvider getIdp() {
-        return getIdpByIdentifier(this.identifier);
-    }
-
-    @Override
-    public IdentityProvider getIdp(String path) {
-        return null;
-    }
 
     @Override
     public String getIdentifier() {

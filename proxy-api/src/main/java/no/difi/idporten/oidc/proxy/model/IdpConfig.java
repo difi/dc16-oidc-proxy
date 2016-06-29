@@ -6,7 +6,6 @@ import java.util.Map;
 
 public interface IdpConfig {
 
-    IdentityProvider getIdp(String path);
 
     String getIdentifier();
 

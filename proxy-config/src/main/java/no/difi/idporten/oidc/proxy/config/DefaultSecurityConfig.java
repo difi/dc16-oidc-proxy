@@ -27,25 +27,58 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
     }
 
+    public IdentityProvider createIdentityProvider() {
+        try{
+            return (IdentityProvider) Class.forName(IDP.getIdpClass()).getConstructor(SecurityConfig.class).newInstance(this);
 
-    @Override
-    public IdentityProvider getIdp(String path) {
-        return IDP.getIdp(path);
+        } catch (Exception e){
+            System.out.println(e);
+        }
+        return null;
     }
+
 
     @Override
     public SocketAddress getBackend() {
         return this.HOST.getBackend();
     }
 
+    @Override
     public String getHostname() {
         return this.hostname;
     }
 
+    @Override
     public String getPath() {
         return this.path;
     }
 
+    @Override
+    public String getIdp() {
+        return PATH.get().getIdp();
+    }
+
+    @Override
+    public String getIdpClass() {
+        return IDP.getIdpClass();
+    }
+
+    @Override
+    public String getClient_id() {
+        return IDP.getClient_Id();
+    }
+
+    @Override
+    public String getPassword() {
+        return IDP.getPassword();
+    }
+
+    @Override
+    public Map<String, String> getParameters() {
+        return IDP.getParameters();
+    }
+
+    @Override
     public String getSecurity() {
         if (PATH.get().getSecurity() != null) {
             return PATH.get().getSecurity();
@@ -57,6 +90,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         return null;
     }
 
+    @Override
     public String getRedirect_uri() {
         if (PATH.get().getRedirect_uri() == null) {
             return IDP.getRedirect_uri();
@@ -64,31 +98,12 @@ public class DefaultSecurityConfig implements SecurityConfig {
         return PATH.get().getRedirect_uri();
     }
 
+    @Override
     public String getScope() {
         if (PATH.get().getScope() == null) {
             return IDP.getScope();
         }
         return PATH.get().getScope();
-    }
-
-    public String getIdp() {
-        return PATH.get().getIdp();
-    }
-
-    public String getIdpClass() {
-        return IDP.getIdpClass();
-    }
-
-    public String getClient_id() {
-        return IDP.getClient_Id();
-    }
-
-    public String getPassword() {
-        return IDP.getPassword();
-    }
-
-    public Map<String, String> getParameters() {
-        return IDP.getParameters();
     }
 
 

@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import org.slf4j.Logger;
@@ -21,8 +20,7 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
     @Inject
     public TypesafeIdpConfigProvider(Config config) {
         idps = config.getObject("idp").keySet().stream()
-                .map(key -> config.getConfig(String.format("idp.%s", key)))
-                .map(TypesafeIdpConfig::new)
+                .map(key -> new TypesafeIdpConfig(key, config.getConfig(String.format("idp.%s", key))))
                 .collect(Collectors.toMap(IdpConfig::getIdentifier, Function.identity()));
         }
 

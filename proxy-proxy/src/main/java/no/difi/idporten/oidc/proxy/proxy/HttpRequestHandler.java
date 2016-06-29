@@ -24,8 +24,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
     public HttpRequestHandler(int maxConnectionsQueued) {
         this.maxConnectionsQueued = maxConnectionsQueued;
         this.COOKIE = "Cookie";
-        idportenIdentityProvider = new IdportenIdentityProvider();
-        checkHeaderForCookie = new CookieInHeader();
+        //idportenIdentityProvider = new IdportenIdentityProvider();
+        //checkHeaderForCookie = new CookieInHeader();
     }
 
     @Override

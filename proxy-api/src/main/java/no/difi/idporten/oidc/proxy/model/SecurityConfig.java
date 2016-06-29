@@ -6,7 +6,7 @@ import java.net.SocketAddress;
 
 public interface SecurityConfig {
 
-    IdentityProvider getIdp(String path);
+    IdentityProvider createIdentityProvider();
 
     SocketAddress getBackend();
 
