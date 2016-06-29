@@ -7,8 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -22,7 +21,9 @@ public class TypesafeHostConfig implements HostConfig {
     private List<InetSocketAddress> backends;
     private List<PathConfig> paths;
 
+
     public TypesafeHostConfig(Config hostConfig) {
+
         this.hostname = hostConfig.getString("hostname");
 
         this.backends = hostConfig.getStringList("backends").stream()
@@ -31,9 +32,11 @@ public class TypesafeHostConfig implements HostConfig {
                 .map(b -> new InetSocketAddress(b[0], Integer.parseInt(b[1])))
                 .collect(Collectors.toList());
 
-        this.paths = hostConfig.getConfigList("paths").stream()
+        this.paths = hostConfig.getConfigList("paths")
+                .stream()
                 .map(Path::new)
                 .collect(Collectors.toList());
+
     }
 
     @Override

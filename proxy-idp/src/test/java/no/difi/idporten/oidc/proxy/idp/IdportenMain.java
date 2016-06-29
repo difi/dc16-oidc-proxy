@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class IdportenMain {
 
     public static void main(String... args) throws Exception {
-        IdentityProvider identityProvider = new IdportenIdentityProvider();
+        IdentityProvider identityProvider = new IdportenIdentityProvider(null);
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Go here: " + identityProvider.generateURI());

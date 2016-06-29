@@ -19,7 +19,7 @@ public class Path implements PathConfig {
             this.redirect_uri = config.getString("redirect_uri");
         }
 
-        if (checkForStringInConfig("scope", config)) {
+        if (checkForStringInConfig("scope", config)){
             this.scope = config.getString("scope");
         }
 
@@ -56,15 +56,15 @@ public class Path implements PathConfig {
     }
 
     @Override
-    public String toString() {
+    public String toString(){
         return "path: " + path + ","
-                + "security: " + security
-                + ", "
-                + "redirect_uri: " + redirect_uri
-                + ", "
-                + "scope: " + scope
-                + ", "
-                + "idp: " + idp;
+                +"security: " + security
+                +", "
+                +"redirect_uri: "+redirect_uri
+                +", "
+                +"scope: "+ scope
+                +", "
+                +"idp: "+idp;
     }
 
 
