@@ -41,9 +41,13 @@ public class TypesafeIdpConfig implements IdpConfig {
         }
     }
 
-    @Override
     public IdentityProvider getIdp() {
         return getIdpByIdentifier(this.identifier);
+    }
+
+    @Override
+    public IdentityProvider getIdp(String path) {
+        return null;
     }
 
     @Override

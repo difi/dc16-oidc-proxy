@@ -28,7 +28,7 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
         }
         Optional<PathConfig> pathOptional = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         if (pathOptional.isPresent()){
-            return new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider);
+            return Optional.of(new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider));
         }
         else{
             return Optional.empty();

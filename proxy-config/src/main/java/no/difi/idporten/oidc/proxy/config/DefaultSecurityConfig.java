@@ -1,11 +1,13 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
+import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 
+import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,6 +24,16 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
     }
 
+
+    @Override
+    public IdentityProvider getIdp(String path) {
+        return null;
+    }
+
+    @Override
+    public SocketAddress getBackend() {
+        return null;
+    }
 
     public String getHostname() {
         return this.hostname;

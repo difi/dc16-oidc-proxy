@@ -6,6 +6,7 @@ import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 
 import java.net.SocketAddress;
+import java.util.Map;
 
 public class TypesafeSecurityConfig implements SecurityConfig {
 
@@ -22,11 +23,61 @@ public class TypesafeSecurityConfig implements SecurityConfig {
 
     @Override
     public IdentityProvider getIdp(String path) {
-        return idpConfig.getIdp();
+        return idpConfig.getIdp(path);
     }
 
     @Override
     public SocketAddress getBackend() {
         return this.hostConfig.getBackend();
+    }
+
+    @Override
+    public String getHostname() {
+        return null;
+    }
+
+    @Override
+    public String getPath() {
+        return null;
+    }
+
+    @Override
+    public String getSecurity() {
+        return null;
+    }
+
+    @Override
+    public String getRedirect_uri() {
+        return null;
+    }
+
+    @Override
+    public String getScope() {
+        return null;
+    }
+
+    @Override
+    public String getIdp() {
+        return null;
+    }
+
+    @Override
+    public String getIdpClass() {
+        return null;
+    }
+
+    @Override
+    public String getClient_id() {
+        return null;
+    }
+
+    @Override
+    public String getPassword() {
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getParameters() {
+        return null;
     }
 }
