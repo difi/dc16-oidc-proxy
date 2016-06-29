@@ -94,7 +94,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         String path = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
-        //host = "www.difi.no"; // edit host here if you want to test different configurations
+        host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
@@ -106,7 +106,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            IdentityProvider idp = securityConfig.getIdp(path);
+            IdentityProvider idp = securityConfig.createIdentityProvider();
             logger.debug("Has identity provider: {}", idp);
             SocketAddress outboundAddress = securityConfig.getBackend();
 

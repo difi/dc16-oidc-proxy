@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.idp;
 import com.google.gson.JsonObject;
 import com.nimbusds.jwt.JWTParser;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -26,14 +27,11 @@ import java.util.stream.Collectors;
 
 public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
-    private String url;
+    private SecurityConfig securityConfig;
+    private String url = "https://eid-exttest.difi.no";
 
-    public IdportenIdentityProvider(String url) {
-        this.url = url;
-    }
-
-    public IdportenIdentityProvider() {
-        this("https://eid-exttest.difi.no");
+    public IdportenIdentityProvider(SecurityConfig securityConfig) {
+        this.securityConfig = securityConfig;
     }
 
     @Override
@@ -41,10 +39,10 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
         try {
             // return new URIBuilder(url + "/opensso/oauth2/authorize")
             return new URIBuilder(url + "/idporten-oidc-provider/authorize")
-                    .addParameter("scope", "openid")
-                    .addParameter("client_id", "dificamp")
+                    .addParameter("scope", securityConfig.getScope())
+                    .addParameter("client_id", securityConfig.getClient_id())
                     .addParameter("response_type", "code")
-                    .addParameter("redirect_uri", "http://localhost:8080/")
+                    .addParameter("redirect_uri", securityConfig.getRedirect_uri())
                     .build().toString();
         } catch (URISyntaxException e) {
             throw new IdentityProviderException(e.getMessage(), e);
@@ -68,7 +66,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             // Create content to be posted
             List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {{
                 add(new BasicNameValuePair("grant_type", "authorization_code"));
-                add(new BasicNameValuePair("redirect_uri", "http://localhost:8080/"));
+                add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirect_uri()));
                 add(new BasicNameValuePair("code", urlParameters.get("code")));
             }};
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
@@ -76,7 +74,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             // Initiate connection
             HttpPost httpPost = new HttpPost(baseURL);
             httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
-            httpPost.setHeader("Authorization", "Basic " + Base64.getUrlEncoder().encodeToString("dificamp:password".getBytes()));
+            httpPost.setHeader("Authorization", "Basic " + Base64.getUrlEncoder().encodeToString((securityConfig.getClient_id() + ":" + securityConfig.getPassword()).getBytes()));
             httpPost.setEntity(new StringEntity(postContent));
 
             HttpResponse httpResponse = httpClient.execute(httpPost);
