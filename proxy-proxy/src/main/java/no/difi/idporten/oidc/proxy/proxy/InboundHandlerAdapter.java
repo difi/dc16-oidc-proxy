@@ -88,13 +88,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      * successful, it writes the first message to the outbound server and starts reading the first response back to the
      * source client.
      */
-    private void bootstrapBackendChannel(ChannelHandlerContext ctx, HttpRequest httpRequest) {
-        logger.info("BOOTSTRAP FOR '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
+    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) {
+        logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
         String path = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
-        host = "www.difi.no"; // edit host here if you want to test different configurations
+        // host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
@@ -106,71 +106,77 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            IdentityProvider idp = securityConfig.createIdentityProvider();
-            logger.debug("Has identity provider: {}", idp);
-            SocketAddress outboundAddress = securityConfig.getBackend();
+            if (!securityConfig.getSecurity().equals("0")) {
+                logger.debug("{} is secured");
+                IdentityProvider idp = securityConfig.createIdentityProvider();
+                logger.debug("Has identity provider: {}", idp);
 
-
-            if (httpRequest.uri().contains("?code=")) {
-                // need to get token here
-                try {
-                    generateJWTResponse(ctx, new Gson().toJson(idp.getToken(path).getUserData()));
-                } catch (IdentityProviderException exc) {
-                    exc.printStackTrace();
-                    generateDefaultResponse(ctx, "no cannot");
+                if (path.contains("?code=")) {
+                    logger.debug("Path contains code: {}", path);
+                    // need to get token here
+                    try {
+                        generateJWTResponse(ctx, new Gson().toJson(idp.getToken(path).getUserData()));
+                    } catch (IdentityProviderException exc) {
+                        exc.printStackTrace();
+                        generateDefaultResponse(ctx, "no cannot");
+                    }
+                } else {
+                    // redirect response
+                    generateRedirectResponse(ctx, idp);
+                    // should not continue life of request after this
                 }
             } else {
-                // redirect response
-                outboundAddress = securityConfig.getBackend();
-                generateRedirectResponse(ctx, idp);
-                // should not continue life of request after this
+                // path is not secured
+                logger.debug("Path is not secured: {}{}", host, path);
+                bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
             }
+        });
+    }
 
+    private void bootstrapOutboundChannel(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest) {
+        logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
+        final Channel inboundChannel = ctx.channel();
 
-            logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
-            final Channel inboundChannel = ctx.channel();
+        Bootstrap b = new Bootstrap();
+        b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
+        b.handler(new OutboundInitializer(inboundChannel))
+                .option(ChannelOption.AUTO_READ, false);
 
-            Bootstrap b = new Bootstrap();
-            b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-            b.handler(new OutboundInitializer(inboundChannel))
-                    .option(ChannelOption.AUTO_READ, false);
+        b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+        b.option(ChannelOption.TCP_NODELAY, true);
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000);
 
-            b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
-            b.option(ChannelOption.TCP_NODELAY, true);
-            b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000);
+        b.option(ChannelOption.SO_SNDBUF, 1048576);
+        b.option(ChannelOption.SO_RCVBUF, 1048576);
 
-            b.option(ChannelOption.SO_SNDBUF, 1048576);
-            b.option(ChannelOption.SO_RCVBUF, 1048576);
+        ChannelFuture f = b.connect(outboundAddress);
 
-            ChannelFuture f = b.connect(outboundAddress);
-
-            outboundChannel = f.channel();
-            logger.debug(String.format("Made outbound channel: %s", outboundChannel));
-            f.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    logger.debug("Outbound channel operation complete");
-                    if (future.isSuccess()) {
-                        // connection complete start to read first data
-                        logger.debug("Outbound channel operation success");
-                        outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
-                            @Override
-                            public void operationComplete(ChannelFuture future) throws Exception {
-                                if (future.isSuccess()) {
-                                    // was able to flush out data, start to read the next chunk
-                                    ctx.channel().read();
-                                } else {
-                                    future.channel().close();
-                                }
+        outboundChannel = f.channel();
+        logger.debug(String.format("Made outbound channel: %s", outboundChannel));
+        f.addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                logger.debug("Outbound channel operation complete");
+                if (future.isSuccess()) {
+                    // connection complete start to read first data
+                    logger.debug("Outbound channel operation success");
+                    outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            if (future.isSuccess()) {
+                                // was able to flush out data, start to read the next chunk
+                                ctx.channel().read();
+                            } else {
+                                future.channel().close();
                             }
-                        });
-                    } else {
-                        // Close the connection if the connection attempt has failed.
-                        logger.debug("Outbound channel operation failure");
-                        inboundChannel.close();
-                    }
+                        }
+                    });
+                } else {
+                    // Close the connection if the connection attempt has failed.
+                    logger.debug("Outbound channel operation failure");
+                    inboundChannel.close();
                 }
-            });
+            }
         });
     }
 
@@ -185,8 +191,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         // First message is always HttpRequest, use it to bootstrap outbound channel.
         if (msg instanceof HttpRequest) {
-            bootstrapBackendChannel(ctx, (HttpRequest) msg);
-        } else if (outboundChannel.isActive()) {
+            handleHttpRequest(ctx, (HttpRequest) msg);
+        } else if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {
                     // was able to flush out data, start to read the next chunk
