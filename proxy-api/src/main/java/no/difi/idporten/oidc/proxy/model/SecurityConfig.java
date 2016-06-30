@@ -11,7 +11,7 @@ public interface SecurityConfig {
 
     CookieConfig getCookieConfig();
 
-    IdentityProvider createIdentityProvider();
+    Optional<IdentityProvider> createIdentityProvider();
 
     SocketAddress getBackend();
 

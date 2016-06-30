@@ -24,15 +24,15 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
     }
 
-    public IdentityProvider createIdentityProvider() {
+    public Optional<IdentityProvider> createIdentityProvider() {
         try {
-            return (IdentityProvider) Class.forName(IDP.getIdpClass()).getConstructor(SecurityConfig.class).newInstance(this);
+            return Optional.of((IdentityProvider) Class.forName(IDP.getIdpClass()).getConstructor(SecurityConfig.class).newInstance(this));
         } catch (ClassNotFoundException exc) {
             exc.printStackTrace();
-            return null;
-        }  catch (Exception exc) { // so many possible exceptions for this
+            return Optional.empty();
+        } catch (Exception exc) { // so many possible exceptions for this
             exc.printStackTrace();
-            return null;
+            return Optional.empty();
         }
     }
 

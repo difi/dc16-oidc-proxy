@@ -32,7 +32,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private SecurityConfigProvider securityConfigProvider;
     private CookieInHeader cookieInHeader = new CookieInHeader();
     private CookieStorage cookieStorage = new InMemoryCookieStorage();
-    private String cookie, host, path;
+    private String cookieName, host, path;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
@@ -82,12 +82,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    private void generateJWTResponse(ChannelHandlerContext ctx, UserData userData) throws Exception{
+    private void generateJWTResponse(ChannelHandlerContext ctx, UserData userData) throws IdentityProviderException {
         FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData.getUserData()), CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
         System.out.println("INSERTING COOKIE");
-        cookieInHeader.insertCookieIntoHeader(result, cookie, cookieStorage.generateCookie(host, userData.getUserData()));
+        CookieInHeader.insertCookieIntoHeader(result, cookieName, cookieStorage.generateCookie(host, userData.getUserData()));
         System.out.println("COOKIE INSERTED");
         logger.debug(String.format("Created JWT response:\n%s", result));
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
@@ -98,7 +98,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      * successful, it writes the first message to the outbound server and starts reading the first response back to the
      * source client.
      */
-    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception{
+    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception {
         logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
         this.path = httpRequest.uri();
@@ -107,7 +107,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         // host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
-        cookie = securityConfigProvider.getConfig(host, path).get().getCookieConfig().getName();
 
         if (!securityConfigOptional.isPresent()) {
             logger.debug("Could not get SecurityConfig of host {}", host);
@@ -116,30 +115,44 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         securityConfigOptional.ifPresent(securityConfig -> {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
+            cookieName = securityConfig.getCookieConfig().getName();
 
-            if (!securityConfig.getSecurity().equals("0")) {
+            if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
                 logger.debug("{} is secured");
-                IdentityProvider idp = securityConfig.createIdentityProvider();
-                logger.debug("Has identity provider: {}", idp);
+                if (CookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookieName, "Cookie")) {
+                    //TODO: Check database for cookieName
+                    System.out.println("FOUND COOKIE: " + cookieName);
+                }
+                Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
+                if (!idpOptional.isPresent()) { // for some reason, the path's IdentityProvider does not exist
+                    generateDefaultResponse(ctx, host);
+                }
+                idpOptional.ifPresent(idp -> {
+                    logger.debug("Has identity provider: {}", idp);
+                    if (path.contains("?code=")) {
+                        logger.debug("TypesafePathConfig contains code: {}", path);
+                        // need to get token here
+                        try {
+                            generateJWTResponse(ctx, idp.getToken(path));
+                        } catch (Exception exc) {
+                            exc.printStackTrace();
+                            generateDefaultResponse(ctx, "no cannot");
+                        }
+                    } else {
+                        // redirect response
+                        generateRedirectResponse(ctx, idp);
+                        // should not continue life of request after this
 
-                if (cookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookie, "Cookie")){
-                    //TODO: Check database for cookie
-                    System.out.println("FOUND COOKIE: " + cookie);
-                }
-                else if (path.contains("?code=")) {
-                    logger.debug("TypesafePathConfig contains code: {}", path);
-                    // need to get token here
-                    try {
-                        generateJWTResponse(ctx, idp.getToken(path));
-                    } catch (Exception exc) {
-                        exc.printStackTrace();
-                        generateDefaultResponse(ctx, "no cannot");
+                        logger.debug("Path contains code: {}", path);
+                        // need to get token here
+                        try {
+                            generateJWTResponse(ctx, idp.getToken(path));
+                        } catch (IdentityProviderException exc) {
+                            exc.printStackTrace();
+                            generateDefaultResponse(ctx, "Something wrong with generating JWTResponse");
+                        }
                     }
-                } else {
-                    // redirect response
-                    generateRedirectResponse(ctx, idp);
-                    // should not continue life of request after this
-                }
+                });
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
