@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
+import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.HostConfig;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
 import org.slf4j.Logger;
@@ -20,10 +21,10 @@ public class TypesafeHostConfig implements HostConfig {
     private String hostname;
     private List<InetSocketAddress> backends;
     private List<PathConfig> paths;
+    private CookieConfig cookieConfig;
 
 
-    public TypesafeHostConfig(Config hostConfig) {
-
+    public TypesafeHostConfig(Config hostConfig, Config globalConfig) {
         this.hostname = hostConfig.getString("hostname");
 
         this.backends = hostConfig.getStringList("backends").stream()
@@ -34,8 +35,13 @@ public class TypesafeHostConfig implements HostConfig {
 
         this.paths = hostConfig.getConfigList("paths")
                 .stream()
-                .map(Path::new)
+                .map(TypesafePathConfig::new)
                 .collect(Collectors.toList());
+
+        this.cookieConfig = new TypesafeCookieConfig(hostConfig.withFallback(globalConfig).getConfig("cookie"));
+
+
+
 
     }
 

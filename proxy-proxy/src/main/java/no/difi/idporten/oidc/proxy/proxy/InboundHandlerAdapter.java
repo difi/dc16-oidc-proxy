@@ -112,7 +112,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             if (!securityConfig.getSecurity().equals("0")) {
                 logger.debug("{} is secured");
                 if (path.contains("?code=")) {
-                    logger.debug("Path contains code: {}", path);
+                    logger.debug("TypesafePathConfig contains code: {}", path);
                     // need to get token here
                     try {
                         generateJWTResponse(ctx, new Gson().toJson(idp.getToken(path).getUserData()));
@@ -127,7 +127,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 }
             } else {
                 // path is not secured
-                logger.debug("Path is not secured: {}{}", host, path);
+                logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
                 bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
             }
         });
