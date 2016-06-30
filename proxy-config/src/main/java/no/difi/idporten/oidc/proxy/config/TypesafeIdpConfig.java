@@ -36,8 +36,6 @@ public class TypesafeIdpConfig implements IdpConfig {
         logger.debug("Created IdpConfig:\n{}", this);
     }
 
-
-
     @Override
     public String getIdentifier() {
         return this.identifier;
