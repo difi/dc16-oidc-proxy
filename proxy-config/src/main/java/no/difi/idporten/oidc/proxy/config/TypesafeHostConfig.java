@@ -54,7 +54,7 @@ public class TypesafeHostConfig implements HostConfig {
         return paths.stream()
                 .filter(pathObject -> path.startsWith(pathObject.getPath()))
                 .findFirst()
-                .orElse(Path.getUnsecuredPath());
+                .orElse(TypesafePathConfig.getUnsecuredPath());
     }
 
     @Override
