@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TypesafeIdpConfig implements IdpConfig {
@@ -68,13 +69,8 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public Map<String, String> getParameters() {
-        return parameters;
-    }
-
-    @Override
-    public String getValueFromParametersWithKey(String key) {
-        return parameters.get(key);
+    public Optional<String> getParameter(String key) {
+        return parameters.containsKey(key) ? Optional.of(parameters.get(key)) : Optional.empty();
     }
 
     @Override

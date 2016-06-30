@@ -77,7 +77,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public String getParameter(String key) {
-        return IDP.getParameters().containsKey(key) ? IDP.getParameters().get(key) : "";
+        return IDP.getParameter(key).orElse("");
     }
 
     @Override
