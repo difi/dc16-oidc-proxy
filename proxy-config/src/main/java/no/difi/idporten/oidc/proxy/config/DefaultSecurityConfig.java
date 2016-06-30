@@ -15,7 +15,7 @@ import java.util.Optional;
 public class DefaultSecurityConfig implements SecurityConfig {
 
     private String hostname, path;
-    private final Optional<PathConfig> PATH;
+    private final PathConfig PATH;
     private final HostConfig HOST;
     private final IdpConfig IDP;
 
@@ -28,34 +28,36 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     public IdentityProvider createIdentityProvider() {
-        try{
+        try {
             return (IdentityProvider) Class.forName(IDP.getIdpClass()).getConstructor(SecurityConfig.class).newInstance(this);
-
-        } catch (Exception e){
-            System.out.println(e);
+        } catch (ClassNotFoundException exc) {
+            exc.printStackTrace();
+            return null;
+        }  catch (Exception exc) { // so many possible exceptions for this
+            exc.printStackTrace();
+            return null;
         }
-        return null;
     }
 
 
     @Override
     public SocketAddress getBackend() {
-        return this.HOST.getBackend();
+        return HOST.getBackend();
     }
 
     @Override
     public String getHostname() {
-        return this.hostname;
+        return HOST.getHostname();
     }
 
     @Override
     public String getPath() {
-        return this.path;
+        return PATH.getPath();
     }
 
     @Override
     public String getIdp() {
-        return PATH.get().getIdp();
+        return PATH.getIdp();
     }
 
     @Override
@@ -74,37 +76,43 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public Map<String, String> getParameters() {
-        return IDP.getParameters();
+    public String getParameter(String key) {
+        return IDP.getParameters().containsKey(key) ? IDP.getParameters().get(key) : "";
     }
 
     @Override
     public String getSecurity() {
-        if (PATH.get().getSecurity() != null) {
-            return PATH.get().getSecurity();
+        if (PATH.getSecurity() == null) {
+            return getParameter("security");
         } else {
-            if (getParameters().keySet().contains("security")) {
-                return getParameters().get("security");
-            }
+            return PATH.getSecurity();
         }
-        return null;
     }
 
     @Override
     public String getRedirect_uri() {
-        if (PATH.get().getRedirect_uri() == null) {
+        if (PATH.getRedirect_uri() == null) {
             return IDP.getRedirect_uri();
         }
-        return PATH.get().getRedirect_uri();
+        return PATH.getRedirect_uri();
     }
 
     @Override
     public String getScope() {
-        if (PATH.get().getScope() == null) {
+        if (PATH.getScope() == null) {
             return IDP.getScope();
         }
-        return PATH.get().getScope();
+        return PATH.getScope();
     }
 
-
+    @Override
+    public String toString() {
+        return "DefaultSecurityConfig{" +
+                "hostname='" + hostname + '\'' +
+                ", path='" + path + '\'' +
+                ", PATH=" + PATH +
+                ", HOST=" + HOST +
+                ", IDP=" + IDP +
+                '}';
+    }
 }
