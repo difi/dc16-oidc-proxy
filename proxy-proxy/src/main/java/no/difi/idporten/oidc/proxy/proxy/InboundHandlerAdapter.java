@@ -6,6 +6,9 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.cookie.*;
+import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.CookieDecoder;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
@@ -19,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -123,6 +127,36 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     //TODO: Check database for cookieName
                     System.out.println("FOUND COOKIE: " + cookieName);
                 }
+
+                // getting correct cookie from request
+                String cookieString = httpRequest.headers().get(HttpHeaderNames.COOKIE);
+                Set<Cookie> cookieSet = ServerCookieDecoder.STRICT.decode(cookieString);
+                Optional<Cookie> nettyCookieOptional = cookieSet.stream()
+                        .filter(nettyCookie -> nettyCookie.name().equals(cookieName))
+                        .findFirst();
+
+
+                if (/*request has the cookie we want*/ nettyCookieOptional.isPresent()) {
+                    // get CookieObject from database with the uuid in the HttpCookie
+                    String UUID = nettyCookieOptional.get().value();
+                    // TODO no.difi.idporten.oidc.proxy.model.Cookie cookieObject = CookieStorageInstance.getCookie(UUID)
+                    if (/*the CookieObject we found has not expired*/ true) { // TODO cookieObject.isValid() or cookieObject.isExpired()
+                        // we need handle exceptions and nullPointers either in this class or somewhere else
+
+                        // generate a JWTResponse with the user data inside the cookie
+                        // TODO generateJWTResponse(ctx, cookieObject.getUserData());
+                        // update CookieObject's expiry
+                        // TODO cookieObject.touch();
+                        // stop this function from continuing
+                    } else { // we found a cookie, got it from the database, but it is expired
+                        // continue the normal flow of authorization with idp
+                        // update the current CookieObject or create a new one(?) after
+                    }
+                } else { // the request does not contain the cookie we want
+                    // continue the normal flow of authorization with idp
+                    // create a new CookieObject with its own UUID etc. after token is collected
+                    // remember to save the new/updated cookie to the database!
+                }
                 Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
                 if (!idpOptional.isPresent()) { // for some reason, the path's IdentityProvider does not exist
                     generateDefaultResponse(ctx, host);
@@ -161,6 +195,15 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         });
     }
 
+    /**
+     * This is what happens when the proxy needs to work as a normal proxy.
+     * We could also direct IDP traffic this way instead of the the apache.http.HttpClient, but then we would need
+     * SSL set up.
+     *
+     * @param ctx
+     * @param outboundAddress
+     * @param httpRequest
+     */
     private void bootstrapOutboundChannel(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest) {
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
