@@ -3,10 +3,7 @@ package no.difi.idporten.oidc.proxy.config;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
-import no.difi.idporten.oidc.proxy.model.HostConfig;
-import no.difi.idporten.oidc.proxy.model.IdpConfig;
-import no.difi.idporten.oidc.proxy.model.PathConfig;
-import no.difi.idporten.oidc.proxy.model.SecurityConfig;
+import no.difi.idporten.oidc.proxy.model.*;
 
 import java.net.SocketAddress;
 import java.util.Map;
@@ -37,6 +34,10 @@ public class DefaultSecurityConfig implements SecurityConfig {
         return null;
     }
 
+    @Override
+    public CookieConfig getCookieConfig() {
+        return HOST.getCookieConfig();
+    }
 
     @Override
     public SocketAddress getBackend() {

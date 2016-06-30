@@ -1,8 +1,13 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
+import com.typesafe.config.ConfigFactory;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
+import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
+import no.difi.idporten.oidc.proxy.config.DefaultSecurityConfigProvider;
+import no.difi.idporten.oidc.proxy.config.TypesafeHostConfigProvider;
+import no.difi.idporten.oidc.proxy.config.TypesafeIdpConfigProvider;
 import no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,16 +19,14 @@ import org.slf4j.LoggerFactory;
 public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage> {
     private static Logger logger = LoggerFactory.getLogger(HttpRequestHandler.class);
 
-    private final String COOKIE;
-
     private IdportenIdentityProvider idportenIdentityProvider;
     private CookieInHeader checkHeaderForCookie;
+    private SecurityConfigProvider securityConfigProvider;
 
     private final int maxConnectionsQueued;
 
     public HttpRequestHandler(int maxConnectionsQueued) {
         this.maxConnectionsQueued = maxConnectionsQueued;
-        this.COOKIE = "TypesafeCookieConfig";
         //idportenIdentityProvider = new IdportenIdentityProvider();
         //checkHeaderForCookie = new CookieInHeader();
     }

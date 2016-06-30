@@ -40,9 +40,6 @@ public class TypesafeHostConfig implements HostConfig {
 
         this.cookieConfig = new TypesafeCookieConfig(hostConfig.withFallback(globalConfig).getConfig("cookie"));
 
-
-
-
     }
 
     @Override
@@ -63,5 +60,10 @@ public class TypesafeHostConfig implements HostConfig {
     public InetSocketAddress getBackend() {
         // Simple round-robin implementation.
         return backends.get(Math.abs(backendIndex.incrementAndGet() % backends.size()));
+    }
+
+    @Override
+    public CookieConfig getCookieConfig() {
+        return cookieConfig;
     }
 }

@@ -7,10 +7,13 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
+import no.difi.idporten.oidc.proxy.model.UserData;
+import no.difi.idporten.oidc.proxy.storage.InMemoryCookieStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +30,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private volatile Channel outboundChannel;
 
     private SecurityConfigProvider securityConfigProvider;
+    private CookieInHeader cookieInHeader = new CookieInHeader();
+    private CookieStorage cookieStorage = new InMemoryCookieStorage();
+    private String cookie, host, path;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
@@ -46,7 +52,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      *
      * @return
      */
-    private static void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
+    private void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
         try {
             String redirectUrl = identityProvider.generateURI();
             StringBuilder content = new StringBuilder(redirectUrl);
@@ -65,7 +71,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     /**
      * Default response for when nothing is configured for the host
      */
-    private static void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
+    private void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
+        System.out.println("NEI");
         StringBuilder content = new StringBuilder();
         content.append(String.format("no cannot use %s", host));
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
@@ -75,10 +82,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    private static void generateJWTResponse(ChannelHandlerContext ctx, String content) {
-        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+    private void generateJWTResponse(ChannelHandlerContext ctx, UserData userData) throws Exception{
+        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData.getUserData()), CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        System.out.println("INSERTING COOKIE");
+        cookieInHeader.insertCookieIntoHeader(result, cookie, cookieStorage.generateCookie(host, userData.getUserData()));
+        System.out.println("COOKIE INSERTED");
         logger.debug(String.format("Created JWT response:\n%s", result));
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }
@@ -88,15 +98,16 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      * successful, it writes the first message to the outbound server and starts reading the first response back to the
      * source client.
      */
-    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) {
+    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception{
         logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        String path = httpRequest.uri();
-        String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
+        this.path = httpRequest.uri();
+        this.host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
         // host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
+        cookie = securityConfigProvider.getConfig(host, path).get().getCookieConfig().getName();
 
         if (!securityConfigOptional.isPresent()) {
             logger.debug("Could not get SecurityConfig of host {}", host);
@@ -111,12 +122,16 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
             if (!securityConfig.getSecurity().equals("0")) {
                 logger.debug("{} is secured");
-                if (path.contains("?code=")) {
+                if (cookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookie, "Cookie")){
+                    //TODO: Check database for cookie
+                    System.out.println("FOUND COOKIE: " + cookie);
+                }
+                else if (path.contains("?code=")) {
                     logger.debug("TypesafePathConfig contains code: {}", path);
                     // need to get token here
                     try {
-                        generateJWTResponse(ctx, new Gson().toJson(idp.getToken(path).getUserData()));
-                    } catch (IdentityProviderException exc) {
+                        generateJWTResponse(ctx, idp.getToken(path));
+                    } catch (Exception exc) {
                         exc.printStackTrace();
                         generateDefaultResponse(ctx, "no cannot");
                     }

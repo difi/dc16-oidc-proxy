@@ -11,4 +11,6 @@ public interface HostConfig {
     Optional<PathConfig> getPathFor(String path);
 
     InetSocketAddress getBackend();
+
+    CookieConfig getCookieConfig();
 }

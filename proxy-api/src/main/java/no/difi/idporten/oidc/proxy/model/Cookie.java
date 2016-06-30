@@ -21,8 +21,7 @@ public class Cookie {
     }
 
     public boolean isValid(){
-        if (new Date().after(expiry)) return true;
-        return false;
+        return (new Date().after(expiry));
     }
 
     public Date getCreated() {

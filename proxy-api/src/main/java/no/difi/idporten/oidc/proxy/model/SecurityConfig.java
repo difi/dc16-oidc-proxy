@@ -6,6 +6,8 @@ import java.net.SocketAddress;
 
 public interface SecurityConfig {
 
+    CookieConfig getCookieConfig();
+
     IdentityProvider createIdentityProvider();
 
     SocketAddress getBackend();
