@@ -26,16 +26,13 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
         if (hostConfigProvider.getByHostname(hostname) == null) {
             return Optional.empty();
         }
-        Optional<PathConfig> pathOptional = hostConfigProvider.getByHostname(hostname).getPathFor(path);
-        if (pathOptional.isPresent()) {
-            if (idpConfigProvider.getByIdentifier(pathOptional.get().getIdp()) == null) {
-                return Optional.empty();
-            } else {
-                return Optional.of(new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider));
-            }
-        } else {
+        PathConfig pathObject = hostConfigProvider.getByHostname(hostname).getPathFor(path);
+        return Optional.of(new DefaultSecurityConfig(hostname, path, hostConfigProvider, idpConfigProvider));
+        /*
+        if (idpConfigProvider.getByIdentifier(pathObject.getIdp()) == null) {
             return Optional.empty();
-
+        } else {
         }
+        */
     }
 }

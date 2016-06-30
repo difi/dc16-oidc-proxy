@@ -1,8 +1,11 @@
 package no.difi.idporten.oidc.proxy.model;
 
 import java.util.Map;
+
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
+
 import java.net.SocketAddress;
+import java.util.Optional;
 
 public interface SecurityConfig {
 
@@ -26,10 +29,9 @@ public interface SecurityConfig {
 
     String getIdpClass();
 
+    String getParameter(String key);
+
     String getClient_id();
 
     String getPassword();
-
-    Map<String, String> getParameters();
-
 }

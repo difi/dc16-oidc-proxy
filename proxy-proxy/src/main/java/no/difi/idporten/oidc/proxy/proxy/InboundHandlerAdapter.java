@@ -117,11 +117,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            IdentityProvider idp = securityConfig.createIdentityProvider();
-            logger.debug("Has identity provider: {}", idp);
-
             if (!securityConfig.getSecurity().equals("0")) {
                 logger.debug("{} is secured");
+                IdentityProvider idp = securityConfig.createIdentityProvider();
+                logger.debug("Has identity provider: {}", idp);
+
                 if (cookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookie, "Cookie")){
                     //TODO: Check database for cookie
                     System.out.println("FOUND COOKIE: " + cookie);

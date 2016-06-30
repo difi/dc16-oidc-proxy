@@ -8,7 +8,7 @@ public interface HostConfig {
 
     String getHostname();
 
-    Optional<PathConfig> getPathFor(String path);
+    PathConfig getPathFor(String path);
 
     InetSocketAddress getBackend();
 

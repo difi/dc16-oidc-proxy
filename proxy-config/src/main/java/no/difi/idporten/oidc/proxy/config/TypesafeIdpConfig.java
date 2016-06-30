@@ -3,12 +3,17 @@ package no.difi.idporten.oidc.proxy.config;
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TypesafeIdpConfig implements IdpConfig {
+
+    private static Logger logger = LoggerFactory.getLogger(TypesafeIdpConfig.class);
 
 
     private String identifier;
@@ -27,7 +32,8 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.scope = idpConfig.getString("scope");
         this.redirect_uri = idpConfig.getString("redirect_uri");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
+        logger.debug("Created IdpConfig:\n{}", this);
     }
 
     @Override
@@ -61,13 +67,20 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public Map<String, String> getParameters() {
-        return parameters;
+    public Optional<String> getParameter(String key) {
+        return parameters.containsKey(key) ? Optional.of(parameters.get(key)) : Optional.empty();
     }
 
     @Override
-    public String getValueFromParametersWithKey(String key) {
-        return parameters.get(key);
+    public String toString() {
+        return "TypesafeIdpConfig{" +
+                "identifier='" + identifier + '\'' +
+                ", idpclass='" + idpclass + '\'' +
+                ", client_id='" + client_id + '\'' +
+                ", password='" + password + '\'' +
+                ", scope='" + scope + '\'' +
+                ", redirect_uri='" + redirect_uri + '\'' +
+                ", parameters=" + parameters +
+                '}';
     }
-
 }
