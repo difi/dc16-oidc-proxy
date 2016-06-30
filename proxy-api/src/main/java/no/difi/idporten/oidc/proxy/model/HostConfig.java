@@ -6,9 +6,11 @@ import java.util.Optional;
 
 public interface HostConfig {
 
-    String getHostname(); //?
+    String getHostname();
 
     PathConfig getPathFor(String path);
 
     InetSocketAddress getBackend();
+
+    CookieConfig getCookieConfig();
 }

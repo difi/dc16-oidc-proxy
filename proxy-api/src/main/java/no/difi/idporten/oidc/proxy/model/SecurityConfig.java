@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface SecurityConfig {
 
+    CookieConfig getCookieConfig();
+
     IdentityProvider createIdentityProvider();
 
     SocketAddress getBackend();
