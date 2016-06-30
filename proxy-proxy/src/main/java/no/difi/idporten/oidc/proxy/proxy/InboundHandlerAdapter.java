@@ -106,11 +106,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            IdentityProvider idp = securityConfig.createIdentityProvider();
-            logger.debug("Has identity provider: {}", idp);
-
             if (!securityConfig.getSecurity().equals("0")) {
                 logger.debug("{} is secured");
+                IdentityProvider idp = securityConfig.createIdentityProvider();
+                logger.debug("Has identity provider: {}", idp);
+
                 if (path.contains("?code=")) {
                     logger.debug("Path contains code: {}", path);
                     // need to get token here

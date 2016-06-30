@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.model;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.util.Map;
+import java.util.Optional;
 
 public interface IdpConfig {
 
@@ -19,8 +20,6 @@ public interface IdpConfig {
 
     String getClient_Id();
 
-    Map<String ,String> getParameters();
-
-    String getValueFromParametersWithKey(String key);
+    Optional<String> getParameter(String key);
 
 }
