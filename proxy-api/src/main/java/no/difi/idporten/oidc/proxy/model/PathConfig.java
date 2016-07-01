@@ -6,7 +6,7 @@ public interface PathConfig {
 
     String getPath();
 
-    String getIdp();
+    String getIdentityProvider();
 
     String getSecurity();
 

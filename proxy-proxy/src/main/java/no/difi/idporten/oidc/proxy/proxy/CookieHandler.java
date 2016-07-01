@@ -5,7 +5,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
 
 
-public class CookieInHeader {
+public class CookieHandler {
 
     /**
      * Inserts a cookie with a sessionID fetched from the configuration, and a uuid from generating

@@ -46,7 +46,7 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     @Override
-    public String getIdp() {
+    public String getIdentityProvider() {
         return this.idp;
     }
 
