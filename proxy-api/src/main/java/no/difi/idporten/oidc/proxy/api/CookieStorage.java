@@ -14,6 +14,12 @@ public interface CookieStorage {
      */
     String generateCookie(String host, HashMap<String, String> userData);
 
+    /**
+     * Generates a cookie and stores it in the database.
+     * @param host
+     * @param userData
+     * @return
+     */
     ProxyCookie generateCookieAsObject(String host, HashMap<String, String> userData);
 
     /**
@@ -33,6 +39,7 @@ public interface CookieStorage {
 
     /**
      * If cookie with given uuid exist in 'cookies' list; return DefaultProxyCookie object, otherwise return null
+     * Updates expiry date of cookie.
      */
     Optional<ProxyCookie> findCookie(String uuid, String host);
 
