@@ -132,16 +132,21 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 }
                 */
 
+
                 CookieConfig cookieConfig = securityConfig.getCookieConfig();
                 cookieName = cookieConfig.getName();
                 CookieStorage cookieStorage = cookieConfig.getCookieStorage();
 
                 // getting correct cookie from request
-                String cookieString = httpRequest.headers().get(HttpHeaderNames.COOKIE);
-                Set<Cookie> cookieSet = ServerCookieDecoder.STRICT.decode(cookieString);
-                Optional<Cookie> nettyCookieOptional = cookieSet.stream()
-                        .filter(nettyCookie -> nettyCookie.name().equals(cookieName))
-                        .findFirst();
+                Optional<Cookie> nettyCookieOptional = Optional.empty();
+                if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
+
+                    String cookieString = httpRequest.headers().get(HttpHeaderNames.COOKIE);
+                    Set<Cookie> cookieSet = ServerCookieDecoder.STRICT.decode(cookieString);
+                    nettyCookieOptional = cookieSet.stream()
+                            .filter(nettyCookie -> nettyCookie.name().equals(cookieName))
+                            .findFirst();
+                }
 
 
                 if (/*request has the cookie we want*/ nettyCookieOptional.isPresent()) {
