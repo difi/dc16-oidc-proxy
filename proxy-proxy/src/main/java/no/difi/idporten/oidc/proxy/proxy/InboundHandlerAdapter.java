@@ -176,15 +176,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // redirect response
                         generateRedirectResponse(ctx, idp);
                         // should not continue life of request after this
-
-                        logger.debug("Path contains code: {}", path);
-                        // need to get token here
-                        try {
-                            generateJWTResponse(ctx, idp.getToken(path));
-                        } catch (IdentityProviderException exc) {
-                            exc.printStackTrace();
-                            generateDefaultResponse(ctx, "Something wrong with generating JWTResponse");
-                        }
                     }
                 });
             } else {
