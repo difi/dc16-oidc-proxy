@@ -1,14 +1,15 @@
 package no.difi.idporten.oidc.proxy.storage;
 
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.model.Cookie;
+import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class InMemoryCookieStorage implements CookieStorage {
 
-    private Map<String, Cookie> cookies = new HashMap<>();
+    private Map<String, DefaultProxyCookie> cookies = new HashMap<>();
     private static final int MINUTE = 60 * 1000;
     private int initialValidPeriod = 30;
     private int expandSessionPeriod = 30;
@@ -19,19 +20,19 @@ public class InMemoryCookieStorage implements CookieStorage {
         Date expiry = new Date(new Date().getTime() + initialValidPeriod * MINUTE);
         Date maxExpiry = new Date(new Date().getTime() + maxValidPeriod * MINUTE);
 
-        Cookie cookie = new Cookie(UUID.randomUUID().toString(), host, expiry, maxExpiry, userData);
+        DefaultProxyCookie cookie = new DefaultProxyCookie(UUID.randomUUID().toString(), host, expiry, maxExpiry, userData);
         cookies.put(indexValue(cookie.getUuid(), host), cookie);
 
         return cookie.getUuid();
     }
 
     @Override
-    public Optional<Cookie> findCookie(String uuid, String host) {
+    public Optional<ProxyCookie> findCookie(String uuid, String host) {
         return Optional.ofNullable(cookies.get(indexValue(uuid, host)));
     }
 
     @Override
-    public void extendCookieExpiry(Cookie cookie) {
+    public void extendCookieExpiry(DefaultProxyCookie cookie) {
         // 'expandedExpiry' is the cookie's current 'expiry' Date plus the amount of minutes in 'expandSessionPeriod'
         Date expandedExpiry = new Date(cookie.getExpiry().getTime() + expandSessionPeriod * MINUTE);
         // If expandedExpiry.compareTo(maxExpiry) equals -1, 'expandedExpiry' Date is before 'maxExpiry' Date
@@ -44,17 +45,27 @@ public class InMemoryCookieStorage implements CookieStorage {
     @Override
     public void removeExpiredCookies() {
         // Mutates the 'cookies' list by removing all expired Cookie objects
-        cookies.values().removeIf(Cookie::isValid); // TODO
+        cookies.values().removeIf(ProxyCookie::isValid); // TODO
     }
 
     @Override
     public String toString() {
         return cookies.values().stream()
-            .map(cookie -> String.format("%-65s %30s %n", cookie.toString(), cookie.getExpiry()))
-            .collect(Collectors.joining(", "));
+                .map(cookie -> String.format("%-65s %30s %n", cookie.toString(), cookie.getExpiry()))
+                .collect(Collectors.joining(", "));
     }
 
     private String indexValue(String uuid, String host) {
         return String.format("%s@%s", uuid, host);
+    }
+
+    @Override
+    public Optional<ProxyCookie> saveOrUpdateCookie(ProxyCookie cookie) {
+        return null;
+    }
+
+    @Override
+    public ProxyCookie generateCookieAsObject(String host, HashMap<String, String> userData) {
+        return null;
     }
 }
