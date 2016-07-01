@@ -5,12 +5,12 @@ import org.testng.annotations.Test;
 
 import java.util.UUID;
 
-public class CookieTest {
+public class DefaultProxyCookieTest {
 
     @Test
     public void simple() {
         String identifier = UUID.randomUUID().toString();
-        Cookie cookie = new Cookie(identifier, "domain.com", null, null, null);
+        DefaultProxyCookie cookie = new DefaultProxyCookie(identifier, "domain.com", null, null, null);
 
         Assert.assertEquals(cookie.getUuid(), identifier);
 

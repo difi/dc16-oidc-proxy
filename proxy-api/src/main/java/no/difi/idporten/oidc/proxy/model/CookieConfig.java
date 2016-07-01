@@ -1,9 +1,9 @@
 package no.difi.idporten.oidc.proxy.model;
 
-public interface CookieConfig {
+import no.difi.idporten.oidc.proxy.api.CookieStorage;
 
+public interface CookieConfig {
     String getName();
 
-
-
+    CookieStorage getCookieStorage();
 }

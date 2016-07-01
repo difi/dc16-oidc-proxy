@@ -8,19 +8,20 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.*;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.CookieDecoder;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
+import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import no.difi.idporten.oidc.proxy.model.UserData;
 import no.difi.idporten.oidc.proxy.storage.InMemoryCookieStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
@@ -86,13 +87,15 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    private void generateJWTResponse(ChannelHandlerContext ctx, UserData userData) throws IdentityProviderException {
-        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData.getUserData()), CharsetUtil.UTF_8));
+    private void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData) throws IdentityProviderException {
+        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        /* Removing this for test purposes because it won't work until cookies are persistently stored.
         System.out.println("INSERTING COOKIE");
-        CookieInHeader.insertCookieIntoHeader(result, cookieName, cookieStorage.generateCookie(host, userData.getUserData()));
+        CookieInHeader.insertCookieIntoHeader(result, cookieName, cookieStorage.generateCookie(host, userData));
         System.out.println("COOKIE INSERTED");
+        */
         logger.debug(String.format("Created JWT response:\n%s", result));
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }
@@ -119,14 +122,19 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         securityConfigOptional.ifPresent(securityConfig -> {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
-            cookieName = securityConfig.getCookieConfig().getName();
 
             if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
-                logger.debug("{} is secured");
-                if (CookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookieName, "Cookie")) {
+                logger.debug("{}{} is secured", host, path);
+                /* Probably refactor this. Currently all cookie handling in this method.
+                if (CookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookieName, "DefaultProxyCookie")) {
                     //TODO: Check database for cookieName
                     System.out.println("FOUND COOKIE: " + cookieName);
                 }
+                */
+
+                CookieConfig cookieConfig = securityConfig.getCookieConfig();
+                cookieName = cookieConfig.getName();
+                CookieStorage cookieStorage = cookieConfig.getCookieStorage();
 
                 // getting correct cookie from request
                 String cookieString = httpRequest.headers().get(HttpHeaderNames.COOKIE);
@@ -137,20 +145,39 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
 
                 if (/*request has the cookie we want*/ nettyCookieOptional.isPresent()) {
+                    logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
                     // get CookieObject from database with the uuid in the HttpCookie
                     String UUID = nettyCookieOptional.get().value();
-                    // TODO no.difi.idporten.oidc.proxy.model.Cookie cookieObject = CookieStorageInstance.getCookie(UUID)
-                    if (/*the CookieObject we found has not expired*/ true) { // TODO cookieObject.isValid() or cookieObject.isExpired()
-                        // we need handle exceptions and nullPointers either in this class or somewhere else
+                    Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(UUID, host);
+                    if (!proxyCookieOptional.isPresent()) {
+                        logger.warn("Could not find cookie {}@{}", UUID, host);
+                        // Cookie contains an UUID, but it is not found in the storage.
+                        // This is an exception and it means something is wrong with either getting cookies or
+                        // creating and writing UUIDs  ...or the user is messing with us
+                        // TODO Create new expired cookie with the UUID we found?
+                    } else {
+                        ProxyCookie proxyCookieObject = proxyCookieOptional.get();
+                        logger.debug("Has proxyCookieObject {}", proxyCookieObject);
 
-                        // generate a JWTResponse with the user data inside the cookie
-                        // TODO generateJWTResponse(ctx, cookieObject.getUserData());
-                        // update CookieObject's expiry
-                        // TODO cookieObject.touch();
-                        // stop this function from continuing
-                    } else { // we found a cookie, got it from the database, but it is expired
-                        // continue the normal flow of authorization with idp
-                        // update the current CookieObject or create a new one(?) after
+                        if (/*the CookieObject we found has not expired*/ proxyCookieObject.isValid()) {
+                            logger.debug("Cookie is valid");
+                            // we need handle exceptions and nullPointers either in this class or somewhere else
+
+                            // generate a JWTResponse with the user data inside the cookie
+                            try {
+                                generateJWTResponse(ctx, proxyCookieObject.getUserData());
+                            } catch (IdentityProviderException exc) {
+                                logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", proxyCookieObject, proxyCookieObject.getUserData());
+                                exc.printStackTrace();
+                            }
+                            // update CookieObject's expiry
+                            cookieStorage.saveOrUpdateCookie(proxyCookieObject);
+                            // stop this function from continuing
+                        } else { // we found a cookie, got it from the database, but it is expired
+                            logger.debug("Cookie is not valid");
+                            // continue the normal flow of authorization with idp
+                            // update the current CookieObject or create a new one(?) after
+                        }
                     }
                 } else { // the request does not contain the cookie we want
                     // continue the normal flow of authorization with idp
@@ -167,8 +194,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         logger.debug("TypesafePathConfig contains code: {}", path);
                         // need to get token here
                         try {
-                            generateJWTResponse(ctx, idp.getToken(path));
-                        } catch (Exception exc) {
+                            generateJWTResponse(ctx, idp.getToken(path).getUserData());
+                            // Generating new cookie and saving it
+                            // Remember to put a Set-Cookie in the response
+                            cookieStorage.saveOrUpdateCookie(cookieStorage.generateCookieAsObject(host, idp.getToken(path).getUserData()));
+                        } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             generateDefaultResponse(ctx, "no cannot");
                         }
