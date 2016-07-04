@@ -3,9 +3,10 @@ package no.difi.idporten.oidc.proxy.proxy;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.cookie.*;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
@@ -13,7 +14,6 @@ import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import no.difi.idporten.oidc.proxy.storage.InMemoryCookieStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +32,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private SecurityConfigProvider securityConfigProvider;
     private ResponseGenerator responseGenerator;
-    private CookieHandler cookieHandler = new CookieHandler();
-    private CookieStorage cookieStorage = new InMemoryCookieStorage();
     private String cookieName, host, path;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
