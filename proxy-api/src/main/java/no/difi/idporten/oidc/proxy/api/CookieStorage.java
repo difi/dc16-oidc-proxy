@@ -15,7 +15,7 @@ public interface CookieStorage {
      * @param userData
      * @return
      */
-    ProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData);
+    DefaultProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData);
 
     /**
      * If cookie with given uuid exist in 'cookies' list; return DefaultProxyCookie object, otherwise return null

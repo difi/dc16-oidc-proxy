@@ -5,10 +5,7 @@ import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.plugin2.message.Message;
 
-import java.io.UnsupportedEncodingException;
-import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -44,7 +41,7 @@ public class DummyCookieStorage implements CookieStorage {
     private static String generateDatabaseKey(String cookieName, String host, String path) {
         String uuid = UUID.randomUUID().toString();
         try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("MD5");
             md.reset();
             md.update(uuid.getBytes());
             md.update(cookieName.getBytes());
@@ -69,19 +66,34 @@ public class DummyCookieStorage implements CookieStorage {
     }
 
 
+
     @Override
-    public ProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData) {
+    public DefaultProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData) {
         logger.debug("Generating cookie object {}@{}{}", name, host, path);
         Date dateNow = new Date();
         String newDatabaseKey = generateDatabaseKey(name, host, path);
-        DefaultProxyCookie newCookieObject = new DefaultProxyCookie(newDatabaseKey, name, host, path, new Date(dateNow.getTime() + 60 * MINUTE), new Date(dateNow.getTime() + 60 * 12 * MINUTE), userData);
+        DefaultProxyCookie newCookieObject = new DefaultProxyCookie(
+                newDatabaseKey,
+                name,
+                host,
+                path,
+                new Date(dateNow.getTime() + initialValidPeriod * MINUTE),
+                new Date(dateNow.getTime() + maxValidPeriod * MINUTE),
+                userData);
         storedCookies.put(newDatabaseKey, newCookieObject);
         return newCookieObject;
     }
 
+    /**
+     * When the user logs in again, the session's cookie 'expiry' is expanded, but only if the cookie's
+     * 'expiry' is not reached. Expands 'expiry' with the amount of time in 'expandSessionPeriod', if
+     * it does not surpass 'maxExpiry'. If cookie is still valid, but expanding 'expiry' will surpass
+     * 'maxExpiry', 'expiry' is set to 'maxExpiry'.
+     * @param cookie
+     */
     private void extendCookieExpiry(DefaultProxyCookie cookie) {
         Date dateNow = new Date();
-        Date newExpiry = new Date(dateNow.getTime() + 60 * MINUTE);
+        Date newExpiry = new Date(dateNow.getTime() + expandSessionPeriod * MINUTE);
         if (newExpiry.after(cookie.getMaxExpiry())) {
             cookie.setExpiry(cookie.getMaxExpiry());
         } else {
@@ -92,12 +104,19 @@ public class DummyCookieStorage implements CookieStorage {
     @Override
     public Optional<ProxyCookie> findCookie(String uuid, String host, String path) {
         Date dateNow = new Date();
-        ProxyCookie result = storedCookies.get(uuid);
+        DefaultProxyCookie result = storedCookies.get(uuid);
         if (uuid.equals("uuidForValidCookie") && host.equals("localhost:8080")) { // only used for testing
-            return Optional.of(new DefaultProxyCookie(uuid, "PROXYCOOKIE", host, path, new Date(dateNow.getTime() + 60 * 24 * MINUTE), new Date(dateNow.getTime() + 60 * 24 * MINUTE), defaultUserData));
+            return Optional.of(new DefaultProxyCookie(
+                    uuid,
+                    "PROXYCOOKIE",
+                    host,
+                    path,
+                    new Date(dateNow.getTime() + 60 * 24 * MINUTE),
+                    new Date(dateNow.getTime() + 60 * 24 * MINUTE),
+                    defaultUserData));
         } else if (result != null && result.getHost().equals(host) && result.getPath().equals(path)) {
-            extendCookieExpiry(storedCookies.get(uuid));
-            return Optional.of(storedCookies.get(uuid));
+            extendCookieExpiry(result);
+            return Optional.of(result);
         } else {
             return Optional.empty();
         }
@@ -105,9 +124,10 @@ public class DummyCookieStorage implements CookieStorage {
 
     @Override
     public void removeExpiredCookies() {
+        logger.info("Removing expired cookies");
         Date dateNow = new Date();
         storedCookies = storedCookies.entrySet().stream()
-                .filter(entry -> entry.getValue().getExpiry().before(dateNow))
+                .filter(entry -> entry.getValue().getExpiry().after(dateNow))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }
