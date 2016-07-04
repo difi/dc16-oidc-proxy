@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
+import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    protected void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData) throws IdentityProviderException {
+    protected void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData, ProxyCookie proxyCookieObject) throws IdentityProviderException {
         FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
@@ -62,6 +63,8 @@ public class ResponseGenerator {
         CookieHandler.insertCookieIntoHeader(result, cookieName, cookieStorage.generateCookie(host, userData));
         System.out.println("COOKIE INSERTED");
         */
+        logger.debug("Setting Set-Cookie to the response");
+        CookieHandler.insertCookieIntoHeader(result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
         logger.debug(String.format("Created JWT response:\n%s", result));
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }

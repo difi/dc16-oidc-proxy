@@ -12,7 +12,7 @@ public interface CookieStorage {
      * Creates a new DefaultProxyCookie object with these attributes; universally unique identifier (UUID) [String],
      * host [String], expiry [Date] and maxExpiry [Date]. Returns UUID as a string.
      */
-    String generateCookie(String host, HashMap<String, String> userData);
+    //String generateCookie(String host, String name, HashMap<String, String> userData);
 
     /**
      * Generates a cookie and stores it in the database.
@@ -20,7 +20,7 @@ public interface CookieStorage {
      * @param userData
      * @return
      */
-    ProxyCookie generateCookieAsObject(String host, HashMap<String, String> userData);
+    ProxyCookie generateCookieAsObject(String host, String path, String name, HashMap<String, String> userData);
 
     /**
      * When the user logs in again, the session's cookie 'expiry' is expanded, but only if the cookie's
@@ -41,7 +41,7 @@ public interface CookieStorage {
      * If cookie with given uuid exist in 'cookies' list; return DefaultProxyCookie object, otherwise return null
      * Updates expiry date of cookie.
      */
-    Optional<ProxyCookie> findCookie(String uuid, String host);
+    Optional<ProxyCookie> findCookie(String uuid, String host, String path);
 
     /**
      * Remove all expired cookies in 'cookies' list, by mutating the list.

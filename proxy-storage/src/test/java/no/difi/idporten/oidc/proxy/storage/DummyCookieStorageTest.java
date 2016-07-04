@@ -6,7 +6,7 @@ import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class InMemoryCookieStorageTest {
+public class DummyCookieStorageTest {
 
     private Injector injector;
 
@@ -14,17 +14,16 @@ public class InMemoryCookieStorageTest {
     public void beforeClass() {
         injector = Guice.createInjector(new StorageModule());
     }
-
     /*
     @Test
     public void simple() {
         CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
-        String identifier = cookieStorage.generateCookie("example.com", "PROXYCOOKIE", null);
+        String identifier = cookieStorage.generateCookieAsObject("example.com", "/", "PROXYCOOKIE", null);
         Assert.assertNotNull(identifier);
 
-        Assert.assertTrue(cookieStorage.findCookie(identifier, "example.com").isPresent());
-        Assert.assertFalse(cookieStorage.findCookie(identifier, "domain.com").isPresent());
+        Assert.assertTrue(cookieStorage.findCookie(identifier, "example.com", "/").isPresent());
+        Assert.assertFalse(cookieStorage.findCookie(identifier, "domain.com", "/").isPresent());
     }
     */
 }

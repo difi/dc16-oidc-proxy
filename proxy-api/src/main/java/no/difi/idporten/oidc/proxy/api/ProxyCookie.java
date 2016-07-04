@@ -17,4 +17,12 @@ public interface ProxyCookie {
      * @return UserData object
      */
     HashMap<String, String> getUserData();
+
+    String getUuid();
+
+    String getName();
+
+    String getHost();
+
+    String getPath();
 }

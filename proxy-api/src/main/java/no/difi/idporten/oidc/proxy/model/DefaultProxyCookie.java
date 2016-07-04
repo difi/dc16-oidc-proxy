@@ -12,17 +12,19 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     private static Logger logger  = LoggerFactory.getLogger(DefaultProxyCookie.class);
 
-    private String uuid, host;
+    private String uuid, host, path, name;
     private HashMap<String, String> userData;
     private Date expiry;
     private Date lastUpdated = new Date();
     private final Date created = new Date();
     private final Date maxExpiry;
 
-    public DefaultProxyCookie(String uuid, String host, Date expiry, Date maxExpiry, HashMap<String, String> userData) {
+    public DefaultProxyCookie(String uuid, String name, String host, String path, Date expiry, Date maxExpiry, HashMap<String, String> userData) {
         this.userData = userData;
         this.uuid = uuid; // Universally unique identifier
+        this.name = name;
         this.host = host; // Hostname (e.g. 'nav.no')
+        this.path = path; // Hostname (e.g. 'nav.no')
         this.expiry = expiry;
         this.maxExpiry = maxExpiry;
     }
@@ -70,7 +72,7 @@ public class DefaultProxyCookie implements ProxyCookie {
         return lastUpdated;
     }
 
-    public void touch() {
+    private void touch() {
         lastUpdated = new Date();
     }
 
@@ -81,5 +83,15 @@ public class DefaultProxyCookie implements ProxyCookie {
     @Override
     public HashMap<String, String> getUserData() {
         return userData;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getPath() {
+        return path;
     }
 }

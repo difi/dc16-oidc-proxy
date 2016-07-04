@@ -7,24 +7,14 @@ import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class InMemoryCookieStorage implements CookieStorage {
-
+public class InMemoryCookieStorage {
+    /*
     private Map<String, DefaultProxyCookie> cookies = new HashMap<>();
     private static final int MINUTE = 60 * 1000;
     private int initialValidPeriod = 30;
     private int expandSessionPeriod = 30;
     private int maxValidPeriod = 120;
 
-    @Override
-    public String generateCookie(String host, HashMap<String, String> userData) {
-        Date expiry = new Date(new Date().getTime() + initialValidPeriod * MINUTE);
-        Date maxExpiry = new Date(new Date().getTime() + maxValidPeriod * MINUTE);
-
-        DefaultProxyCookie cookie = new DefaultProxyCookie(UUID.randomUUID().toString(), host, expiry, maxExpiry, userData);
-        cookies.put(indexValue(cookie.getUuid(), host), cookie);
-
-        return cookie.getUuid();
-    }
 
     @Override
     public Optional<ProxyCookie> findCookie(String uuid, String host) {
@@ -65,7 +55,8 @@ public class InMemoryCookieStorage implements CookieStorage {
     }
 
     @Override
-    public ProxyCookie generateCookieAsObject(String host, HashMap<String, String> userData) {
+    public ProxyCookie generateCookieAsObject(String host, String path, String name, HashMap<String, String> userData) {
         return null;
     }
+    */
 }
