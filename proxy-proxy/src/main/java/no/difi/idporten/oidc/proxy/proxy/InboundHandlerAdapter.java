@@ -64,8 +64,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         this.trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
         this.host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
-        // host = "www.difi.no"; // edit host here if you want to test different configurations
-
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
         if (!securityConfigOptional.isPresent()) {
@@ -137,7 +135,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // need to get token here
                         try {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            responseGenerator.generateJWTResponse(ctx, userData, cookieStorage.generateCookieAsObject(host, trimmedPath, cookieName, userData));
+                            responseGenerator.generateJWTResponse(ctx, userData, cookieStorage.generateCookieAsObject(cookieName, host, trimmedPath, userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             responseGenerator.generateDefaultResponse(ctx, "no cannot");

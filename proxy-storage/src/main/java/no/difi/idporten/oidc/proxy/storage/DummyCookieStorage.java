@@ -8,15 +8,21 @@ import org.slf4j.LoggerFactory;
 import sun.plugin2.message.Message;
 
 import java.io.UnsupportedEncodingException;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DummyCookieStorage implements CookieStorage {
 
     private static Logger logger = LoggerFactory.getLogger(DummyCookieStorage.class);
 
+
     private static final int MINUTE = 60 * 1000;
+    private int initialValidPeriod = 30;
+    private int expandSessionPeriod = 30;
+    private int maxValidPeriod = 120;
 
     private static DummyCookieStorage ourInstance = new DummyCookieStorage();
 
@@ -24,27 +30,30 @@ public class DummyCookieStorage implements CookieStorage {
         return ourInstance;
     }
 
-    private static HashMap<String, String> defaultUserData;
+    private static HashMap<String, String> defaultUserData; // just used for testing purposes
+
+    private Map<String, DefaultProxyCookie> storedCookies;
 
     /**
      * Generates a MD5 hash based on a random new UUID and the parameters
+     *
      * @param host
      * @param cookieName
      * @return
      */
-    private static String generateDatabaseKey(String host, String path, String cookieName) {
+    private static String generateDatabaseKey(String cookieName, String host, String path) {
         String uuid = UUID.randomUUID().toString();
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
             md.reset();
             md.update(uuid.getBytes());
+            md.update(cookieName.getBytes());
             md.update(host.getBytes());
             md.update(path.getBytes());
-            md.update(cookieName.getBytes());
             byte[] array = md.digest();
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < array.length; ++i) {
-                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1,3));
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException exc) {
@@ -59,20 +68,18 @@ public class DummyCookieStorage implements CookieStorage {
         storedCookies = new HashMap<String, DefaultProxyCookie>();
     }
 
-    private HashMap<String, DefaultProxyCookie> storedCookies;
 
     @Override
-    public ProxyCookie generateCookieAsObject(String host, String path, String name, HashMap<String, String> userData) {
+    public ProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData) {
         logger.debug("Generating cookie object {}@{}{}", name, host, path);
         Date dateNow = new Date();
-        String newDatabaseKey = generateDatabaseKey(host, path, name);
+        String newDatabaseKey = generateDatabaseKey(name, host, path);
         DefaultProxyCookie newCookieObject = new DefaultProxyCookie(newDatabaseKey, name, host, path, new Date(dateNow.getTime() + 60 * MINUTE), new Date(dateNow.getTime() + 60 * 12 * MINUTE), userData);
         storedCookies.put(newDatabaseKey, newCookieObject);
         return newCookieObject;
     }
 
-    @Override
-    public void extendCookieExpiry(DefaultProxyCookie cookie) {
+    private void extendCookieExpiry(DefaultProxyCookie cookie) {
         Date dateNow = new Date();
         Date newExpiry = new Date(dateNow.getTime() + 60 * MINUTE);
         if (newExpiry.after(cookie.getMaxExpiry())) {
@@ -80,11 +87,6 @@ public class DummyCookieStorage implements CookieStorage {
         } else {
             cookie.setExpiry(newExpiry);
         }
-    }
-
-    @Override
-    public Optional<ProxyCookie> saveOrUpdateCookie(ProxyCookie cookie) {
-        return Optional.empty();
     }
 
     @Override
@@ -103,6 +105,9 @@ public class DummyCookieStorage implements CookieStorage {
 
     @Override
     public void removeExpiredCookies() {
-
+        Date dateNow = new Date();
+        storedCookies = storedCookies.entrySet().stream()
+                .filter(entry -> entry.getValue().getExpiry().before(dateNow))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

@@ -9,33 +9,13 @@ import java.util.Optional;
 public interface CookieStorage {
 
     /**
-     * Creates a new DefaultProxyCookie object with these attributes; universally unique identifier (UUID) [String],
-     * host [String], expiry [Date] and maxExpiry [Date]. Returns UUID as a string.
-     */
-    //String generateCookie(String host, String name, HashMap<String, String> userData);
-
-    /**
      * Generates a cookie and stores it in the database.
+     *
      * @param host
      * @param userData
      * @return
      */
-    ProxyCookie generateCookieAsObject(String host, String path, String name, HashMap<String, String> userData);
-
-    /**
-     * When the user logs in again, the session's cookie 'expiry' is expanded, but only if the cookie's
-     * 'expiry' is not reached. Expands 'expiry' with the amount of time in 'expandSessionPeriod', if
-     * it does not surpass 'maxExpiry'. If cookie is still valid, but expanding 'expiry' will surpass
-     * 'maxExpiry', 'expiry' is set to 'maxExpiry'.
-     */
-    void extendCookieExpiry(DefaultProxyCookie cookie);
-
-    /**
-     * Method for saving a new cookie or updating a current cookie depending on whether it already exists or not.
-     * @param cookie
-     * @return Optional.of(ProxyCookie) if successful, Optional.empty() otherwise.
-     */
-    Optional<ProxyCookie> saveOrUpdateCookie(ProxyCookie cookie);
+    ProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData);
 
     /**
      * If cookie with given uuid exist in 'cookies' list; return DefaultProxyCookie object, otherwise return null
