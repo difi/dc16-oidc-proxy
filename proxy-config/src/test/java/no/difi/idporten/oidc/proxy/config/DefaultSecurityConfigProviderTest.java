@@ -8,98 +8,129 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
+
 public class DefaultSecurityConfigProviderTest {
 
     private SecurityConfigProvider provider;
-    private SecurityConfig securityConfigWithPathOne;
-    private SecurityConfig securityConfigWithPathTwo;
+    private SecurityConfig securityConfigWithIdpPathChecker;
+    private SecurityConfig securityConfigWithPathPathChecker;
     private final String HOST = "www.difi.no";
-    private final String PATHONE = "/";
-    private final String PATHTWO = "/app5/";
+    private final String PathChecksIdpForScopeRedirectAndSecurity = "/";
+    private final String PathChecksPathForScopeRedirectAndSecurity = "/app5/";
 
     @BeforeTest
-    public void injectSecurityConfigProvider(){
+    public void injectSecurityConfigProvider() {
         Injector injector = Guice.createInjector(new ConfigModule());
         provider = injector.getInstance(SecurityConfigProvider.class);
-        securityConfigWithPathOne = provider.getConfig(HOST, PATHONE).get();
-        securityConfigWithPathTwo = provider.getConfig(HOST, PATHTWO).get();
+        securityConfigWithIdpPathChecker = provider.getConfig(HOST, PathChecksIdpForScopeRedirectAndSecurity).get();
+        securityConfigWithPathPathChecker = provider.getConfig(HOST, PathChecksPathForScopeRedirectAndSecurity).get();
+    }
+
+    @Test
+    public void testEmptyHostnameInjection() {
+        Assert.assertEquals(provider.getConfig("", "/"), Optional.empty());
+
+    }
+
+    @Test
+    public void testGetCookieConfig() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getCookieConfig());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getCookieConfig().getName(), "dificookie");
+    }
+
+    @Test
+    public void testGetBackend() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getBackend());
     }
 
 
     @Test
-    public void testGetHostname(){
-        Assert.assertNotNull(securityConfigWithPathOne.getHostname());
-        Assert.assertEquals(securityConfigWithPathOne.getHostname(), "www.difi.no");
+    public void testGetHostname() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getHostname());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getHostname(), "www.difi.no");
     }
 
     @Test
-    public void testGetPath(){
-        Assert.assertNotNull(securityConfigWithPathOne.getPath());
-        Assert.assertEquals(securityConfigWithPathOne.getPath(), "/");
+    public void testGetPath() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getPath());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getPath(), "/");
     }
 
     @Test
-    public void testGetIdp(){
-        Assert.assertNotNull(securityConfigWithPathOne.getIdp());
-        Assert.assertEquals(securityConfigWithPathOne.getIdp(), "idporten");
+    public void testGetIdp() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getIdp());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getIdp(), "idporten");
     }
 
     @Test
-    public void testGetIdpClass(){
-        Assert.assertNotNull(securityConfigWithPathOne.getIdpClass());
-        Assert.assertNotNull(securityConfigWithPathOne.getIdpClass(), "no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider");
+    public void testGetIdpClass() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getIdpClass());
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getIdpClass(), "no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider");
     }
 
     @Test
-    public void testgetClient_id(){
-        Assert.assertNotNull(securityConfigWithPathOne.getClient_id());
-        Assert.assertEquals(securityConfigWithPathOne.getClient_id(), "dificamp");
+    public void testgetClient_id() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getClient_id());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getClient_id(), "dificamp");
     }
 
     @Test
-    public void testGetPassword(){
-        Assert.assertNotNull(securityConfigWithPathOne.getPassword());
-        Assert.assertEquals(securityConfigWithPathOne.getPassword(), "password");
+    public void testGetPassword() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getPassword());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getPassword(), "password");
     }
 
     @Test
-    public void testGetExistingParameter(){
-        Assert.assertNotNull(securityConfigWithPathOne.getParameter("quality"));
-        Assert.assertEquals(securityConfigWithPathOne.getParameter("quality"), "3");
+    public void testGetExistingParameter() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getParameter("quality"));
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getParameter("quality"), "3");
     }
 
     @Test
-    public void testGetNonexistingParameter(){
-        Assert.assertEquals(securityConfigWithPathOne.getParameter("scope"), "");
+    public void testGetNonexistingParameter() {
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getParameter("scope"), "");
     }
 
     @Test
-    public void testGetSecurity(){
-        Assert.assertNotNull(securityConfigWithPathOne.getSecurity());
-        Assert.assertEquals(securityConfigWithPathOne.getSecurity(), "3");
+    public void testGetSecurity() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getSecurity());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), "3");
     }
 
     @Test
-    public void testGetRedirect_uriFromPath(){
-        Assert.assertNotNull(securityConfigWithPathTwo.getRedirect_uri());
-        Assert.assertEquals(securityConfigWithPathTwo.getRedirect_uri(), "http://localhost:8080/redirect");
+    public void testGetRedirect_uriFromPath() {
+        Assert.assertNotNull(securityConfigWithPathPathChecker.getRedirect_uri());
+        Assert.assertEquals(securityConfigWithPathPathChecker.getRedirect_uri(), "http://localhost:8080/redirect");
     }
 
     @Test
-    public void testGetRedirect_uriFromIdp(){
-        Assert.assertNotNull(securityConfigWithPathOne.getRedirect_uri());
-        Assert.assertEquals(securityConfigWithPathOne.getRedirect_uri(), "http://localhost:8080/");
+    public void testGetRedirect_uriFromIdp() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getRedirect_uri());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getRedirect_uri(), "http://localhost:8080/");
     }
 
     @Test
-    public void testGetScopeFromPath(){
-        Assert.assertNotNull(securityConfigWithPathTwo.getScope());
-        Assert.assertEquals(securityConfigWithPathTwo.getScope(), "email");
+    public void testGetScopeFromPath() {
+        Assert.assertNotNull(securityConfigWithPathPathChecker.getScope());
+        Assert.assertEquals(securityConfigWithPathPathChecker.getScope(), "email");
     }
 
     @Test
-    public void testGetScopeFromIdp(){
-        Assert.assertNotNull(securityConfigWithPathOne.getScope());
-        Assert.assertEquals(securityConfigWithPathOne.getScope(), "openid");
+    public void testGetScopeFromIdp() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getScope());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getScope(), "openid");
+    }
+
+    @Test
+    public void testGetSecurityFromPath() {
+        Assert.assertNotNull(securityConfigWithPathPathChecker.getSecurity());
+        Assert.assertEquals(securityConfigWithPathPathChecker.getSecurity(), "2");
+    }
+
+    @Test
+    public void testGetSecurityFromIdp() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getSecurity());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), "3");
     }
 }
