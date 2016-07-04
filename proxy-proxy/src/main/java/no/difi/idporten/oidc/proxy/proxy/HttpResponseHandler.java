@@ -22,7 +22,7 @@ public class HttpResponseHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpResponse) {
             HttpResponse response = (HttpResponse) msg;
             //logger.info(String.format("Message is HttpResponse\n%s", response));
-            //CookieInHeader.insertCookieIntoHeader(response, "ProxyID", );
+            //CookieHandler.insertCookieIntoHeader(response, "ProxyID", );
         }
         super.channelRead(ctx, msg);
     }
