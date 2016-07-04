@@ -2,6 +2,7 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.testng.Assert;
@@ -25,6 +26,12 @@ public class DefaultSecurityConfigProviderTest {
         provider = injector.getInstance(SecurityConfigProvider.class);
         securityConfigWithIdpPathChecker = provider.getConfig(HOST, PathChecksIdpForScopeRedirectAndSecurity).get();
         securityConfigWithPathPathChecker = provider.getConfig(HOST, PathChecksPathForScopeRedirectAndSecurity).get();
+    }
+
+    @Test
+    public void testCreateIdentityProvider() throws Exception{
+        Optional<IdentityProvider> identityProvider = securityConfigWithIdpPathChecker.createIdentityProvider();
+        Assert.assertEquals(identityProvider.get().generateURI(), "https://eid-exttest.difi.no/idporten-oidc-provider/authorize?scope=openid&client_id=dificamp&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F");
     }
 
     @Test
