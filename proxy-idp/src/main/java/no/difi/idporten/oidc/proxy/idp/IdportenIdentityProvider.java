@@ -2,6 +2,7 @@ package no.difi.idporten.oidc.proxy.idp;
 
 import com.google.gson.JsonObject;
 import com.nimbusds.jwt.JWTParser;
+import com.typesafe.config.ConfigFactory;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
@@ -99,4 +100,5 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     private String decodeIDToken(String id_token) throws Exception {
         return JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
     }
+
 }

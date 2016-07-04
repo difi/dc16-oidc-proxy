@@ -37,6 +37,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public CookieConfig getCookieConfig() {
+        System.out.println(HOST.getCookieConfig());
         return HOST.getCookieConfig();
     }
 

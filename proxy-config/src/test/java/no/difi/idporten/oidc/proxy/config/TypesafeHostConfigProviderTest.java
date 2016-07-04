@@ -12,7 +12,7 @@ public class TypesafeHostConfigProviderTest {
 
     private HostConfigProvider provider;
     private static final String DIFIHOSTNAME = "www.difi.no"; // this is a hostname that should be configured and valid
-    private static final String EFUKTHOSTNAME = "www.efukt.com"; // this is a hostname that should not be configured
+    private static final String UNKNOWNHOSTNAME = "www.facebook.com"; // this is a hostname that should not be configured
 
     @BeforeClass
     public void injectHostConfigProvider() {
@@ -27,6 +27,6 @@ public class TypesafeHostConfigProviderTest {
 
     @Test
     public void testReturnsNullWhenUnknownHostConfig() {
-        Assert.assertNull(provider.getByHostname(EFUKTHOSTNAME));
+        Assert.assertNull(provider.getByHostname(UNKNOWNHOSTNAME));
     }
 }

@@ -67,14 +67,14 @@ public class TypesafePathConfig implements PathConfig {
 
     @Override
     public String toString(){
-        return "path: " + path + ","
+        return getPath();/*"path: " + path + ","
                 +"security: " + security
                 +", "
                 +"redirect_uri: "+redirect_uri
                 +", "
                 +"scope: "+ scope
                 +", "
-                +"idp: "+idp;
+                +"idp: "+idp;*/
     }
 
 
