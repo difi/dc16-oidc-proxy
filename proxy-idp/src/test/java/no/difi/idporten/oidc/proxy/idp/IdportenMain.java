@@ -11,7 +11,7 @@ public class IdportenMain {
         IdentityProvider identityProvider = new IdportenIdentityProvider(null);
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Go here: " + identityProvider.generateURI());
+        System.out.println("Go here: " + identityProvider.generateRedirectURI());
 
         System.out.print("Write code: ");
         String code = scanner.next();

@@ -10,34 +10,41 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public class GoogleIdentityProvider extends AbstractIdentityProvider {
+
+    private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
     private final SecurityConfig securityConfig;
     private final String APIURL = "https://www.googleapis.com/oauth2/v3/token"; // Google's api services
     private final String LOGINURL = "https://accounts.google.com/o/oauth2/auth"; // For logging in/authorizing with Google
 
-    // Currently just something Viktor made on his Google account
-    // Rather using config now
-    private static String DIFICLIENTID = "1063910224877-dhqd36c09sitf9alq3jb0rfsfmebe35o.apps.googleusercontent.com";
-    private static String DIFICLIENTSECRET = "MiUsgGqAUFPVoqjIDifJS-Rj";
-
     public GoogleIdentityProvider(SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
     }
 
+    /**
+     * Generates a redirect URI to Google's login based on the current SecurityConfig
+     * @return uri
+     * @throws IdentityProviderException
+     */
     @Override
-    public String generateURI() throws IdentityProviderException {
+    public String generateRedirectURI() throws IdentityProviderException {
         try {
             return new URIBuilder(LOGINURL)
                     .addParameter("scope", securityConfig.getScope())
@@ -53,51 +60,61 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     }
 
     /**
-     * Get token using the code from the log in at accounts.google.com
+     * Uses a code from when a user has authorized Google to get some information about him to make a request
+     * to the Google API.
+     * @param uri containing a code and maybe some more information about the request.
+     * @return UserData object containing information about the user.
+     * @throws IdentityProviderException
      */
     @Override
     public UserData getToken(String uri) throws IdentityProviderException {
         try {
-            // The base-APIURL used to make a POST request
-            String baseURL = APIURL;
-            String code = uri.split("\\?code=")[1];
 
-            HttpPost postRequest = new HttpPost(baseURL);
+            Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()
+                    .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
+
+
+            // Configure http post request
+            HttpPost postRequest = new HttpPost(APIURL);
             List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("code", code));
-            params.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirect_uri())); // orElse("http://localhost:8080/google")
+            params.add(new BasicNameValuePair("code", urlParameters.get("code")));
+            params.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirect_uri()));
             params.add(new BasicNameValuePair("client_id", securityConfig.getClient_id()));
             params.add(new BasicNameValuePair("client_secret", securityConfig.getPassword()));
             params.add(new BasicNameValuePair("scope", securityConfig.getScope())); // orElse("")
             params.add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
             postRequest.setEntity(new UrlEncodedFormEntity(params));
 
-            System.out.println(String.format("Created post request:\n%s\n%s\n%s", postRequest, postRequest.getAllHeaders(), postRequest.getEntity()));
+            logger.debug(String.format("Created post request:\n%s\n%s\n%s", postRequest, postRequest.getAllHeaders(), postRequest.getEntity()));
 
-
+            // Send http post request
             HttpResponse httpResponse = httpClient.execute(postRequest);
 
-            System.out.println("Sending 'POST' request to URL : " + baseURL);
-            System.out.println("Post parameters : " + params);
-            System.out.println("Response Code : " + httpResponse.getStatusLine().getStatusCode());
-            System.out.println("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
+            logger.debug("Sending 'POST' request to URL : " + APIURL);
+            logger.debug("Post parameters : " + params);
+            logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
+            logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
+
             // Must use complicated stream to read response and make it a json object
-            InputStream in = httpResponse.getEntity().getContent();
             JsonObject jsonResponse;
-            try (BufferedReader buffer = new BufferedReader(new InputStreamReader(in))) {
-                jsonResponse = gson.fromJson(buffer, JsonObject.class);
-                System.out.println("Response body as json :\n" + jsonResponse);
+            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
+                jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
                 return new UserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
             } catch (IOException exc) {
-                exc.printStackTrace();
+                throw new IdentityProviderException(exc.getMessage(), exc);
             }
-        } catch (Exception e) {
-            throw new IdentityProviderException(e.getMessage(), e);
+        } catch (Exception exc) {
+            throw new IdentityProviderException(exc.getMessage(), exc);
         }
-        return null;
     }
 
-    private String decodeIDToken(String id_token) throws Exception {
-        return JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
+    /**
+     * Decodes a signed JWT token to a human-readable string.
+     * @param idToken
+     * @return
+     * @throws Exception
+     */
+    private String decodeIDToken(String idToken) throws Exception {
+        return JWTParser.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
     }
 }
