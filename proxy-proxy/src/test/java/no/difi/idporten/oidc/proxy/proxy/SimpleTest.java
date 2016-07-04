@@ -3,6 +3,8 @@ package no.difi.idporten.oidc.proxy.proxy;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.sun.tools.javac.util.ByteBuffer;
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,7 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
+import java.net.URL;
 
 public class SimpleTest {
 
@@ -37,7 +40,8 @@ public class SimpleTest {
     public void testRedirectResponse() throws Exception {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ByteStreams.copy(URI.create("http://localhost:8080/").toURL().openStream(), baos);
+            URL url = URI.create("http://localhost:8080/").toURL();
+            ByteStreams.copy(url.openStream(), baos);
         } catch (Exception e) {
             // Currently expected.
             logger.info("Received '{}'.", e.getMessage(), e);
@@ -53,12 +57,6 @@ public class SimpleTest {
             logger.info("Somethingsomething: ", e.getMessage(), e);
         }
     }
-    @Test
-    public void testJwtResponse() throws Exception{
-        try{
 
-        } catch (Exception e){
 
-        }
-    }
 }

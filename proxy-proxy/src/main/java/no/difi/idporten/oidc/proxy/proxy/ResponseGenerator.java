@@ -43,7 +43,6 @@ public class ResponseGenerator {
      * Default response for when nothing is configured for the host
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
-        System.out.println("NEI");
         StringBuilder content = new StringBuilder();
         content.append(String.format("no cannot use %s", host));
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
