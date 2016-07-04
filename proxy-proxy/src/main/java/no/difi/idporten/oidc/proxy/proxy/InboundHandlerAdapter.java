@@ -1,14 +1,12 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import com.google.gson.Gson;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.cookie.*;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.util.CharsetUtil;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
@@ -16,12 +14,10 @@ import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import no.difi.idporten.oidc.proxy.storage.InMemoryCookieStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,12 +31,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private volatile Channel outboundChannel;
 
     private SecurityConfigProvider securityConfigProvider;
-    private CookieInHeader cookieInHeader = new CookieInHeader();
-    private CookieStorage cookieStorage = new InMemoryCookieStorage();
+    private ResponseGenerator responseGenerator;
     private String cookieName, host, path;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
+        responseGenerator = new ResponseGenerator();
     }
 
     /**
@@ -52,53 +48,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ctx.read();
     }
 
-    /**
-     * Generates redirect response for initial request to server. This is the response containing idp, scope, client_id etc.
-     *
-     * @return
-     */
-    private void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
-        try {
-            String redirectUrl = identityProvider.generateURI();
-            StringBuilder content = new StringBuilder(redirectUrl);
-            FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
-            result.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
-            result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-            result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-            logger.debug(String.format("Created redirect response:\n%s", result));
-            ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
-        } catch (IdentityProviderException exc) {
-            exc.printStackTrace();
-            generateDefaultResponse(ctx, "");
-        }
-    }
-
-    /**
-     * Default response for when nothing is configured for the host
-     */
-    private void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
-        System.out.println("NEI");
-        StringBuilder content = new StringBuilder();
-        content.append(String.format("no cannot use %s", host));
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
-        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        logger.debug(String.format("Created default response:\n%s", response));
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    private void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData) throws IdentityProviderException {
-        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
-        result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-        result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        /* Removing this for test purposes because it won't work until cookies are persistently stored.
-        System.out.println("INSERTING COOKIE");
-        CookieInHeader.insertCookieIntoHeader(result, cookieName, cookieStorage.generateCookie(host, userData));
-        System.out.println("COOKIE INSERTED");
-        */
-        logger.debug(String.format("Created JWT response:\n%s", result));
-        ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
-    }
 
     /**
      * Bootstraps the backend channel which is the one connected to the outbound server. If the connection is
@@ -117,7 +66,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         if (!securityConfigOptional.isPresent()) {
             logger.debug("Could not get SecurityConfig of host {}", host);
-            generateDefaultResponse(ctx, host);
+            responseGenerator.generateDefaultResponse(ctx, host);
         }
         securityConfigOptional.ifPresent(securityConfig -> {
             // do this if security config is present (not null)
@@ -126,7 +75,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
                 logger.debug("{}{} is secured", host, path);
                 /* Probably refactor this. Currently all cookie handling in this method.
-                if (CookieInHeader.checkHeaderForCookie(httpRequest.headers(), cookieName, "DefaultProxyCookie")) {
+                if (CookieHandler.checkHeaderForCookie(httpRequest.headers(), cookieName, "DefaultProxyCookie")) {
                     //TODO: Check database for cookieName
                     System.out.println("FOUND COOKIE: " + cookieName);
                 }
@@ -170,7 +119,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             // generate a JWTResponse with the user data inside the cookie
                             try {
-                                generateJWTResponse(ctx, proxyCookieObject.getUserData());
+                                responseGenerator.generateJWTResponse(ctx, proxyCookieObject.getUserData());
                             } catch (IdentityProviderException exc) {
                                 logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", proxyCookieObject, proxyCookieObject.getUserData());
                                 exc.printStackTrace();
@@ -191,7 +140,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 }
                 Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
                 if (!idpOptional.isPresent()) { // for some reason, the path's IdentityProvider does not exist
-                    generateDefaultResponse(ctx, host);
+                    responseGenerator.generateDefaultResponse(ctx, host);
                 }
                 idpOptional.ifPresent(idp -> {
                     logger.debug("Has identity provider: {}", idp);
@@ -199,17 +148,17 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         logger.debug("TypesafePathConfig contains code: {}", path);
                         // need to get token here
                         try {
-                            generateJWTResponse(ctx, idp.getToken(path).getUserData());
+                            responseGenerator.generateJWTResponse(ctx, idp.getToken(path).getUserData());
                             // Generating new cookie and saving it
                             // Remember to put a Set-Cookie in the response
                             cookieStorage.saveOrUpdateCookie(cookieStorage.generateCookieAsObject(host, idp.getToken(path).getUserData()));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
-                            generateDefaultResponse(ctx, "no cannot");
+                            responseGenerator.generateDefaultResponse(ctx, "no cannot");
                         }
                     } else {
                         // redirect response
-                        generateRedirectResponse(ctx, idp);
+                        responseGenerator.generateRedirectResponse(ctx, idp);
                         // should not continue life of request after this
                     }
                 });

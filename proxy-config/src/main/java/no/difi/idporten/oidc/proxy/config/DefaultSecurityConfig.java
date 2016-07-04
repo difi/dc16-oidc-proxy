@@ -6,7 +6,6 @@ import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
 
 import java.net.SocketAddress;
-import java.util.Map;
 import java.util.Optional;
 
 public class DefaultSecurityConfig implements SecurityConfig {
@@ -59,7 +58,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public String getIdp() {
-        return PATH.getIdp();
+        return PATH.getIdentityProvider();
     }
 
     @Override
