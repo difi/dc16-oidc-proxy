@@ -13,7 +13,8 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 
-public class SimpleTest {
+public class HttpRequestAndResponseTest {
+
 
     private static Logger logger = LoggerFactory.getLogger(SimpleTest.class);
 
@@ -34,7 +35,7 @@ public class SimpleTest {
     }
 
     @Test
-    public void testRedirectResponse() throws Exception {
+    public void simple() throws Exception {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ByteStreams.copy(URI.create("http://localhost:8080/").toURL().openStream(), baos);
@@ -44,21 +45,4 @@ public class SimpleTest {
         }
     }
 
-    @Test
-    public void testDefaultResponse() throws Exception{
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ByteStreams.copy(URI.create("http://www.nettavisen.no/").toURL().openStream(), baos);
-        } catch (Exception e){
-            logger.info("Somethingsomething: ", e.getMessage(), e);
-        }
-    }
-    @Test
-    public void testJwtResponse() throws Exception{
-        try{
-
-        } catch (Exception e){
-
-        }
-    }
 }
