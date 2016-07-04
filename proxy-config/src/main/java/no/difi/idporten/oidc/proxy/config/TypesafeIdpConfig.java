@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
-import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,7 @@ public class TypesafeIdpConfig implements IdpConfig {
 
 
     private String identifier;
-    private String idpclass;
+    private String idpClass;
     private String client_id;
     private String password;
     private String scope;
@@ -26,7 +25,7 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     public TypesafeIdpConfig(String identifier, Config idpConfig) {
         this.identifier = identifier;
-        this.idpclass = idpConfig.getString("class");
+        this.idpClass = idpConfig.getString("class");
         this.client_id = idpConfig.getString("client_id");
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
@@ -43,7 +42,7 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     @Override
     public String getIdpClass() {
-        return this.idpclass;
+        return this.idpClass;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class TypesafeIdpConfig implements IdpConfig {
     public String toString() {
         return "TypesafeIdpConfig{" +
                 "identifier='" + identifier + '\'' +
-                ", idpclass='" + idpclass + '\'' +
+                ", idpClass='" + idpClass + '\'' +
                 ", client_id='" + client_id + '\'' +
                 ", password='" + password + '\'' +
                 ", scope='" + scope + '\'' +

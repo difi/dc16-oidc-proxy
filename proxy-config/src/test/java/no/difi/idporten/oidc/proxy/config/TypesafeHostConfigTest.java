@@ -1,51 +1,60 @@
 package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.ConfigFactory;
+import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
+import no.difi.idporten.oidc.proxy.model.HostConfig;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class TypesafeHostConfigTest {
 
-    private TypesafeHostConfig config;
+    private HostConfig hostConfig;
+    private HostConfigProvider hostConfigProvider = new TypesafeHostConfigProvider(ConfigFactory.load());
 
     @BeforeTest
     public void injectHostConfigProvider() {
-        //this.config = new TypesafeHostConfig(ConfigFactory.parseReader(new InputStreamReader(getClass().getResourceAsStream("/hostConfig/simple.conf")), ConfigFactory.load()));
+        this.hostConfig = hostConfigProvider.getByHostname("www.difi.no");
     }
 
-    @Test (enabled = false)
+    @Test
     public void returnBackendRouting() throws Exception {
-        Assert.assertNotNull(config.getBackend());
-        Assert.assertNotNull(config.getBackend());
+        Assert.assertNotNull(hostConfig.getBackend());
+        Assert.assertNotNull(hostConfig.getBackend());
 
         Field field = TypesafeHostConfig.class.getDeclaredField("backendIndex");
         field.setAccessible(true);
-        AtomicInteger atomicInteger = (AtomicInteger) field.get(config);
+        AtomicInteger atomicInteger = (AtomicInteger) field.get(hostConfig);
         atomicInteger.addAndGet(Integer.MAX_VALUE);
 
-        Assert.assertNotNull(config.getBackend());
-        Assert.assertNotNull(config.getBackend());
+        Assert.assertNotNull(hostConfig.getBackend());
+        Assert.assertNotNull(hostConfig.getBackend());
     }
-    /* Different when every host must have a default path
+
     @Test
-    public void returnPath() {
-        Assert.assertEquals(config.getPathFor("/app1/test").getPath(), "/app1/test");
-        Assert.assertTrue(config.getPathFor("/app1/").isPresent());
-        Assert.assertTrue(config.getPathFor("/app1").isPresent());
-
-        Assert.assertTrue(config.getPathFor("/app2/test").isPresent());
-        Assert.assertTrue(config.getPathFor("/app2/").isPresent());
-        Assert.assertTrue(config.getPathFor("/app2").isPresent());
-
-        Assert.assertFalse(config.getPathFor("/app3").isPresent());
-        Assert.assertFalse(config.getPathFor("/").isPresent());
-        Assert.assertFalse(config.getPathFor("/about/").isPresent());
+    public void testGetHostname() {
+        Assert.assertNotNull(hostConfig.getHostname());
+        Assert.assertEquals(hostConfig.getHostname(), "www.difi.no");
     }
-    */
+
+    @Test
+    public void testGetPathFor() {
+        Assert.assertNotNull(hostConfig.getPathFor("/om-oss"));
+        Assert.assertNotEquals(hostConfig.getPathFor("/om-oss"), "/om_oss");
+    }
+
+    @Test
+    public void testGetCookieConfig(){
+        Assert.assertNotNull(hostConfig.getCookieConfig());
+        Assert.assertEquals(hostConfig.getCookieConfig().getName(), "dificookie");
+        Assert.assertNotNull(hostConfig.getCookieConfig().getName(), "PROXYCOOKIE");
+    }
+
+
+
+
 }
