@@ -44,7 +44,6 @@ public class ResponseGenerator {
      * Default response for when nothing is configured for the host
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
-        System.out.println("NEI");
         StringBuilder content = new StringBuilder();
         content.append(String.format("no cannot use %s", host));
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
@@ -58,11 +57,6 @@ public class ResponseGenerator {
         FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        /* Removing this for test purposes because it won't work until cookies are persistently stored.
-        System.out.println("INSERTING COOKIE");
-        CookieHandler.insertCookieIntoHeader(result, cookieName, cookieStorage.generateCookie(host, userData));
-        System.out.println("COOKIE INSERTED");
-        */
         logger.debug("Setting Set-Cookie to the response");
         CookieHandler.insertCookieIntoHeader(result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
         logger.debug(String.format("Created JWT response:\n%s", result));
