@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.methods.HttpPost;
@@ -13,7 +14,10 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -28,18 +32,25 @@ import java.util.stream.Collectors;
 
 public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
+    private static Logger logger = LoggerFactory.getLogger(IdportenIdentityProvider.class);
+
     private SecurityConfig securityConfig;
-    private String url = "https://eid-exttest.difi.no";
+    private String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
+    private String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
 
     public IdportenIdentityProvider(SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
     }
 
+    /**
+     * Generates a redirect URI to IDPorten's login based on the current SecurityConfig
+     * @return uri
+     * @throws IdentityProviderException
+     */
     @Override
-    public String generateURI() throws IdentityProviderException {
+    public String generateRedirectURI() throws IdentityProviderException {
         try {
-            // return new URIBuilder(url + "/opensso/oauth2/authorize")
-            return new URIBuilder(url + "/idporten-oidc-provider/authorize")
+            return new URIBuilder(LOGINURL)
                     .addParameter("scope", securityConfig.getScope())
                     .addParameter("client_id", securityConfig.getClient_id())
                     .addParameter("response_type", "code")
@@ -51,54 +62,63 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     }
 
     /**
-     * Get token using the code from the log in at ID-porten
+     * Uses a code from when a user has authorized IDPorten to get some information about him to make a request
+     * to the IDPorten API.
+     * @param uri containing a code and maybe some more information about the request.
+     * @return UserData object containing information about the user.
+     * @throws IdentityProviderException
      */
     @Override
     public UserData getToken(String uri) throws IdentityProviderException {
         try {
-            // The base-url used to make a POST request
-            // String baseURL = url + "/opensso/oauth2/access_token";
-            String baseURL = url + "/idporten-oidc-provider/token";
-
             // Parsing parameters in provided uri
             Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()
                     .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
             // Create content to be posted
             List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {{
-                add(new BasicNameValuePair("grant_type", "authorization_code"));
+                add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
                 add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirect_uri()));
                 add(new BasicNameValuePair("code", urlParameters.get("code")));
             }};
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
 
-            // Initiate connection
-            HttpPost httpPost = new HttpPost(baseURL);
-            httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
-            httpPost.setHeader("Authorization", "Basic " + Base64.getUrlEncoder().encodeToString((securityConfig.getClient_id() + ":" + securityConfig.getPassword()).getBytes()));
+            // Configure post request
+            HttpPost httpPost = new HttpPost(APIURL);
+            httpPost.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString((securityConfig.getClient_id() + ":" + securityConfig.getPassword()).getBytes()));
             httpPost.setEntity(new StringEntity(postContent));
 
+            // Send request to api-server
             HttpResponse httpResponse = httpClient.execute(httpPost);
 
-            System.out.println("\nSending 'POST' request to URL : " + baseURL);
-            System.out.println("Post parameters : " + postContent);
-            System.out.println("Response Code : " + httpResponse.getStatusLine().getStatusCode());
-            System.out.println("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
+            logger.debug("\nSending 'POST' request to URL : " + APIURL);
+            logger.debug("Post parameters : " + postContent);
+            logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
+            logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
 
             // Parse response
             JsonObject response;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 response = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
+                return new UserData(decodeIDToken(response.get("id_token").getAsString()));
+            } catch (IOException exc) {
+                throw new IdentityProviderException(exc.getMessage(), exc);
             }
 
-            return new UserData(decodeIDToken(response.get("id_token").getAsString()));
-        } catch (Exception e) {
-            throw new IdentityProviderException(e.getMessage(), e);
+        } catch (Exception exc) {
+            throw new IdentityProviderException(exc.getMessage(), exc);
         }
     }
 
-    private String decodeIDToken(String id_token) throws Exception {
-        return JWTParser.parse(id_token).getJWTClaimsSet().toString().replace("\\", "");
+    /**
+     * Decodes a signed JWT token to a human-readable string.
+     * @param idToken
+     * @return
+     * @throws Exception
+     */
+    private String decodeIDToken(String idToken) throws Exception {
+        return JWTParser.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
     }
 
 }

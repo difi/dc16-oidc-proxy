@@ -31,7 +31,7 @@ public class DefaultSecurityConfigProviderTest {
     @Test
     public void testCreateIdentityProvider() throws Exception{
         Optional<IdentityProvider> identityProvider = securityConfigWithIdpPathChecker.createIdentityProvider();
-        Assert.assertEquals(identityProvider.get().generateURI(), "https://eid-exttest.difi.no/idporten-oidc-provider/authorize?scope=openid&client_id=dificamp&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F");
+        Assert.assertEquals(identityProvider.get().generateRedirectURI(), "https://eid-exttest.difi.no/idporten-oidc-provider/authorize?scope=openid&client_id=dificamp&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F");
     }
 
     @Test

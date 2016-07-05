@@ -8,9 +8,9 @@ import java.util.UUID;
 public class DefaultProxyCookieTest {
 
     @Test
-    public void simple() {
+    public void createSimpleCookie() {
         String identifier = UUID.randomUUID().toString();
-        DefaultProxyCookie cookie = new DefaultProxyCookie(identifier, "domain.com", null, null, null);
+        DefaultProxyCookie cookie = new DefaultProxyCookie(identifier, "PROXYCOOKIE", "domain.com", "/", null, null, null);
 
         Assert.assertEquals(cookie.getUuid(), identifier);
 

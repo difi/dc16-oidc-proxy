@@ -6,7 +6,6 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
@@ -18,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -33,6 +32,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private SecurityConfigProvider securityConfigProvider;
     private ResponseGenerator responseGenerator;
     private String cookieName, host, path;
+    private String trimmedPath; // path without any parameters
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
@@ -58,9 +58,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
         this.path = httpRequest.uri();
+        this.trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
         this.host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
-
-        // host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
         System.out.println("PATH "+securityConfigOptional.get().getPath());
@@ -75,41 +74,27 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
             if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
                 logger.debug("{}{} is secured", host, path);
-                /* Probably refactor this. Currently all cookie handling in this method.
-                if (CookieHandler.checkHeaderForCookie(httpRequest.headers(), cookieName, "DefaultProxyCookie")) {
-                    //TODO: Check database for cookieName
-                    System.out.println("FOUND COOKIE: " + cookieName);
-                }
-                */
 
 
                 CookieConfig cookieConfig = securityConfig.getCookieConfig();
-                cookieName = cookieConfig.getName();
+                this.cookieName = cookieConfig.getName();
                 CookieStorage cookieStorage = cookieConfig.getCookieStorage();
 
                 // getting correct cookie from request
-                Optional<Cookie> nettyCookieOptional = Optional.empty();
-                if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
-
-                    String cookieString = httpRequest.headers().get(HttpHeaderNames.COOKIE);
-                    Set<Cookie> cookieSet = ServerCookieDecoder.STRICT.decode(cookieString);
-                    nettyCookieOptional = cookieSet.stream()
-                            .filter(nettyCookie -> nettyCookie.name().equals(cookieName))
-                            .findFirst();
-                }
-
+                logger.debug("Looking for cookie with name {}", cookieName);
+                Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, cookieName);
 
                 if (/*request has the cookie we want*/ nettyCookieOptional.isPresent()) {
                     logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
                     // get CookieObject from database with the uuid in the HttpCookie
                     String UUID = nettyCookieOptional.get().value();
-                    Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(UUID, host);
+                    Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(UUID, host, trimmedPath);
                     if (!proxyCookieOptional.isPresent()) {
-                        logger.warn("Could not find cookie {}@{}", UUID, host);
+                        logger.warn("Could not find cookie {}@{}{}", UUID, host, trimmedPath);
                         // Cookie contains an UUID, but it is not found in the storage.
                         // This is an exception and it means something is wrong with either getting cookies or
                         // creating and writing UUIDs  ...or the user is messing with us
-                        // TODO Create new expired cookie with the UUID we found?
+
                     } else {
                         ProxyCookie proxyCookieObject = proxyCookieOptional.get();
                         logger.debug("Has proxyCookieObject {}", proxyCookieObject);
@@ -120,13 +105,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             // generate a JWTResponse with the user data inside the cookie
                             try {
-                                responseGenerator.generateJWTResponse(ctx, proxyCookieObject.getUserData());
+                                responseGenerator.generateJWTResponse(ctx, proxyCookieObject.getUserData(), proxyCookieObject);
                             } catch (IdentityProviderException exc) {
                                 logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", proxyCookieObject, proxyCookieObject.getUserData());
                                 exc.printStackTrace();
                             }
-                            // update CookieObject's expiry
-                            cookieStorage.saveOrUpdateCookie(proxyCookieObject);
                             // stop this function from continuing
                         } else { // we found a cookie, got it from the database, but it is expired
                             logger.debug("Cookie is not valid");
@@ -149,10 +132,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         logger.debug("TypesafePathConfig contains code: {}", path);
                         // need to get token here
                         try {
-                            responseGenerator.generateJWTResponse(ctx, idp.getToken(path).getUserData());
-                            // Generating new cookie and saving it
-                            // Remember to put a Set-Cookie in the response
-                            cookieStorage.saveOrUpdateCookie(cookieStorage.generateCookieAsObject(host, idp.getToken(path).getUserData()));
+                            HashMap<String, String> userData = idp.getToken(path).getUserData();
+                            // Generating JWT response and setting cookie
+                            responseGenerator.generateJWTResponse(ctx, userData, cookieStorage.generateCookieAsObject(cookieName, host, trimmedPath, userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             responseGenerator.generateDefaultResponse(ctx, "no cannot");
