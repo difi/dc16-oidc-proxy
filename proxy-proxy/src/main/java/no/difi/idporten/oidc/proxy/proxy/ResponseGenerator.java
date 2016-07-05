@@ -26,7 +26,7 @@ public class ResponseGenerator {
      */
     protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
         try {
-            String redirectUrl = identityProvider.generateURI();
+            String redirectUrl = identityProvider.generateRedirectURI();
             StringBuilder content = new StringBuilder(redirectUrl);
             FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
             result.headers().set(HttpHeaderNames.LOCATION, redirectUrl);

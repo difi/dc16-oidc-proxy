@@ -5,7 +5,7 @@ import no.difi.idporten.oidc.proxy.model.UserData;
 
 public interface IdentityProvider {
 
-    String generateURI() throws IdentityProviderException;
+    String generateRedirectURI() throws IdentityProviderException;
 
     UserData getToken(String url) throws IdentityProviderException;
 }
