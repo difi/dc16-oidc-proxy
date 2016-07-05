@@ -23,6 +23,7 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
     @Override
     public Optional<SecurityConfig> getConfig(String hostname, String path) {
+        System.out.println("PATH: "+path);
         if (hostConfigProvider.getByHostname(hostname) == null) {
             return Optional.empty();
         }
