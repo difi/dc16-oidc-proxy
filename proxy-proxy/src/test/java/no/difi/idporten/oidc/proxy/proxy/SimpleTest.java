@@ -8,6 +8,7 @@ import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,10 +38,21 @@ public class SimpleTest {
     }
 
     @Test
-    public void testRedirectResponse() throws Exception {
+    public void testSecuredConfigured() throws Exception{
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            URL url = URI.create("http://localhost:8080/").toURL();
+            ByteStreams.copy(URI.create("http://localhost:8080/google").toURL().openStream(), baos);
+        } catch (Exception e){
+            logger.info("Received '{}'.", e.getMessage(), e);
+        }
+    }
+
+    @Test
+    public void testUnsecuredConfigured() throws Exception {
+        try {
+            System.out.println("THREAD: ");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            URL url = URI.create("http://www.xkcd.com:8080/").toURL();
             ByteStreams.copy(url.openStream(), baos);
         } catch (Exception e) {
             // Currently expected.
@@ -49,12 +61,12 @@ public class SimpleTest {
     }
 
     @Test
-    public void testDefaultResponse() throws Exception{
+    public void testUnconfigured() throws Exception{
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ByteStreams.copy(URI.create("http://www.nettavisen.no/").toURL().openStream(), baos);
+            ByteStreams.copy(URI.create("http://127.0.0.1:8080").toURL().openStream(), baos);
         } catch (Exception e){
-            logger.info("Somethingsomething: ", e.getMessage(), e);
+            logger.info("Received '{}'.", e.getMessage(), e);
         }
     }
 

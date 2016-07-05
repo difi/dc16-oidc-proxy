@@ -63,6 +63,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         // host = "www.difi.no"; // edit host here if you want to test different configurations
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
+        System.out.println("PATH "+securityConfigOptional.get().getPath());
 
         if (!securityConfigOptional.isPresent()) {
             logger.debug("Could not get SecurityConfig of host {}", host);
@@ -165,6 +166,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
+                //responseGenerator.generateUnsecuredRespone(ctx, securityConfig.getBackend(), httpRequest);
                 bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
             }
         });
@@ -210,6 +212,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             if (future.isSuccess()) {
+                                logger.debug(String.format("IS SUCCESS: %s", future.toString()));
                                 // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();
                             } else {
