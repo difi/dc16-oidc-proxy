@@ -46,9 +46,14 @@ public class ResponseGenerator {
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
         StringBuilder content = new StringBuilder();
         content.append(String.format("no cannot use %s", host));
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.BAD_REQUEST,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(content.toString()), CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        response.headers().set(
+                HttpHeaderNames.CONTENT_TYPE,
+                String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
         logger.debug(String.format("Created default response:\n%s", response));
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
