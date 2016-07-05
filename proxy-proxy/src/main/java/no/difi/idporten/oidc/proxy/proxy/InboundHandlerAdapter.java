@@ -6,7 +6,6 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
@@ -14,14 +13,12 @@ import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import no.difi.idporten.oidc.proxy.model.UserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -96,7 +93,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // Cookie contains an UUID, but it is not found in the storage.
                         // This is an exception and it means something is wrong with either getting cookies or
                         // creating and writing UUIDs  ...or the user is messing with us
-                        // TODO Create new expired cookie with the UUID we found?
+
                     } else {
                         ProxyCookie proxyCookieObject = proxyCookieOptional.get();
                         logger.debug("Has proxyCookieObject {}", proxyCookieObject);
@@ -135,6 +132,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // need to get token here
                         try {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
+                            // Generating JWT response and setting cookie
                             responseGenerator.generateJWTResponse(ctx, userData, cookieStorage.generateCookieAsObject(cookieName, host, trimmedPath, userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
