@@ -53,8 +53,36 @@ public class CookieDatabase {
         } System.out.println("DB: Table 'PUBLIC.cookie' created in H2 database");
     }
 
+    public void insertCookie(ProxyCookie cookie){
+        // For Cookie variables expiry and maxExpiry, Date's getTime() is used to store millisecond values in the database as BIGINT
+        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, host, name, path, expiry, maxExpiry) " +
+                        "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getHost(), cookie.getName(),
+                cookie.getPath(), cookie.getExpiry().getTime(), cookie.getMaxExpiry().getTime());
+
+        /*
+        Unclear at current time whether lastUpdated and created should be variables in cookies and database
+        Also, query above includes name and path
+        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, host, expiry, maxExpiry, created, lastUpdated) " +
+                        "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getHost(), cookie.getExpiry().getTime(),
+                        cookie.getMaxExpiry().getTime(), cookie.getCreated().getTime(), cookie.getLastUpdated().getTime());
+        */
+        System.out.println("DB: Insert cookie query: " + query);
+        try {
+            statement.execute(query);
+        } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.insertCookie(): " + e);
+            e.printStackTrace();
+        } System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
+    }
+
     public static void main(String[] args) {
         CookieDatabase db = new CookieDatabase();
         db.createTable();
+
+        // Creating test entries
+        db.insertCookie(new DefaultProxyCookie("test-cookie", "name", "/", "host.com", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
+        for (int i=1; i<5; i++){
+            db.insertCookie(new DefaultProxyCookie(UUID.randomUUID().toString(), "name"+i, "/", "host.com", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
+        }
     }
 }
