@@ -60,12 +60,20 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
+    /**
+     * Generates and writes an appropriate JSON response based on userData with a correct 'Set-Cookie' header.
+     * @param ctx
+     * @param userData
+     * @param proxyCookieObject
+     * @throws IdentityProviderException
+     */
     protected void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData, ProxyCookie proxyCookieObject) throws IdentityProviderException {
         FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
         result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
         result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format("%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
         logger.debug("Setting Set-Cookie to the response");
-        CookieHandler.insertCookieIntoHeader(result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
+        CookieHandler.insertCookieToResponse
+                (result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
         logger.debug(String.format("Created JWT response:\n%s", result));
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }
