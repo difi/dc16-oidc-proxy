@@ -6,10 +6,16 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import org.apache.http.*;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,12 +84,4 @@ public class ResponseGenerator {
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }
 
-    protected void generateUnsecuredRespone(ChannelHandlerContext ctx, SocketAddress socketAddress, HttpRequest httpRequest){
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
-        //response.headers().set(HttpHeaderNames.LOCATION, socketAddress);
-        //response.headers().set(HttpHeaderNames.HOST, "localhost:8080");
-        logger.debug(String.format("Created unsecured configured response: %s", response));
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-
-    }
 }

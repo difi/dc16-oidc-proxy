@@ -2,6 +2,7 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

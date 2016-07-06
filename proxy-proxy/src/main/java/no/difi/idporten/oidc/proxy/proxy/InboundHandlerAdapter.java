@@ -143,6 +143,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
+
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
         b.handler(new OutboundInitializer(inboundChannel))
@@ -180,7 +181,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     });
                 } else {
                     // Close the connection if the connection attempt has failed.
-                    responseGenerator.generateUnsecuredRespone(ctx, outboundAddress, httpRequest);
                     logger.debug("Outbound channel operation failure");
                     inboundChannel.close();
                 }
