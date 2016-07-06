@@ -122,7 +122,7 @@ public class CookieHandler {
     private Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest) {
         if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
 
-            String cookieString = httpRequest.headers().get(HttpHeaderNames.COOKIE);
+            String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
             Set<Cookie> cookieSet = ServerCookieDecoder.STRICT.decode(cookieString);
             return cookieSet.stream()
                     .filter(nettyCookie -> nettyCookie.name().equals(cookieName))
