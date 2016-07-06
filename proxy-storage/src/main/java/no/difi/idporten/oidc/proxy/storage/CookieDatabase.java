@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.storage;
 
+import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import org.h2.tools.Server;
 
@@ -20,41 +21,40 @@ public class CookieDatabase {
     Statement statement;
     ResultSet resultSet;
 
-    public CookieDatabase() throws SQLException {
+    public CookieDatabase() {
         try {
             Class.forName(JDBC_DRIVER);
-            //server = Server.createTcpServer().start();
             connection = DriverManager.getConnection(DB_URL, USER, PASS);
             statement = connection.createStatement();
-        } catch (SQLException |ClassNotFoundException sqlE){
-            sqlE.printStackTrace();
+        } catch (SQLException | ClassNotFoundException e){
+            System.err.println("Exception caught in CookieDatabase.CookieDatabase(): " + e);
+            e.printStackTrace();
         }
     }
 
     public void createTable(){
-        System.out.println("CREATE TABLE");
         try{
-            //statement.execute("DROP TABLE IF EXISTS PUBLIC.cookie");
             statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie\n" +
                     "(\n" +
                     "    uuid VARCHAR(36) PRIMARY KEY NOT NULL,\n" +
                     "    userData BLOB,\n" +
                     "    host VARCHAR(30) NOT NULL,\n" +
+                    "    name VARCHAR(30) NOT NULL,\n" +
+                    "    path VARCHAR(30) NOT NULL,\n" +
                     "    expiry BIGINT NOT NULL,\n" +
                     "    maxExpiry BIGINT NOT NULL,\n" +
-                    "    created BIGINT NOT NULL,\n" +
-                    "    lastUpdated BIGINT NOT NULL\n" +
+//                    "    created BIGINT NOT NULL,\n" +
+//                    "    lastUpdated BIGINT NOT NULL\n" +
                     ");\n");
             statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
         } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.createTable(): " + e);
             e.printStackTrace();
-        }
+        } System.out.println("DB: Table 'PUBLIC.cookie' created in H2 database");
     }
 
-    public static void main(String[] args) throws Exception {
-        CookieDatabase di = new CookieDatabase();
-        di.createTable();
+    public static void main(String[] args) {
+        CookieDatabase db = new CookieDatabase();
+        db.createTable();
     }
-
-
 }
