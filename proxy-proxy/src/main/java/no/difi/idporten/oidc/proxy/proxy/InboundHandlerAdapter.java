@@ -169,6 +169,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
+
                             if (future.isSuccess()) {
                                 // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();
@@ -179,6 +180,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     });
                 } else {
                     // Close the connection if the connection attempt has failed.
+                    responseGenerator.generateUnsecuredRespone(ctx, outboundAddress, httpRequest);
                     logger.debug("Outbound channel operation failure");
                     inboundChannel.close();
                 }
