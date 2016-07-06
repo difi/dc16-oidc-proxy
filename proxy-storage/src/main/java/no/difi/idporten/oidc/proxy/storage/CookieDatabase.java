@@ -34,18 +34,18 @@ public class CookieDatabase {
 
     public void createTable(){
         try{
-            statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie\n" +
-                    "(\n" +
-                    "    uuid VARCHAR(36) PRIMARY KEY NOT NULL,\n" +
-                    "    userData BLOB,\n" +
-                    "    host VARCHAR(30) NOT NULL,\n" +
-                    "    name VARCHAR(30) NOT NULL,\n" +
-                    "    path VARCHAR(30) NOT NULL,\n" +
-                    "    expiry BIGINT NOT NULL,\n" +
-                    "    maxExpiry BIGINT NOT NULL,\n" +
+            statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie " +
+                    "(" +
+                        "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
+                        "name VARCHAR(30) NOT NULL, " +
+                        "host VARCHAR(30) NOT NULL, " +
+                        "path VARCHAR(30) NOT NULL, " +
+                        "expiry BIGINT NOT NULL, " +
+                        "maxExpiry BIGINT NOT NULL, " +
+                        "userData BLOB" +
 //                    "    created BIGINT NOT NULL,\n" +
 //                    "    lastUpdated BIGINT NOT NULL\n" +
-                    ");\n");
+                    ");");
             statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
         } catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.createTable(): " + e);
@@ -55,8 +55,8 @@ public class CookieDatabase {
 
     public void insertCookie(ProxyCookie cookie){
         // For Cookie variables expiry and maxExpiry, Date's getTime() is used to store millisecond values in the database as BIGINT
-        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, host, name, path, expiry, maxExpiry) " +
-                        "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getHost(), cookie.getName(),
+        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, expiry, maxExpiry) " +
+                        "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getName(), cookie.getHost(),
                 cookie.getPath(), cookie.getExpiry().getTime(), cookie.getMaxExpiry().getTime());
 
         /*
@@ -80,9 +80,9 @@ public class CookieDatabase {
         db.createTable();
 
         // Creating test entries
-        db.insertCookie(new DefaultProxyCookie("test-cookie", "name", "/", "host.com", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
+        db.insertCookie(new DefaultProxyCookie("test-cookie", "name", "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
         for (int i=1; i<5; i++){
-            db.insertCookie(new DefaultProxyCookie(UUID.randomUUID().toString(), "name"+i, "/", "host.com", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
+            db.insertCookie(new DefaultProxyCookie(UUID.randomUUID().toString(), "name"+i, "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
         }
     }
 }
