@@ -142,6 +142,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
+
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
         b.handler(new OutboundInitializer(inboundChannel))
@@ -168,6 +169,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
+
                             if (future.isSuccess()) {
                                 // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();

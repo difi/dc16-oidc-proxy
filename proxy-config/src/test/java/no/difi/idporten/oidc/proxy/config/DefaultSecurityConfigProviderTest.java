@@ -90,8 +90,8 @@ public class DefaultSecurityConfigProviderTest {
 
     @Test
     public void testGetExistingParameter() {
-        Assert.assertNotNull(securityConfigWithIdpPathChecker.getParameter("quality"));
-        Assert.assertEquals(securityConfigWithIdpPathChecker.getParameter("quality"), "3");
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getParameter("security"));
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getParameter("security"), "3");
     }
 
     @Test
