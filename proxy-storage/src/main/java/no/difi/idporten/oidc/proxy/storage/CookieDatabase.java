@@ -66,7 +66,8 @@ public class CookieDatabase {
                         "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getHost(), cookie.getExpiry().getTime(),
                         cookie.getMaxExpiry().getTime(), cookie.getCreated().getTime(), cookie.getLastUpdated().getTime());
         */
-        System.out.println("DB: Insert cookie query: " + query);
+
+        // System.out.println("DB: Insert cookie query: " + query);
         try {
             statement.execute(query);
         } catch (SQLException e){
@@ -88,17 +89,51 @@ public class CookieDatabase {
 
                 // TODO: Handle conversion of userData object to HashMap<String, String>. Returns null object in ProxyCookie constructor until resolved
 
-                System.out.printf("%s65 %15s %20s %20s %20s %20s %20s\n", uuid, name, host, path, expiry, maxExpiry, userData);
+                //System.out.printf("\n%.65s %15s %20s %20s %20s %20s %20s\n", uuid, name, host, path, expiry, maxExpiry, userData);
                 cookie = new DefaultProxyCookie(uuid, name, host, path, new Date(expiry), new Date(maxExpiry), null);
                 System.out.println("DB: Found cookie with uuid " + uuid);
             } else {
                 System.err.println("DB: Cookie with this uuid does not exist: "+uuid);
             }
         }catch (SQLException e){
-            System.err.println("SQLException triggered in CookieDatabase.findCookie(): " + e);
+            System.err.println("SQLException caught in CookieDatabase.findCookie(): " + e);
             e.printStackTrace();
         }
         return Optional.ofNullable(cookie);
+    }
+
+    public HashMap<String, ProxyCookie> getAllCookies(){
+        HashMap<String , ProxyCookie> cookies = new HashMap<>();
+        try{
+            resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie");
+            while (resultSet.next()){
+                String uuid = resultSet.getString("uuid");
+                String name = resultSet.getString("name");
+                String host = resultSet.getString("host");
+                String path = resultSet.getString("path");
+                long expiry = resultSet.getLong("expiry");
+                long maxExpiry = resultSet.getLong("maxExpiry");
+                Object userData = resultSet.getObject("userData");
+
+                // TODO: Handle conversion of userData object to HashMap<String, String>. Returns null object in ProxyCookie constructor until resolved
+
+                System.out.printf("\n%.65s %15s %20s %20s %20s %20s %20s", uuid, name, host, path, expiry, maxExpiry, userData);
+                cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, new Date(expiry), new Date(maxExpiry), null));
+            }
+        } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.getAllCookies(): " + e);
+            e.printStackTrace();
+        }
+        return cookies;
+    }
+
+    public static void printCookie(ProxyCookie cookie){
+        System.out.println("\ncookie.toString(): "+cookie);
+        System.out.println("cookie.getName(): "+cookie.getName());
+        System.out.println("cookie.getHost(): "+cookie.getHost());
+        System.out.println("cookie.getPath(): "+cookie.getPath());
+        System.out.println("cookie.getExpiry(): "+cookie.getExpiry());
+        System.out.println("cookie.getMaxExpiry(): "+cookie.getMaxExpiry());
     }
 
     public static void main(String[] args) {
@@ -111,15 +146,14 @@ public class CookieDatabase {
             db.insertCookie(new DefaultProxyCookie(UUID.randomUUID().toString(), "name"+i, "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
         }
 
+        HashMap<String, ProxyCookie> cookies = db.getAllCookies();
+        System.out.println("\n\ngetAllCookies HashMap:\n" + cookies);
+        cookies.values().forEach(CookieDatabase::printCookie);
+
         // Finding a test entry
         Optional<ProxyCookie> testCookie = db.findCookie("test-cookie");
         if (testCookie.isPresent()){
-            System.out.println("testCookie.get(): "+testCookie.get());
-            System.out.println("testCookie.get().getName(): "+testCookie.get().getName());
-            System.out.println("testCookie.get().getHost(): "+testCookie.get().getHost());
-            System.out.println("testCookie.get().getPath(): "+testCookie.get().getPath());
-            System.out.println("testCookie.get().getExpiry(): "+testCookie.get().getExpiry());
-            System.out.println("testCookie.get().getMaxExpiry(): "+testCookie.get().getMaxExpiry());
+            printCookie(testCookie.get());
         }
 
     }
