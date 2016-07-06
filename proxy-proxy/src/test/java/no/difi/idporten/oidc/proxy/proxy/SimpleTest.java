@@ -1,10 +1,7 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import com.google.common.io.ByteStreams;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.sun.tools.javac.util.ByteBuffer;
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +10,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URL;
 
@@ -40,8 +36,8 @@ public class SimpleTest {
     @Test
     public void testSecuredConfigured() throws Exception{
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ByteStreams.copy(URI.create("http://localhost:8080/google").toURL().openStream(), baos);
+            URL url = URI.create("http://localhost:8080/google").toURL();
+            Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 302 Found]"));
         } catch (Exception e){
             logger.info("Received '{}'.", e.getMessage(), e);
         }
@@ -50,10 +46,8 @@ public class SimpleTest {
     @Test
     public void testUnsecuredConfigured() throws Exception {
         try {
-            System.out.println("THREAD: ");
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             URL url = URI.create("http://www.xkcd.com:8080/").toURL();
-            ByteStreams.copy(url.openStream(), baos);
+            Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 200 OK]"));
         } catch (Exception e) {
             // Currently expected.
             logger.info("Received '{}'.", e.getMessage(), e);
@@ -63,8 +57,8 @@ public class SimpleTest {
     @Test
     public void testUnconfigured() throws Exception{
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ByteStreams.copy(URI.create("http://127.0.0.1:8080").toURL().openStream(), baos);
+            URL url = URI.create("http://127.0.0.1:8080").toURL();
+            Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 400 Bad Request]"));
         } catch (Exception e){
             logger.info("Received '{}'.", e.getMessage(), e);
         }

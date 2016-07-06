@@ -47,6 +47,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
             HttpRequest request = (HttpRequest) msg;
 
 
+
             String host = request.headers().getAsString(HttpHeaderNames.HOST);
             logger.debug(String.format("Trimmed host name: %s", host));
         }

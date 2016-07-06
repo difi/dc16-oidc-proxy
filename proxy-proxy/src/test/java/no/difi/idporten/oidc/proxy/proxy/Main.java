@@ -12,14 +12,15 @@ import java.util.ArrayList;
 public class Main {
 
     @Test
-    public void main() {
+    public void main() throws Exception {
         Injector injector = Guice.createInjector(new ArrayList<Module>() {{
             add(new ConfigModule());
             add(new StorageModule());
             add(new ProxyModule());
         }});
-        System.out.println(injector.getBindings());
         injector.getInstance(NettyHttpListener.class).run();
 
     }
+
+
 }

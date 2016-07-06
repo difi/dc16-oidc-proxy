@@ -19,7 +19,6 @@ public class TypesafeHostConfigProvider implements HostConfigProvider {
                 .map(key -> config.getConfig(String.format("host.%s", key)))
                 .map(c -> new TypesafeHostConfig(c, config))
                 .collect(Collectors.toMap(HostConfig::getHostname, Function.identity()));
-        System.out.println(hosts);
     }
 
     @Override

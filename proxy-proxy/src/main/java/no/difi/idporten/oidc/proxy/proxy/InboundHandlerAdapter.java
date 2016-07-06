@@ -62,7 +62,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         this.host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
-        System.out.println("PATH "+securityConfigOptional.get().getPath());
 
         if (!securityConfigOptional.isPresent()) {
             logger.debug("Could not get SecurityConfig of host {}", host);
@@ -194,7 +193,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             if (future.isSuccess()) {
-                                logger.debug(String.format("IS SUCCESS: %s", future.toString()));
                                 // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();
                             } else {
