@@ -124,7 +124,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                //responseGenerator.generateUnsecuredRespone(ctx, securityConfig.getBackend(), httpRequest);
                 bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
             }
         });

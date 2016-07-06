@@ -15,16 +15,11 @@ import org.slf4j.LoggerFactory;
 public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage> {
     private static Logger logger = LoggerFactory.getLogger(HttpRequestHandler.class);
 
-    private IdportenIdentityProvider idportenIdentityProvider;
-    private CookieHandler checkHeaderForCookie;
-    private SecurityConfigProvider securityConfigProvider;
-
     private final int maxConnectionsQueued;
 
     public HttpRequestHandler(int maxConnectionsQueued) {
         this.maxConnectionsQueued = maxConnectionsQueued;
-        //idportenIdentityProvider = new IdportenIdentityProvider();
-        //checkHeaderForCookie = new CookieHandler();
+
     }
 
     @Override

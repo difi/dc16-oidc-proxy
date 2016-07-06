@@ -48,10 +48,8 @@ public class SimpleTest {
     public void testUnsecuredConfigured() throws Exception {
         try {
             URL url = URI.create("http://localhost:8080/").toURL();
-            System.out.println("HEADER"+url.openConnection().getHeaderFields());
             Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 200 OK]"));
         } catch (Exception e) {
-            // Currently expected.
             logger.info("Received '{}'.", e.getMessage(), e);
         }
     }
