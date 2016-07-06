@@ -69,12 +69,14 @@ public class CookieDatabase {
 
         // System.out.println("DB: Insert cookie query: " + query);
         try {
-            statement.execute(query);
+            statement.executeUpdate(query);
+            System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
         } catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.insertCookie(): " + e);
             e.printStackTrace();
-        } System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
+        }
     }
+
     public Optional<ProxyCookie> findCookie(String uuid){
         ProxyCookie cookie = null;
         try {
@@ -135,6 +137,17 @@ public class CookieDatabase {
         System.out.println("cookie.getExpiry(): "+cookie.getExpiry());
         System.out.println("cookie.getMaxExpiry(): "+cookie.getMaxExpiry());
     }
+    public void removeExpiredCookies(){
+        //System.out.println("removeExpiredCookies()");
+        try{
+            long presentTimeInMillisec = new Date().getTime();
+            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE expiry < '"+presentTimeInMillisec+"'");
+            System.out.println("DB: Expired cookies removed from database");
+        } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): "+e);
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         CookieDatabase db = new CookieDatabase();
@@ -142,6 +155,9 @@ public class CookieDatabase {
 
         // Creating test entries
         db.insertCookie(new DefaultProxyCookie("test-cookie", "name", "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
+        db.insertCookie(new DefaultProxyCookie("expired-cookie1", "name", "host.com", "/", new Date(new Date().getTime() - 30 * 60 * 1000), new Date(new Date().getTime() - 120 * 60 * 1000), new HashMap<>(1)));
+        db.insertCookie(new DefaultProxyCookie("expired-cookie2", "name", "host.com", "/", new Date(new Date().getTime() - 50 * 60 * 1000), new Date(new Date().getTime() - 220 * 60 * 1000), new HashMap<>(1)));
+        db.insertCookie(new DefaultProxyCookie("expires-now-cookie", "name", "host.com", "/", new Date(new Date().getTime()), new Date(new Date().getTime() - 220 * 60 * 1000), new HashMap<>(1)));
         for (int i=1; i<5; i++){
             db.insertCookie(new DefaultProxyCookie(UUID.randomUUID().toString(), "name"+i, "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
         }
@@ -149,6 +165,12 @@ public class CookieDatabase {
         HashMap<String, ProxyCookie> cookies = db.getAllCookies();
         System.out.println("\n\ngetAllCookies HashMap:\n" + cookies);
         cookies.values().forEach(CookieDatabase::printCookie);
+
+        db.removeExpiredCookies();
+        HashMap<String, ProxyCookie> cookies2 = db.getAllCookies();
+        System.out.println("\n\ngetAllCookies HashMap:\n" + cookies2);
+        cookies2.values().forEach(CookieDatabase::printCookie);
+
 
         // Finding a test entry
         Optional<ProxyCookie> testCookie = db.findCookie("test-cookie");
