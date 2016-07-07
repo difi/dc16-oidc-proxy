@@ -12,11 +12,7 @@ import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mockito;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -42,6 +38,7 @@ public class ResponseGeneratorTest {
      */
     @Captor
     private ArgumentCaptor<FullHttpResponse> httpResponseCaptor;
+
     /**
      * Acts as an empty ChannelHandlerContext object, but can be configured to return any value you want from any of
      * its methods if needed. We use the httpResponseCaptor to see which arguments writeAndFlush were called with.
@@ -148,7 +145,8 @@ public class ResponseGeneratorTest {
             Assert.assertTrue(actual instanceof HttpResponse);
             String content = actual.content().toString(Charset.forName("UTF-8"));
             Assert.assertEquals(actual.status(), HttpResponseStatus.BAD_REQUEST);
-            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator.TEXT_HTML));
+            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
+                    .TEXT_HTML));
             Assert.assertTrue(content.contains(host));
         }
     }
@@ -168,7 +166,8 @@ public class ResponseGeneratorTest {
         userData.put("pid", pid);
         userData.put("tokenType", "JWTToken");
         userData.put("aud", "dificamp");
-        ProxyCookie proxyCookie =  new DefaultProxyCookie(uuid, cookieName, host, path, farFutureDate, farFutureDate, userData);
+        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, farFutureDate, farFutureDate,
+                userData);
         try {
             responseGeneratorSpy.generateJWTResponse(ctxMock, userData, proxyCookie);
         } catch (NullPointerException exc) {
@@ -183,7 +182,8 @@ public class ResponseGeneratorTest {
             Assert.assertTrue(actual instanceof HttpResponse);
             String content = actual.content().toString(Charset.forName("UTF-8"));
             Assert.assertEquals(actual.status(), HttpResponseStatus.OK);
-            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator.APPLICATION_JSON));
+            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
+                    .APPLICATION_JSON));
             userData.entrySet().stream().forEach(entry -> {
                 Assert.assertTrue(content.contains(entry.getKey()));
                 Assert.assertTrue(content.contains(entry.getValue()));
