@@ -28,9 +28,6 @@ public class DatabaseCookieStorage implements CookieStorage {
         return ourInstance;
     }
 
-    private static HashMap<String, String> defaultUserData; // just used for testing purposes
-
-    private Map<String, DefaultProxyCookie> storedCookies;
 
     /**
      * Generates a MD5 hash based on a random new UUID and the parameters
@@ -43,13 +40,11 @@ public class DatabaseCookieStorage implements CookieStorage {
         String uuid = UUID.randomUUID().toString();
         // ProxyCookie (DefaultProxyCookie) initialized with userData = null for the time being
         db.insertCookie(new DefaultProxyCookie(uuid, cookieName, host, path, new Date(new Date().getTime() + initialValidPeriod * MINUTE), new Date(new Date().getTime() + maxValidPeriod * MINUTE), null));
-        return DummyCookieStorage.hashCookieBrowserId(uuid, cookieName, host, path);
+        return DummyCookieStorage.hashBrowserCookieId(uuid, cookieName, host, path);
     }
 
     private DatabaseCookieStorage() {
-        defaultUserData = new HashMap<String, String>();
-        defaultUserData.put("pid", "08023549930");
-        storedCookies = new HashMap<String, DefaultProxyCookie>();
+        // Instantiate
     }
 
 
@@ -67,16 +62,14 @@ public class DatabaseCookieStorage implements CookieStorage {
      * 'maxExpiry', 'expiry' is set to 'maxExpiry'.
      * @param cookie
      */
-    private void extendCookieExpiry(ProxyCookie cookie) {
-        /*if( cookie )
-        Date dateNow = new Date();
 
-        Date newExpiry = new Date(dateNow.getTime() + expandSessionPeriod * MINUTE);
+    private void extendCookieExpiry(ProxyCookie cookie) {
+        Date newExpiry = cookie.getExpiry();
         if (newExpiry.after(cookie.getMaxExpiry())) {
-            ((DefaultProxyCookie) cookie).setExpiry(cookie.getMaxExpiry());
-        } else {
-            cookie.setExpiry(newExpiry);
-        }*/
+            newExpiry = cookie.getMaxExpiry();
+        }
+        // As of now lastUpdated is set to the time it is inserted into the database, in CookieDatabase.extendCookieExpiry()
+        db.extendCookieExpiry(cookie.getUuid(), newExpiry);
     }
 
     @Override

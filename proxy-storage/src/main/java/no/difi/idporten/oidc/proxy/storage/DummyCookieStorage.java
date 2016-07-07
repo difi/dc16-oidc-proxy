@@ -40,10 +40,10 @@ public class DummyCookieStorage implements CookieStorage {
      */
     private static String generateDatabaseKey(String cookieName, String host, String path) {
         String uuid = UUID.randomUUID().toString();
-        return hashCookieBrowserId(uuid, cookieName, host, path);
+        return hashBrowserCookieId(uuid, cookieName, host, path);
     }
 
-    public static String hashCookieBrowserId(String uuid, String cookieName, String host, String path){
+    public static String hashBrowserCookieId(String uuid, String cookieName, String host, String path){
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.reset();
