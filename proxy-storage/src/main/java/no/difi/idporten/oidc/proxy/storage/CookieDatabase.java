@@ -3,6 +3,8 @@ package no.difi.idporten.oidc.proxy.storage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import org.h2.tools.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.Date;
@@ -16,6 +18,7 @@ public class CookieDatabase {
     private final String USER = "SA";
     private final String PASS = "";
 
+    private static Logger logger = LoggerFactory.getLogger(CookieDatabase.class);
     Server server;
     Connection connection;
     Statement statement;
@@ -42,9 +45,9 @@ public class CookieDatabase {
                         "path VARCHAR(30) NOT NULL, " +
                         "expiry BIGINT NOT NULL, " +
                         "maxExpiry BIGINT NOT NULL, " +
-                        "userData BLOB" +
-//                    "    created BIGINT NOT NULL,\n" +
-//                    "    lastUpdated BIGINT NOT NULL\n" +
+                        "userData BLOB, " +
+                        "created BIGINT NOT NULL, " +
+                        "lastUpdated BIGINT NOT NULL" +
                     ");");
             statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
         } catch (SQLException e){
@@ -54,20 +57,20 @@ public class CookieDatabase {
     }
 
     public void insertCookie(ProxyCookie cookie){
-        // For Cookie variables expiry and maxExpiry, Date's getTime() is used to store millisecond values in the database as BIGINT
-        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, expiry, maxExpiry) " +
-                        "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getName(), cookie.getHost(),
-                cookie.getPath(), cookie.getExpiry().getTime(), cookie.getMaxExpiry().getTime());
+        // For Cookie variables expiry, maxExpiry, created and lastUpdated, Date's getTime() is used to store millisecond values in the database as BIGINT
 
-        /*
-        Unclear at current time whether lastUpdated and created should be variables in cookies and database
-        Also, query above includes name and path
-        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, host, expiry, maxExpiry, created, lastUpdated) " +
-                        "VALUES ('%s','%s','%s','%s','%s','%s')", cookie.getUuid(), cookie.getHost(), cookie.getExpiry().getTime(),
-                        cookie.getMaxExpiry().getTime(), cookie.getCreated().getTime(), cookie.getLastUpdated().getTime());
-        */
+        long presentTimeInMillisec = new Date().getTime(); // lastUpdated
+        // TODO: Fix handling of userData conversion into SQL Blob. Now disregards input of userData
+        //String userData = cookie.getUserData().toString();
+//        System.out.println("Blob.class.toGenericString(): "+lol);
+//        System.out.println("cookie.getUserData().toString(): "+userData);
+        //if (userData.equals("{}")) userData = "null";
+        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, expiry, maxExpiry, created, lastUpdated) " +
+                        "VALUES ('%s','%s','%s','%s','%s','%s', '%s', '%s');", cookie.getUuid(), cookie.getName(), cookie.getHost(),
+                        cookie.getPath(), cookie.getExpiry().getTime(), cookie.getMaxExpiry().getTime(),
+                        cookie.getCreated().getTime(), presentTimeInMillisec);
 
-        // System.out.println("DB: Insert cookie query: " + query);
+         System.out.println("DB: Insert cookie query: " + query);
         try {
             statement.executeUpdate(query);
             System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
@@ -80,7 +83,7 @@ public class CookieDatabase {
     public Optional<ProxyCookie> findCookie(String uuid){
         ProxyCookie cookie = null;
         try {
-            resultSet = statement.executeQuery("SELECT * from PUBLIC.cookie WHERE uuid = '"+uuid+"'");
+            resultSet = statement.executeQuery("SELECT * from PUBLIC.cookie WHERE uuid = '"+uuid+"';");
             if (resultSet.next()) {
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
@@ -104,10 +107,12 @@ public class CookieDatabase {
         return Optional.ofNullable(cookie);
     }
 
+
+
     public HashMap<String, ProxyCookie> getAllCookies(){
         HashMap<String , ProxyCookie> cookies = new HashMap<>();
         try{
-            resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie");
+            resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie;");
             while (resultSet.next()){
                 String uuid = resultSet.getString("uuid");
                 String name = resultSet.getString("name");
@@ -137,11 +142,12 @@ public class CookieDatabase {
         System.out.println("cookie.getExpiry(): "+cookie.getExpiry());
         System.out.println("cookie.getMaxExpiry(): "+cookie.getMaxExpiry());
     }
+
     public void removeExpiredCookies(){
         //System.out.println("removeExpiredCookies()");
         try{
             long presentTimeInMillisec = new Date().getTime();
-            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE expiry < '"+presentTimeInMillisec+"'");
+            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE expiry < "+presentTimeInMillisec+";");
             System.out.println("DB: Expired cookies removed from database");
         } catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): "+e);
@@ -149,34 +155,4 @@ public class CookieDatabase {
         }
     }
 
-    public static void main(String[] args) {
-        CookieDatabase db = new CookieDatabase();
-        db.createTable();
-
-        // Creating test entries
-        db.insertCookie(new DefaultProxyCookie("test-cookie", "name", "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
-        db.insertCookie(new DefaultProxyCookie("expired-cookie1", "name", "host.com", "/", new Date(new Date().getTime() - 30 * 60 * 1000), new Date(new Date().getTime() - 120 * 60 * 1000), new HashMap<>(1)));
-        db.insertCookie(new DefaultProxyCookie("expired-cookie2", "name", "host.com", "/", new Date(new Date().getTime() - 50 * 60 * 1000), new Date(new Date().getTime() - 220 * 60 * 1000), new HashMap<>(1)));
-        db.insertCookie(new DefaultProxyCookie("expires-now-cookie", "name", "host.com", "/", new Date(new Date().getTime()), new Date(new Date().getTime() - 220 * 60 * 1000), new HashMap<>(1)));
-        for (int i=1; i<5; i++){
-            db.insertCookie(new DefaultProxyCookie(UUID.randomUUID().toString(), "name"+i, "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
-        }
-
-        HashMap<String, ProxyCookie> cookies = db.getAllCookies();
-        System.out.println("\n\ngetAllCookies HashMap:\n" + cookies);
-        cookies.values().forEach(CookieDatabase::printCookie);
-
-        db.removeExpiredCookies();
-        HashMap<String, ProxyCookie> cookies2 = db.getAllCookies();
-        System.out.println("\n\ngetAllCookies HashMap:\n" + cookies2);
-        cookies2.values().forEach(CookieDatabase::printCookie);
-
-
-        // Finding a test entry
-        Optional<ProxyCookie> testCookie = db.findCookie("test-cookie");
-        if (testCookie.isPresent()){
-            printCookie(testCookie.get());
-        }
-
-    }
 }
