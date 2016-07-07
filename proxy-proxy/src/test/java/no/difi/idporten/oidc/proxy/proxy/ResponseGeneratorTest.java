@@ -65,7 +65,6 @@ public class ResponseGeneratorTest {
 
         } finally {
             Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any());
-            Assert.assertThrows(IdentityProviderException.class, Mockito.verify(identityProviderMock).generateRedirectURI());
             /*
             Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
             Mockito.verify(responseGeneratorSpy).generateDefaultResponse(Mockito.any(), Mockito.anyString());
