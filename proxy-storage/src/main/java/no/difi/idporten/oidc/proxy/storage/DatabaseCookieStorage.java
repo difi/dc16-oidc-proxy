@@ -17,9 +17,9 @@ public class DatabaseCookieStorage implements CookieStorage {
 
 
     private static final int MINUTE = 60 * 1000;
-    private int initialValidPeriod = 30;
+    private static int initialValidPeriod = 30;
     private static int expandSessionPeriod = 30;
-    private int maxValidPeriod = 120;
+    private static int maxValidPeriod = 120;
     private static CookieDatabase db = new CookieDatabase();
 
     private static DatabaseCookieStorage ourInstance = new DatabaseCookieStorage();
@@ -41,9 +41,9 @@ public class DatabaseCookieStorage implements CookieStorage {
      */
     private static String generateDatabaseKey(String cookieName, String host, String path) {
         String uuid = UUID.randomUUID().toString();
-        db.insertCookie(new DefaultProxyCookie("test-cookie", "name", "host.com", "/", new Date(new Date().getTime() + 30 * 60 * 1000), new Date(new Date().getTime() + 120 * 60 * 1000), new HashMap<>(1)));
-
-        return null;
+        // ProxyCookie (DefaultProxyCookie) initialized with userData = null for the time being
+        db.insertCookie(new DefaultProxyCookie(uuid, cookieName, host, path, new Date(new Date().getTime() + initialValidPeriod * MINUTE), new Date(new Date().getTime() + maxValidPeriod * MINUTE), null));
+        return DummyCookieStorage.hashCookieBrowserId(uuid, cookieName, host, path);
     }
 
     private DatabaseCookieStorage() {

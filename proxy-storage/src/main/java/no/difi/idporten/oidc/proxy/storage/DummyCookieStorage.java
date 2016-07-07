@@ -18,7 +18,7 @@ public class DummyCookieStorage implements CookieStorage {
 
     private static final int MINUTE = 60 * 1000;
     private int initialValidPeriod = 30;
-    private int expandSessionPeriod = 30;
+    private static int expandSessionPeriod = 30;
     private int maxValidPeriod = 120;
 
     private static DummyCookieStorage ourInstance = new DummyCookieStorage();
@@ -40,6 +40,10 @@ public class DummyCookieStorage implements CookieStorage {
      */
     private static String generateDatabaseKey(String cookieName, String host, String path) {
         String uuid = UUID.randomUUID().toString();
+        return hashCookieBrowserId(uuid, cookieName, host, path);
+    }
+
+    public static String hashCookieBrowserId(String uuid, String cookieName, String host, String path){
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.reset();
@@ -55,9 +59,9 @@ public class DummyCookieStorage implements CookieStorage {
             return sb.toString();
         } catch (NoSuchAlgorithmException exc) {
             exc.printStackTrace();
-        }
-        return null;
+        } return null;
     }
+
 
     private DummyCookieStorage() {
         defaultUserData = new HashMap<String, String>();
@@ -130,4 +134,11 @@ public class DummyCookieStorage implements CookieStorage {
                 .filter(entry -> entry.getValue().getExpiry().after(dateNow))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
+
+    public static void main(String[] args) {
+        CookieDatabase db = new CookieDatabase();
+
+    }
+
+
 }
