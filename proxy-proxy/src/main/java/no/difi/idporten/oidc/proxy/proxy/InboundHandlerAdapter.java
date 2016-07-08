@@ -73,53 +73,29 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
             if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
                 logger.debug("{}{} is secured", host, path);
-
-
-                CookieConfig cookieConfig = securityConfig.getCookieConfig();
-                this.cookieName = cookieConfig.getName();
-                CookieStorage cookieStorage = cookieConfig.getCookieStorage();
+                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
 
                 // getting correct cookie from request
-                logger.debug("Looking for cookie with name {}", cookieName);
-                Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, cookieName);
+                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
 
-                if (/*request has the cookie we want*/ nettyCookieOptional.isPresent()) {
-                    logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
-                    // get CookieObject from database with the uuid in the HttpCookie
-                    String UUID = nettyCookieOptional.get().value();
-                    Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(UUID, host, trimmedPath);
-                    if (!proxyCookieOptional.isPresent()) {
-                        logger.warn("Could not find cookie {}@{}{}", UUID, host, trimmedPath);
-                        // Cookie contains an UUID, but it is not found in the storage.
-                        // This is an exception and it means something is wrong with either getting cookies or
-                        // creating and writing UUIDs  ...or the user is messing with us
+                // This is the expression where a query to the database is necessary
+                if (validProxyCookieOptional.isPresent()) {
+                    ProxyCookie validProxyCookie = validProxyCookieOptional.get();
+                    logger.debug("Has validProxyCookie {}", validProxyCookie);
 
-                    } else {
-                        ProxyCookie proxyCookieObject = proxyCookieOptional.get();
-                        logger.debug("Has proxyCookieObject {}", proxyCookieObject);
+                    logger.debug("Cookie is valid");
+                    // we need handle exceptions and nullPointers either in this class or somewhere else
 
-                        if (/*the CookieObject we found has not expired*/ proxyCookieObject.isValid()) {
-                            logger.debug("Cookie is valid");
-                            // we need handle exceptions and nullPointers either in this class or somewhere else
-
-                            // generate a JWTResponse with the user data inside the cookie
-                            try {
-                                responseGenerator.generateJWTResponse(ctx, proxyCookieObject.getUserData(), proxyCookieObject);
-                            } catch (IdentityProviderException exc) {
-                                logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", proxyCookieObject, proxyCookieObject.getUserData());
-                                exc.printStackTrace();
-                            }
-                            // stop this function from continuing
-                        } else { // we found a cookie, got it from the database, but it is expired
-                            logger.debug("Cookie is not valid");
-                            // continue the normal flow of authorization with idp
-                            // update the current CookieObject or create a new one(?) after
-                        }
+                    // generate a JWTResponse with the user data inside the cookie
+                    try {
+                        responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
+                        // stop this function from continuing
+                    } catch (IdentityProviderException exc) {
+                        logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
+                        exc.printStackTrace();
                     }
-                } else { // the request does not contain the cookie we want
-                    // continue the normal flow of authorization with idp
-                    // create a new CookieObject with its own UUID etc. after token is collected
-                    // remember to save the new/updated cookie to the database!
+                } else {
+                    logger.debug("Could not find valid ProxyCookie in storage");
                 }
                 Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
                 if (!idpOptional.isPresent()) { // for some reason, the path's IdentityProvider does not exist
@@ -132,8 +108,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // need to get token here
                         try {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            // Generating JWT response and setting cookie
-                            responseGenerator.generateJWTResponse(ctx, userData, cookieStorage.generateCookieAsObject(cookieName, host, trimmedPath, userData));
+                            // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
+                            // and generateJWTResponse sets the correct 'Set-Cookie' header.
+                            responseGenerator.generateJWTResponse(ctx, userData, cookieHandler.generateCookie(userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             responseGenerator.generateDefaultResponse(ctx, "no cannot");
@@ -165,6 +142,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
+
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
         b.handler(new OutboundInitializer(inboundChannel))
@@ -191,6 +169,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
+
                             if (future.isSuccess()) {
                                 // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();
