@@ -16,9 +16,7 @@ import org.mockito.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.Date;
@@ -57,14 +55,15 @@ public class ResponseGeneratorTest {
         // Instantiating mock
         this.ctxMock = Mockito.mock(ChannelHandlerContext.class);
         MockitoAnnotations.initMocks(this); // Needed for httpResponseCaptor to work
+    }
+
+    @BeforeMethod
+    public void setUp() {
 
     }
 
-    /**
-     * Should reset mocks here, but for some reason the mock is not reset between tests...
-     */
-    @AfterTest
-    public void cleanUpMocks() {
+    @AfterMethod
+    public void tearDown() {
         Mockito.reset(ctxMock); // Don't think this works
     }
 
@@ -75,8 +74,6 @@ public class ResponseGeneratorTest {
 
     @Test
     public void generateRedirectResponseWhenIdentityProviderNotConfigured() throws Exception {
-        Mockito.reset(ctxMock); // It only works when resetting here
-
         IdentityProvider identityProviderMock = Mockito.mock(IdentityProvider.class);
 
         // The spy is basically the real responseGenerator objects, but it watches which methods have been called
@@ -106,7 +103,6 @@ public class ResponseGeneratorTest {
 
     @Test
     public void generateRedirectResponseWhenIdentityProviderIsConfigured() throws Exception {
-        Mockito.reset(ctxMock); // It only works when resetting here
         String validRedirectUrl = "valid.redirect.url";
         IdentityProvider identityProviderMock = Mockito.mock(IdentityProvider.class);
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
@@ -131,7 +127,6 @@ public class ResponseGeneratorTest {
 
     @Test
     public void generateDefaultResponse() {
-        Mockito.reset(ctxMock); // It only works when resetting here
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         try {
             responseGeneratorSpy.generateDefaultResponse(ctxMock, host);
@@ -153,7 +148,6 @@ public class ResponseGeneratorTest {
 
     @Test
     public void generateJWTResponseWhenCorrectlyConfigured() throws Exception {
-        Mockito.reset(ctxMock); // It only works when resetting here
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
 
         String uuid = "uuid";
