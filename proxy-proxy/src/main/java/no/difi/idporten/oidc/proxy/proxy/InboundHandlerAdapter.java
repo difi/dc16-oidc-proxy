@@ -71,7 +71,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
+            if (securityConfig.isSecured()) { // the requested resource IS secured
                 logger.debug("{}{} is secured", host, path);
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
 
