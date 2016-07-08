@@ -54,6 +54,10 @@ public class DefaultProxyCookie implements ProxyCookie {
         touch();
     }
 
+    public Date getLastUpdated() {
+        return lastUpdated;
+    }
+
     @Override
     public String getUuid() {
         return uuid;
@@ -76,7 +80,7 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     @Override
     public String toString() {
-        return String.format("%s@%s", uuid, host);
+        return String.format("%s@%s%s", uuid, host, path);
     }
 
     @Override

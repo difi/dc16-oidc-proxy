@@ -30,4 +30,8 @@ public interface ProxyCookie {
     Date getExpiry();
 
     Date getMaxExpiry();
+
+    Date getLastUpdated();
+
+    Date getCreated();
 }
