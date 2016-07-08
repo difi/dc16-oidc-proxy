@@ -157,16 +157,30 @@ public class CookieDatabase {
 
     // Return Optional<ProxyCookie>? Maybe not important as this method is only used if cookie is found, by the db-handling object
     public Optional<ProxyCookie> extendCookieExpiry(String uuid, Date expiry){
+        Optional<ProxyCookie> cookie = Optional.empty();
         long presentTimeInMillisec = new Date().getTime();
-        String query = "UPDATE PUBLIC.cookie SET expiry = "+expiry+", lastUpdated = "+presentTimeInMillisec+" WHERE uuid = '"+uuid+"';";
+        String query = "UPDATE PUBLIC.cookie SET expiry = "+expiry.getTime()+", lastUpdated = "+presentTimeInMillisec+" WHERE uuid = '"+uuid+"';";
         try{
             int foo = statement.executeUpdate(query);
-            System.out.println("Result of statement.executeUpdate(): "+foo);
+            //cookie =
+            System.out.println("DB: Updated expiry of cookie with uuid "+uuid+". New expiry: "+expiry);
+        } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
+            e.printStackTrace();
+        } return cookie;
+    }
+
+    /*
+    public void extendCookieExpiry(String uuid, Date expiry){
+        long presentTimeInMillisec = new Date().getTime();
+        String query = "UPDATE PUBLIC.cookie SET expiry = "+expiry.getTime()+", lastUpdated = "+presentTimeInMillisec+" WHERE uuid = '"+uuid+"';";
+        try{
+            int foo = statement.executeUpdate(query);
+            System.out.println("DB: Updated expiry of cookie with uuid "+uuid+". New expiry: "+expiry);
         } catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
             e.printStackTrace();
         }
-        return findCookie(uuid);
-    }
+    }*/
 
 }
