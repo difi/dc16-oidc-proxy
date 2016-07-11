@@ -13,27 +13,35 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     private static Logger logger = LoggerFactory.getLogger(DefaultProxyCookie.class);
 
+    private static final int MINUTE = 60 * 1000;
     private String uuid, host, path, name;
     private HashMap<String, String> userData;
-    private Date expiry;
     private Date lastUpdated = new Date();
     private final Date created = new Date();
-    private final Date maxExpiry;
+    private int touchPeriod;     // in minutes
+    private final int maxExpiry; // in minutes
 
-    public DefaultProxyCookie(String uuid, String name, String host, String path, Date expiry, Date maxExpiry, HashMap<String, String> userData) {
+    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData) {
+        System.err.println("\nDefaulProxyCookie constructor\n");
         this.userData = userData;
         this.uuid = uuid; // Universally unique identifier
         this.name = name;
         this.host = host; // Hostname (e.g. 'nav.no')
         this.path = path;
-        this.expiry = expiry;
-        this.maxExpiry = maxExpiry;
+        this.touchPeriod = touchPeriod; // in minutes
+        this.maxExpiry = maxExpiry;     // in minutes
     }
+
+
 
     @Override
     public boolean isValid() {
-        logger.debug("Checking if cookie is valid with expiry date: {}", expiry);
-        return expiry.after(new Date());
+        System.err.println("\nDefaultProxyCookie.isValid()\n");
+        //logger.debug("Checking if cookie is valid with expiry date: {}", expiry);
+        Date now = new Date();
+        Date expiry = new Date(lastUpdated.getTime() + touchPeriod * MINUTE);
+        Date maxExpiry = new Date(created.getTime() + getMaxExpiry() * MINUTE);
+        return expiry.after(now) && maxExpiry.after(now);
     }
 
     public Date getCreated() {
@@ -41,10 +49,11 @@ public class DefaultProxyCookie implements ProxyCookie {
     }
 
     @Override
-    public Date getMaxExpiry() {
+    public int getMaxExpiry() {
         return maxExpiry;
     }
 
+    /*
     public void setExpiry(Date expiry) {
         if (expiry.after(getMaxExpiry())) {
             this.expiry = getMaxExpiry();
@@ -53,6 +62,7 @@ public class DefaultProxyCookie implements ProxyCookie {
         }
         touch();
     }
+    */
 
     public Date getLastUpdated() {
         return lastUpdated;
@@ -67,12 +77,6 @@ public class DefaultProxyCookie implements ProxyCookie {
     public String getHost() {
         return host;
     }
-
-    @Override
-    public Date getExpiry() {
-        return expiry;
-    }
-
 
     private void touch() {
         lastUpdated = new Date();
@@ -96,5 +100,10 @@ public class DefaultProxyCookie implements ProxyCookie {
     @Override
     public String getPath() {
         return path;
+    }
+
+    @Override
+    public int getTouchPeriod() {
+        return touchPeriod;
     }
 }

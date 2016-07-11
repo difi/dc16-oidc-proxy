@@ -27,9 +27,9 @@ public interface ProxyCookie {
 
     String getPath();
 
-    Date getExpiry();
+    int getTouchPeriod();
 
-    Date getMaxExpiry();
+    int getMaxExpiry();
 
     Date getLastUpdated();
 

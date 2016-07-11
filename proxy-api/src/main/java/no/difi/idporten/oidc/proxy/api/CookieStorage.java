@@ -17,6 +17,8 @@ public interface CookieStorage {
      */
     DefaultProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData);
 
+
+    ProxyCookie generateCookieInDb(String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData);
     /**
      * If cookie with given uuid exist in 'cookies' list; return DefaultProxyCookie object, otherwise return null
      * Updates expiry date of cookie.

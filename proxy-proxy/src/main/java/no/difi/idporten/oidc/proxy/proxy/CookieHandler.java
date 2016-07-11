@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
+import no.difi.idporten.oidc.proxy.storage.DatabaseCookieStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,16 @@ public class CookieHandler {
      * @return
      */
     public ProxyCookie generateCookie(HashMap<String, String> userData) {
+        System.err.println("\nCookieHandler.generateCookie(HashMap<String, String> userData)\n");
+        //return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
         return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
+    }
+
+    public ProxyCookie generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry) {
+        System.err.println("\nCookieHandler.generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry)\n");
+        //return DatabaseCookieStorage.generateCookieAsObject(cookieName, host, path, userData);
+        //return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
+        return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
     /**

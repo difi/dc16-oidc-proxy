@@ -34,23 +34,26 @@ public class DatabaseCookieStorage implements CookieStorage {
 
 
     /**
-     * Generates a MD5 hash based on a random new UUID and the parameters
      *
      * @param host
      * @param cookieName
      * @return
      */
-    private String generateCookie(String cookieName, String host, String path) {
-        String uuid = UUID.randomUUID().toString();
-
+    @Override
+    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData) {
+        System.out.println("\nDatabaseCookieStorage.generateCookieInDb()\n");
         // ProxyCookie (DefaultProxyCookie) initialized with userData = null for the time being
-        db.insertCookie(new DefaultProxyCookie(uuid, cookieName, host, path, new Date(new Date().getTime() + initialValidPeriod * MINUTE), new Date(new Date().getTime() + maxValidPeriod * MINUTE), null));
-        //return DummyCookieStorage.hashBrowserCookieId(uuid, cookieName, host, path);
-        return uuid;
+        String uuid = UUID.randomUUID().toString();
+        if (userData != null) System.out.println("Userdata: "+userData.toString());
+        //ProxyCookie pc = new DefaultProxyCookie(uuid, cookieName, host, path, new Date(new Date().getTime() + initialValidPeriod * MINUTE), new Date(new Date().getTime() + maxValidPeriod * MINUTE), null);
+        ProxyCookie pc = new DefaultProxyCookie(uuid, cookieName, host, path, touchPeriod, maxExpiry, userData);
+        db.insertCookie(pc);
+        return pc;
     }
 
     private DatabaseCookieStorage() {
         // Instantiate
+        System.out.println("\nDatabaseCookieStorage constructor");
         db.createTable();
     }
 
@@ -70,23 +73,35 @@ public class DatabaseCookieStorage implements CookieStorage {
      */
 
     private void extendCookieExpiry(ProxyCookie cookie) {
-        Date newExpiry = new Date(cookie.getExpiry().getTime() + expandSessionPeriod * MINUTE);
-        if (newExpiry.after(cookie.getMaxExpiry())) {
-            newExpiry = cookie.getMaxExpiry();
+        /* Redundant?
+        Date now = new Date();
+        Date newExpiry = new Date(cookie.getLastUpdated().getTime() + cookie.getTouchPeriod() * MINUTE);
+        Date maxExpiry = new Date(cookie.getCreated().getTime() + cookie.getMaxExpiry() * MINUTE);
+        //Date newExpiry = new Date(cookie.getExpiry().getTime() + expandSessionPeriod * MINUTE);
+        if (newExpiry.after(maxExpiry)) {
+            //newExpiry = cookie.getMaxExpiry();
+            System.out.println("EXPIRY WILL BECOME AFTER MAXEXPIRY");
         }
-        // As of now, lastUpdated is set to the time it is inserted into the database, in CookieDatabase.extendCookieExpiry()
-        db.extendCookieExpiry(cookie.getUuid(), newExpiry);
+        */
+        db.extendCookieExpiry(cookie.getUuid());
     }
 
     @Override
     public Optional<ProxyCookie> findCookie(String uuid, String host, String path) {
-        long presentTime= new Date().getTime();
+        //long presentTime= new Date().getTime();
         Optional<ProxyCookie> result = db.findCookie(uuid);
 
         if (result.isPresent()){
+            Date now = new Date();
+            // expiry = lastUpdate + touchperiod
+            Date expiry = new Date(result.get().getLastUpdated().getTime() + result.get().getTouchPeriod() * MINUTE);
+            // maxExpiry = created + maxExpiry (period)
+            Date maxExpiry = new Date(result.get().getCreated().getTime() + result.get().getMaxExpiry() * MINUTE);
+
             // Check expiry
-            if (result.get().getExpiry().getTime() < presentTime){
-                System.err.println("Cookie was found, but expired");
+            //if (result.get().getExpiry().getTime() < presentTime){
+            if (now.after(expiry) || now.after(maxExpiry)){
+                System.out.println("Cookie was found, but has expired");
                 return Optional.empty();
             }
             // Check host and path
@@ -96,11 +111,11 @@ public class DatabaseCookieStorage implements CookieStorage {
                 return result;
             } else {
                 // Used for debug at the moment. else is otherwise redundant, as the same is returned further down
-                System.err.println("Cookie is found, but host and/or path does not match");
+                System.out.println("Cookie is found, but host and/or path does not match");
                 return Optional.empty();
             }
         }
-        System.err.println("Cookie with this uuid was not found: "+uuid);
+        System.out.println("Cookie with this uuid was not found: "+uuid);
         return Optional.empty();
     }
 
@@ -117,6 +132,11 @@ public class DatabaseCookieStorage implements CookieStorage {
 
     public static void main(String[] args) {
         //ourInstance.hash();
+        HashMap<String, String> userData = db.stringToHashMap("{at_hash=notARealHash1337, aud=sometestpath.googleusercontent.com, dfd=123123123123123, email_not_verified=true, azp=sometestpath.apps.googleusercontent.com, dsds=accounts.google.com, exp=123123123, iat=234234234, email=gmail@gmail.com}");
+        HashMap<String, String> userData2 = db.stringToHashMap("{at_hash=notARealHash1338, hkk=sometestpath.apps.googleusercontent.com, øøæ=123123123123123, email_might_verified=true, azp=sometestpath.apps.googleusercontent.com, dsds=accounts.google.com, exp=123123123, iat=345345345, email=gmail@gmail.com}");
+        HashMap<String, String> userData3 = db.stringToHashMap("{at_hash=notARealHash1339, sds=sometestpath.apps.googleusercontent.com, dfd=123123123123123, email_slightly_verified=true, azp=sometestpath.apps.googleusercontent.com, dsds=accounts.google.com, exp=123123123, iat=456456456, email=gmail@gmail.com}");
+//        System.out.println(db.stringToHashMap(hashMap));
+
 
         // Creating test entries
         /*
@@ -129,7 +149,10 @@ public class DatabaseCookieStorage implements CookieStorage {
         }
         */
 
-        String uuid = ourInstance.generateCookie("db-cookie", "google.com", "/oauth");
+        ProxyCookie cookie = ourInstance.generateCookieInDb("db-cookie", "google.com", "/oauth", 20, 100, userData);
+        ProxyCookie cookie2 = ourInstance.generateCookieInDb("db-cookie", "google2.com", "/oauth", 20, 100, userData2);
+        ProxyCookie cookie3 = ourInstance.generateCookieInDb("db-cookie", "google3.com", "/oauth", 20, 100, userData3);
+
         //String uuid2 = generateCookie("db-cookie2", "idporten.no", "/");
         //String uuid3 = generateCookie("db-cookie2", "facebook.com", "/people");
 
@@ -138,7 +161,7 @@ public class DatabaseCookieStorage implements CookieStorage {
 
         System.out.println("\nfinding cookie\n");
 
-        Optional<ProxyCookie> cook = ourInstance.findCookie(uuid, "google.com", "/oauth");
+        Optional<ProxyCookie> cook = ourInstance.findCookie(cookie.getUuid(), "google.com", "/oauth");
         if (cook.isPresent()){
             System.out.println("\nprinting found cookie:");
             db.printCookie(cook.get());
