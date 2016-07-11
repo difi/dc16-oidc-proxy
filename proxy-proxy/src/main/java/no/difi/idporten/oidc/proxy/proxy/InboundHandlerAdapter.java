@@ -26,9 +26,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private volatile Channel outboundChannel;
 
     private SecurityConfigProvider securityConfigProvider;
+
     private ResponseGenerator responseGenerator;
+
     private String host, path;
+
     private String trimmedPath; // path without any parameters
+
     private ProxyCookie validProxyCookie;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
@@ -85,7 +89,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                     // generate a JWTResponse with the user data inside the cookie
                     try {
-                        outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest, securityConfig, validProxyCookie);
+                        outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
+                                httpRequest, securityConfig, validProxyCookie);
                         return;
                         //responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
                         // stop this function from continuing
@@ -107,10 +112,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // need to get token here
                         try {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
-                            // and generateJWTResponse sets the correct 'Set-Cookie' header.
-                            outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest, securityConfig, cookieHandler.generateCookie(userData));
-                            //responseGenerator.generateJWTResponse(ctx, userData, cookieHandler.generateCookie(userData));
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
+                                    httpRequest, securityConfig, cookieHandler.generateCookie(userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             responseGenerator.generateDefaultResponse(ctx, host);
@@ -124,8 +127,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest, securityConfig, validProxyCookie);
-                //bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
+                outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
+                        httpRequest, securityConfig, validProxyCookie);
             }
         });
     }

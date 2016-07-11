@@ -8,19 +8,15 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
-import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
-import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.sql.Date;
 import java.util.HashMap;
-import java.util.Optional;
 
 public class ResponseGenerator {
 
@@ -104,9 +100,9 @@ public class ResponseGenerator {
      * @param httpRequest
      */
 
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest, SecurityConfig securityConfig, ProxyCookie proxyCookie){
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
 
-        if (proxyCookie != null){
+        if (proxyCookie != null) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData());
 
         }
@@ -119,7 +115,7 @@ public class ResponseGenerator {
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel, securityConfig, proxyCookie, setCookie))
+        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);

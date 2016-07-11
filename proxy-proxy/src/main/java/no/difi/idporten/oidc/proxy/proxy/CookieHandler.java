@@ -23,9 +23,11 @@ public class CookieHandler {
     private static Logger logger = LoggerFactory.getLogger(CookieHandler.class);
 
     private final CookieStorage cookieStorage;
-    private final CookieConfig cookieConfig;
+
     private final String cookieName;
+
     private final String host;
+
     private final String path;
 
     /**
@@ -35,7 +37,6 @@ public class CookieHandler {
      * @param path
      */
     public CookieHandler(CookieConfig cookieConfig, String host, String path) {
-        this.cookieConfig = cookieConfig;
         this.cookieStorage = cookieConfig.getCookieStorage();
         this.cookieName = cookieConfig.getName();
         this.host = host;
@@ -94,27 +95,6 @@ public class CookieHandler {
      */
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String uuid) {
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
-    }
-
-    public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String uuid) {
-        httpRequest.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
-    }
-
-    /**
-     * Checks either e response or a request for a specific cookie.
-     *
-     * @param httpHeaders
-     * @param sessionID
-     * @param headerField
-     * @return
-     */
-    public boolean checkHeaderForCookie(HttpHeaders httpHeaders, String sessionID, String headerField) {
-        if (httpHeaders.contains(headerField)) {
-            if (httpHeaders.get(headerField).contains(sessionID)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
