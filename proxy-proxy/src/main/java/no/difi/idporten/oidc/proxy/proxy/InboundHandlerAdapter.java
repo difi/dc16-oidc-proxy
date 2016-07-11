@@ -91,6 +91,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
                         // stop this function from continuing
                     } catch (IdentityProviderException exc) {
+
                         logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
                         exc.printStackTrace();
                     }
@@ -110,7 +111,16 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
                             // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
                             // and generateJWTResponse sets the correct 'Set-Cookie' header.
-                            responseGenerator.generateJWTResponse(ctx, userData, cookieHandler.generateCookie(userData));
+
+                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
+                            int touchPeriod = securityConfig.getCookieConfig().getTouch();  // in minutes
+
+                            System.out.println("\n\nsecurityConfig.getHostname(): "+securityConfig.getHostname());
+                            System.out.println("securityConfig.getCookieConfig().getName(): "+securityConfig.getCookieConfig().getName());
+                            System.out.println("securityConfig.getCookieConfig().getMaxExpiry(): "+maxExpiry);
+                            System.out.println("securityConfig.getCookieConfig().getTouch(): "+touchPeriod+"\n\n");
+
+                            responseGenerator.generateJWTResponse(ctx, userData, cookieHandler.generateCookie(userData, touchPeriod, maxExpiry));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             responseGenerator.generateDefaultResponse(ctx, "no cannot");
