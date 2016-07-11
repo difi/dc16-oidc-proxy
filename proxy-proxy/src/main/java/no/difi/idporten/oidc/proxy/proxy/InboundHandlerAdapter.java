@@ -1,22 +1,18 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.cookie.Cookie;
-import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
-import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -33,6 +29,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private ResponseGenerator responseGenerator;
     private String host, path;
     private String trimmedPath; // path without any parameters
+    private ProxyCookie validProxyCookie;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
@@ -80,7 +77,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                 // This is the expression where a query to the database is necessary
                 if (validProxyCookieOptional.isPresent()) {
-                    ProxyCookie validProxyCookie = validProxyCookieOptional.get();
+                    validProxyCookie = validProxyCookieOptional.get();
                     logger.debug("Has validProxyCookie {}", validProxyCookie);
 
                     logger.debug("Cookie is valid");
@@ -88,9 +85,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                     // generate a JWTResponse with the user data inside the cookie
                     try {
-                        responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
+                        outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest, securityConfig, validProxyCookie);
+                        return;
+                        //responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
                         // stop this function from continuing
-                    } catch (IdentityProviderException exc) {
+                    } catch (Exception exc) {
                         logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
                         exc.printStackTrace();
                     }
@@ -110,11 +109,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
                             // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
                             // and generateJWTResponse sets the correct 'Set-Cookie' header.
-                            responseGenerator.generateSecuredResponse(ctx, securityConfig.getBackend(), httpRequest, userData, cookieHandler.generateCookie(userData));
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest, securityConfig, cookieHandler.generateCookie(userData));
                             //responseGenerator.generateJWTResponse(ctx, userData, cookieHandler.generateCookie(userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
-                            responseGenerator.generateDefaultResponse(ctx, "no cannot");
+                            responseGenerator.generateDefaultResponse(ctx, host);
                         }
                     } else {
                         // redirect response
@@ -125,7 +124,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest);
+                outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(), httpRequest, securityConfig, validProxyCookie);
                 //bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
             }
         });

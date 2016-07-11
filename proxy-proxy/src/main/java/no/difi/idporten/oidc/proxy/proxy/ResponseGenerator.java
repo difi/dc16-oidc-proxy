@@ -12,11 +12,15 @@ import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
+import java.sql.Date;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class ResponseGenerator {
 
@@ -54,7 +58,7 @@ public class ResponseGenerator {
      * Default response for when nothing is configured for the host
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
-        String content = String.format("no cannot use %s", host);
+        String content = String.format("Unknown host:  %s", host);
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.BAD_REQUEST,
@@ -75,6 +79,8 @@ public class ResponseGenerator {
      * @param proxyCookieObject
      * @throws IdentityProviderException
      */
+
+    @Deprecated
     protected void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData, ProxyCookie
             proxyCookieObject) throws IdentityProviderException {
         FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
@@ -84,7 +90,6 @@ public class ResponseGenerator {
                 "%s; %s=%s", APPLICATION_JSON, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
         logger.debug("Setting Set-Cookie to the response");
         CookieHandler.insertCookieToResponse(result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
-        System.out.println();
         logger.debug(String.format("Created JWT response:\n%s", result));
         ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
     }
@@ -99,15 +104,22 @@ public class ResponseGenerator {
      * @param httpRequest
      */
 
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest){
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest, SecurityConfig securityConfig, ProxyCookie proxyCookie){
+
+        if (proxyCookie != null){
+            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData());
+
+        }
         Channel outboundChannel;
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
+        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), securityConfig.getHostname(), securityConfig.getPath());
+        boolean setCookie = cookieHandler.getValidProxyCookie(httpRequest) != null;
 
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel))
+        b.handler(new OutboundInitializer(inboundChannel, securityConfig, proxyCookie, setCookie))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
@@ -150,15 +162,5 @@ public class ResponseGenerator {
 
     }
 
-    protected Channel generateSecuredResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress,
-                                              HttpRequest httpRequest, HashMap<String, String> userData,
-                                              ProxyCookie proxyCookieObject) throws  IdentityProviderException{
-
-        System.out.println("HEADER:"+httpRequest.headers().entries());
-
-
-
-        return generateProxyResponse(ctx, outboundAddress, httpRequest);
-    }
 
 }

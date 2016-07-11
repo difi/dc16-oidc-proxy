@@ -5,6 +5,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,14 +19,20 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private final Channel inboundChannel; // Inbound channel on which to write responses
     private static Logger logger = LoggerFactory.getLogger(OutboundHandlerAdapter.class);
+    private SecurityConfig securityConfig;
+    private ProxyCookie proxyCookie;
+    private boolean setCookie;
 
     /**
      *
      * @param inboundChannel Channel on which to write responses
      */
-    public OutboundHandlerAdapter(Channel inboundChannel) {
+    public OutboundHandlerAdapter(Channel inboundChannel, SecurityConfig securityConfig, ProxyCookie proxyCookie, boolean setCookie) {
         logger.info(String.format("Initializing target pool with inbound channel %s", inboundChannel));
         this.inboundChannel = inboundChannel;
+        this.securityConfig = securityConfig;
+        this.proxyCookie = proxyCookie;
+        this.setCookie = setCookie;
     }
 
     @Override
@@ -32,8 +42,13 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
         ctx.write(Unpooled.EMPTY_BUFFER);
     }
 
+
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof HttpResponse){
+            CookieHandler.insertCookieToResponse((HttpResponse) msg, proxyCookie.getName(), proxyCookie.getUuid());
+        }
+
         logger.debug(String.format("Receiving response from server: %s", msg.getClass()));
         inboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
             @Override

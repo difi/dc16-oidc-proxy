@@ -96,6 +96,10 @@ public class CookieHandler {
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
     }
 
+    public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String uuid) {
+        httpRequest.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
+    }
+
     /**
      * Checks either e response or a request for a specific cookie.
      *
