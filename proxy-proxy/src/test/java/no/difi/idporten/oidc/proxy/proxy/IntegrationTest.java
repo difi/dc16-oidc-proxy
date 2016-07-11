@@ -2,28 +2,33 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.apache.http.Header;
-import io.netty.handler.codec.http.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class IntegrationTest {
-    private static Logger logger = LoggerFactory.getLogger(SimpleTest.class);
+
     private static HttpClient httpClient;
+
     private Thread thread;
+
     private final String BASEURL = "http://localhost:8080";
+
+    private int thread_sleep = 1_000;
 
     private static Map<String, String> getHeadersAsMap(Header[] headers) {
         return Arrays.stream(headers)
@@ -38,7 +43,7 @@ public class IntegrationTest {
 
         thread.start();
 
-        Thread.sleep(1_000);
+        Thread.sleep(thread_sleep);
     }
 
     @AfterClass

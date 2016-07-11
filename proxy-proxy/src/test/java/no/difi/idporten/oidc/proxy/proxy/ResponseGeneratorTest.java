@@ -59,7 +59,7 @@ public class ResponseGeneratorTest {
 
     @BeforeMethod
     public void setUp() {
-
+        //Empty body
     }
 
     @AfterMethod

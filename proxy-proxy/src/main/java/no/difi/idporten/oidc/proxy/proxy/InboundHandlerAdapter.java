@@ -29,10 +29,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private ResponseGenerator responseGenerator;
 
-    private String host, path;
-
-    private String trimmedPath; // path without any parameters
-
     private ProxyCookie validProxyCookie;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
@@ -58,9 +54,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception {
         logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        this.path = httpRequest.uri();
-        this.trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
-        this.host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
+        String path = httpRequest.uri();
+        String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
+        String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 

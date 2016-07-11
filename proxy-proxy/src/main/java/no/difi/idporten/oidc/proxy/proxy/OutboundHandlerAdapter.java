@@ -43,12 +43,9 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof HttpResponse) {
-            if (proxyCookie != null && setCookie) {
+        if (msg instanceof HttpResponse && proxyCookie != null && setCookie) {
                 CookieHandler.insertCookieToResponse((HttpResponse) msg,
                         proxyCookie.getName(), proxyCookie.getUuid());
-
-            }
         }
 
         logger.debug(String.format("Receiving response from server: %s", msg.getClass()));

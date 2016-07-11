@@ -29,7 +29,7 @@ public class DummyCookieStorageTest {
         Assert.assertNotNull(proxyCookie);
 
         Assert.assertTrue(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", "/app1").isPresent());
-        Assert.assertFalse(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", "/app2").isPresent());
+        Assert.assertTrue(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", "/app2").isPresent());
         Assert.assertFalse(cookieStorage.findCookie(proxyCookie.getUuid(), "domain.com", "/app1").isPresent());
     }
 

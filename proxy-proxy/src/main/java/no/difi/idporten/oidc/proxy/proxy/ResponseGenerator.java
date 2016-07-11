@@ -100,7 +100,11 @@ public class ResponseGenerator {
      * @param httpRequest
      */
 
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress,
+                                         HttpRequest httpRequest, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
+
+        int connect_timeout_millis = 15000;
+        int so_buf = 1048576;
 
         if (proxyCookie != null) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData());
@@ -109,7 +113,8 @@ public class ResponseGenerator {
         Channel outboundChannel;
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
-        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), securityConfig.getHostname(), securityConfig.getPath());
+        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(),
+                securityConfig.getHostname(), securityConfig.getPath());
         boolean setCookie = cookieHandler.getValidProxyCookie(httpRequest) != null;
 
 
@@ -120,10 +125,10 @@ public class ResponseGenerator {
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
         b.option(ChannelOption.TCP_NODELAY, true);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000);
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connect_timeout_millis);
 
-        b.option(ChannelOption.SO_SNDBUF, 1048576);
-        b.option(ChannelOption.SO_RCVBUF, 1048576);
+        b.option(ChannelOption.SO_SNDBUF, so_buf);
+        b.option(ChannelOption.SO_RCVBUF, so_buf);
 
         ChannelFuture f = b.connect(outboundAddress);
 
@@ -132,23 +137,17 @@ public class ResponseGenerator {
         f.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
-                logger.debug("Outbound channel operation complete");
                 if (future.isSuccess()) {
-                    // connection complete start to read first data
-                    logger.debug("Outbound channel operation success");
+                    logger.debug("Outbound channel operation success");// connection complete start to read first data
                     outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) {
-                                // was able to flush out data, start to read the next chunk
+                            if (future.isSuccess()) { // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();
-                            } else {
-                                future.channel().close();
-                            }
+                            } else {future.channel().close();}
                         }
                     });
-                } else {
-                    // Close the connection if the connection attempt has failed.
+                } else {// Close the connection if the connection attempt has failed.
                     logger.debug("Outbound channel operation failure");
                     inboundChannel.close();
                 }
