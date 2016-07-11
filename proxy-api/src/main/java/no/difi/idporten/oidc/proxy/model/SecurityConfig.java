@@ -34,4 +34,6 @@ public interface SecurityConfig {
     String getClient_id();
 
     String getPassword();
+
+    boolean isSecured();
 }

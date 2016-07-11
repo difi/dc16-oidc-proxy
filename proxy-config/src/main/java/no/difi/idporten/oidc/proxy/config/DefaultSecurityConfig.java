@@ -106,6 +106,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public boolean isSecured() {
+        return !getSecurity().equals("0");
+    }
+
+    @Override
     public String toString() {
         return "DefaultSecurityConfig{" +
                 "hostname='" + hostname + '\'' +
