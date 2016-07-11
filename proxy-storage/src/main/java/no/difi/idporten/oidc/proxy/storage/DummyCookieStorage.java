@@ -76,6 +76,7 @@ public class DummyCookieStorage implements CookieStorage {
         logger.debug("Generating cookie object {}@{}{}", name, host, path);
         Date dateNow = new Date();
         String newDatabaseKey = generateDatabaseKey(name, host, path);
+        /*
         DefaultProxyCookie newCookieObject = new DefaultProxyCookie(
                 newDatabaseKey,
                 name,
@@ -85,7 +86,13 @@ public class DummyCookieStorage implements CookieStorage {
                 new Date(dateNow.getTime() + maxValidPeriod * MINUTE),
                 userData);
         storedCookies.put(newDatabaseKey, newCookieObject);
-        return newCookieObject;
+        return newCookieObject;*/
+        return null;
+    }
+
+    @Override
+    public ProxyCookie generateCookieInDb(String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData) {
+        return null;
     }
 
     /**
@@ -96,6 +103,7 @@ public class DummyCookieStorage implements CookieStorage {
      * @param cookie
      */
     private void extendCookieExpiry(DefaultProxyCookie cookie) {
+        /*
         Date dateNow = new Date();
         Date newExpiry = new Date(dateNow.getTime() + expandSessionPeriod * MINUTE);
         if (newExpiry.after(cookie.getMaxExpiry())) {
@@ -103,10 +111,12 @@ public class DummyCookieStorage implements CookieStorage {
         } else {
             cookie.setExpiry(newExpiry);
         }
+        */
     }
 
     @Override
     public Optional<ProxyCookie> findCookie(String uuid, String host, String path) {
+        /*
         Date dateNow = new Date();
         DefaultProxyCookie result = storedCookies.get(uuid);
         if (uuid.equals("uuidForValidCookie") && host.equals("localhost:8080")) { // only used for testing
@@ -124,15 +134,19 @@ public class DummyCookieStorage implements CookieStorage {
         } else {
             return Optional.empty();
         }
+        */
+
+        return Optional.empty();
     }
 
     @Override
     public void removeExpiredCookies() {
-        logger.info("Removing expired cookies");
+        /*logger.info("Removing expired cookies");
         Date dateNow = new Date();
         storedCookies = storedCookies.entrySet().stream()
                 .filter(entry -> entry.getValue().getExpiry().after(dateNow))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                */
     }
 
     public static void main(String[] args) {
