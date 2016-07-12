@@ -4,7 +4,6 @@ import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.storage.DatabaseCookieStorage;
-import no.difi.idporten.oidc.proxy.storage.DummyCookieStorage;
 
 public class TypesafeCookieConfig implements CookieConfig {
 
@@ -34,10 +33,6 @@ public class TypesafeCookieConfig implements CookieConfig {
     }
 
     @Override
-    /*public CookieStorage getCookieStorage() {
-        return DummyCookieStorage.getInstance();
-    }*/
-
     public CookieStorage getCookieStorage() {
         return DatabaseCookieStorage.getInstance();
     }

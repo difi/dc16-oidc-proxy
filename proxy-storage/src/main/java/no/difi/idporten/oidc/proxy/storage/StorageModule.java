@@ -13,6 +13,6 @@ public class StorageModule extends AbstractModule {
 
     @Provides
     public CookieStorage cookieStorageProvider() {
-        return DummyCookieStorage.getInstance();
+        return DatabaseCookieStorage.getInstance();
     }
 }
