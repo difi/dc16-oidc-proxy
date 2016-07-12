@@ -21,10 +21,12 @@ public class RequestInterceptor {
     public static final String HEADERNAME = "X-DifiProxy-";
 
 
-    public static void insertUserDataToHeader(HttpRequest httpRequest, Map<String, String> userData, SecurityConfig securityConfig) {
+    public static void insertUserDataToHeader(
+            HttpRequest httpRequest, Map<String, String> userData, SecurityConfig securityConfig) {
         List<String> userDataNames = securityConfig.getUserDataNames();
         for (int i = 0; i < userDataNames.size(); i++) {
-            httpRequest.headers().add(HEADERNAME+userDataNames.get(i), encodeUserDataForHeader(userData, userDataNames.get(i)));
+            httpRequest.headers().add(HEADERNAME + userDataNames.get(i),
+                    encodeUserDataForHeader(userData, userDataNames.get(i)));
         }
         logger.debug("Inserted header to request:\n{}", httpRequest);
     }

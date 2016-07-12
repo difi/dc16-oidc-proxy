@@ -15,7 +15,6 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class ResponseGenerator {
@@ -96,12 +95,13 @@ public class ResponseGenerator {
      * SSL set up.
      *
      * @param ctx
-     * @param outboundAddress
+     * @param securityConfig
      * @param httpRequest
+     * @param proxyCookie
      */
 
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, SocketAddress outboundAddress,
-                                         HttpRequest httpRequest, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
+                                         SecurityConfig securityConfig, ProxyCookie proxyCookie) {
 
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
@@ -130,7 +130,7 @@ public class ResponseGenerator {
         b.option(ChannelOption.SO_SNDBUF, so_buf);
         b.option(ChannelOption.SO_RCVBUF, so_buf);
 
-        ChannelFuture f = b.connect(outboundAddress);
+        ChannelFuture f = b.connect(securityConfig.getBackend());
 
         outboundChannel = f.channel();
         logger.debug(String.format("Made outbound channel: %s", outboundChannel));
@@ -144,7 +144,9 @@ public class ResponseGenerator {
                         public void operationComplete(ChannelFuture future) throws Exception {
                             if (future.isSuccess()) { // was able to flush out data, start to read the next chunk
                                 ctx.channel().read();
-                            } else {future.channel().close();}
+                            } else {
+                                future.channel().close();
+                            }
                         }
                     });
                 } else {// Close the connection if the connection attempt has failed.

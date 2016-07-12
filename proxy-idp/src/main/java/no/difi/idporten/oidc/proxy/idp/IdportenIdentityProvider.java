@@ -75,17 +75,19 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
                     .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
             // Create content to be posted
-            List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {{
-                add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
-                add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
-                add(new BasicNameValuePair("code", urlParameters.get("code")));
+            List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {
+                {
+                    add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
+                    add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
+                    add(new BasicNameValuePair("code", urlParameters.get("code")));
             }};
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
 
             // Configure post request
             HttpPost httpPost = new HttpPost(APIURL);
             httpPost.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded");
-            httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString((securityConfig.getClientId() + ":" + securityConfig.getPassword()).getBytes()));
+            httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString(
+                    (securityConfig.getClientId() + ":" + securityConfig.getPassword()).getBytes()));
             httpPost.setEntity(new StringEntity(postContent));
 
             // Send request to api-server

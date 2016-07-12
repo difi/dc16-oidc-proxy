@@ -29,7 +29,7 @@ public class DefaultSecurityConfigProviderTest {
     }
 
     @Test
-    public void testCreateIdentityProvider() throws Exception{
+    public void testCreateIdentityProvider() throws Exception {
         Optional<IdentityProvider> identityProvider = securityConfigWithIdpPathChecker.createIdentityProvider();
         Assert.assertEquals(identityProvider.get().generateRedirectURI(), "https://eid-exttest.difi.no/idporten-oidc-provider/authorize?scope=openid&client_id=dificamp&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F");
     }
@@ -142,7 +142,7 @@ public class DefaultSecurityConfigProviderTest {
     }
 
     @Test
-    public void testGetUser_data(){
+    public void testGetUserData() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getUserDataNames());
         Assert.assertTrue(securityConfigWithIdpPathChecker.getUserDataNames().contains("pid"));
     }

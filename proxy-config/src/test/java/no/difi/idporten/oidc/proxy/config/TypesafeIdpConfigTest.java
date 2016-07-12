@@ -49,7 +49,7 @@ public class TypesafeIdpConfigTest {
     }
 
     @Test
-    public void testGetUser_data(){
+    public void testGetUserData() {
         Assert.assertNotNull(idpConfig.getUserDataNames());
         Assert.assertTrue(idpConfig.getUserDataNames().contains("pid"));
 
