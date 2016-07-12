@@ -29,7 +29,7 @@ public class DefaultSecurityConfigProviderTest {
     }
 
     @Test
-    public void testCreateIdentityProvider() throws Exception{
+    public void testCreateIdentityProvider() throws Exception {
         Optional<IdentityProvider> identityProvider = securityConfigWithIdpPathChecker.createIdentityProvider();
         Assert.assertEquals(identityProvider.get().generateRedirectURI(), "https://eid-exttest.difi.no/idporten-oidc-provider/authorize?scope=openid&client_id=dificamp&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F");
     }
@@ -78,8 +78,8 @@ public class DefaultSecurityConfigProviderTest {
 
     @Test
     public void testgetClient_id() {
-        Assert.assertNotNull(securityConfigWithIdpPathChecker.getClient_id());
-        Assert.assertEquals(securityConfigWithIdpPathChecker.getClient_id(), "dificamp");
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getClientId());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getClientId(), "dificamp");
     }
 
     @Test
@@ -107,14 +107,14 @@ public class DefaultSecurityConfigProviderTest {
 
     @Test
     public void testGetRedirect_uriFromPath() {
-        Assert.assertNotNull(securityConfigWithPathPathChecker.getRedirect_uri());
-        Assert.assertEquals(securityConfigWithPathPathChecker.getRedirect_uri(), "http://localhost:8080/redirect");
+        Assert.assertNotNull(securityConfigWithPathPathChecker.getRedirectUri());
+        Assert.assertEquals(securityConfigWithPathPathChecker.getRedirectUri(), "http://localhost:8080/redirect");
     }
 
     @Test
     public void testGetRedirect_uriFromIdp() {
-        Assert.assertNotNull(securityConfigWithIdpPathChecker.getRedirect_uri());
-        Assert.assertEquals(securityConfigWithIdpPathChecker.getRedirect_uri(), "http://localhost:8080/");
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getRedirectUri());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getRedirectUri(), "http://localhost:8080/");
     }
 
     @Test
@@ -139,5 +139,11 @@ public class DefaultSecurityConfigProviderTest {
     public void testGetSecurityFromIdp() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getSecurity());
         Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), "3");
+    }
+
+    @Test
+    public void testGetUserData() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getUserDataNames());
+        Assert.assertTrue(securityConfigWithIdpPathChecker.getUserDataNames().contains("pid"));
     }
 }

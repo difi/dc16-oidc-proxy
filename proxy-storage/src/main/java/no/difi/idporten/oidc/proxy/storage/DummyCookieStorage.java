@@ -114,7 +114,7 @@ public class DummyCookieStorage implements CookieStorage {
                     new Date(dateNow.getTime() + 60 * 24 * MINUTE),
                     new Date(dateNow.getTime() + 60 * 24 * MINUTE),
                     defaultUserData));
-        } else if (result != null && result.getHost().equals(host) && result.getPath().equals(path)) {
+        } else if (result != null && result.getHost().equals(host) /*&& result.getPath().equals(path)*/) {
             extendCookieExpiry(result);
             return Optional.of(result);
         } else {

@@ -19,8 +19,11 @@ public class TypesafeHostConfig implements HostConfig {
     private static Logger logger = LoggerFactory.getLogger(TypesafeHostConfig.class);
 
     private String hostname;
+
     private List<InetSocketAddress> backends;
+
     private List<PathConfig> paths;
+
     private CookieConfig cookieConfig;
 
 

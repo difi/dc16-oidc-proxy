@@ -1,8 +1,6 @@
 package no.difi.idporten.oidc.proxy.model;
 
-import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 public interface IdpConfig {
@@ -16,9 +14,11 @@ public interface IdpConfig {
 
     String getScope();
 
-    String getRedirect_uri();
+    String getRedirectUri();
 
-    String getClient_Id();
+    String getClientId();
+
+    List<String> getUserDataNames();
 
     Optional<String> getParameter(String key);
 

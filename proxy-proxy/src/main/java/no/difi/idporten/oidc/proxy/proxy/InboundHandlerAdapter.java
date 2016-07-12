@@ -1,22 +1,18 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.cookie.Cookie;
-import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
-import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -30,9 +26,10 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private volatile Channel outboundChannel;
 
     private SecurityConfigProvider securityConfigProvider;
+
     private ResponseGenerator responseGenerator;
-    private String cookieName, host, path;
-    private String trimmedPath; // path without any parameters
+
+    private ProxyCookie validProxyCookie;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
@@ -57,9 +54,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception {
         logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
-        this.path = httpRequest.uri();
-        this.trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
-        this.host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
+        String path = httpRequest.uri();
+        String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
+        String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
@@ -71,7 +68,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
 
-            if (!securityConfig.getSecurity().equals("0")) { // the requested resource IS secured
+            if (securityConfig.isSecured()) { // the requested resource IS secured
                 logger.debug("{}{} is secured", host, path);
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
 
@@ -80,17 +77,18 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                 // This is the expression where a query to the database is necessary
                 if (validProxyCookieOptional.isPresent()) {
-                    ProxyCookie validProxyCookie = validProxyCookieOptional.get();
+                    validProxyCookie = validProxyCookieOptional.get();
                     logger.debug("Has validProxyCookie {}", validProxyCookie);
 
                     logger.debug("Cookie is valid");
                     // we need handle exceptions and nullPointers either in this class or somewhere else
-
                     // generate a JWTResponse with the user data inside the cookie
                     try {
-                        responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
+                        outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
+                                securityConfig, validProxyCookie);
+                        return;
                         // stop this function from continuing
-                    } catch (IdentityProviderException exc) {
+                    } catch (Exception exc) {
                         logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
                         exc.printStackTrace();
                     }
@@ -108,12 +106,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // need to get token here
                         try {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
-                            // and generateJWTResponse sets the correct 'Set-Cookie' header.
-                            responseGenerator.generateJWTResponse(ctx, userData, cookieHandler.generateCookie(userData));
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
+                                    securityConfig, cookieHandler.generateCookie(userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
-                            responseGenerator.generateDefaultResponse(ctx, "no cannot");
+                            responseGenerator.generateDefaultResponse(ctx, host);
                         }
                     } else {
                         // redirect response
@@ -124,65 +121,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                bootstrapOutboundChannel(ctx, securityConfig.getBackend(), httpRequest);
-            }
-        });
-    }
-
-    /**
-     * This is what happens when the proxy needs to work as a normal proxy.
-     * We could also direct IDP traffic this way instead of the the apache.http.HttpClient, but then we would need
-     * SSL set up.
-     *
-     * @param ctx
-     * @param outboundAddress
-     * @param httpRequest
-     */
-    private void bootstrapOutboundChannel(ChannelHandlerContext ctx, SocketAddress outboundAddress, HttpRequest httpRequest) {
-        logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
-        final Channel inboundChannel = ctx.channel();
-
-
-        Bootstrap b = new Bootstrap();
-        b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel))
-                .option(ChannelOption.AUTO_READ, false);
-
-        b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
-        b.option(ChannelOption.TCP_NODELAY, true);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 15000);
-
-        b.option(ChannelOption.SO_SNDBUF, 1048576);
-        b.option(ChannelOption.SO_RCVBUF, 1048576);
-
-        ChannelFuture f = b.connect(outboundAddress);
-
-        outboundChannel = f.channel();
-        logger.debug(String.format("Made outbound channel: %s", outboundChannel));
-        f.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                logger.debug("Outbound channel operation complete");
-                if (future.isSuccess()) {
-                    // connection complete start to read first data
-                    logger.debug("Outbound channel operation success");
-                    outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-
-                            if (future.isSuccess()) {
-                                // was able to flush out data, start to read the next chunk
-                                ctx.channel().read();
-                            } else {
-                                future.channel().close();
-                            }
-                        }
-                    });
-                } else {
-                    // Close the connection if the connection attempt has failed.
-                    logger.debug("Outbound channel operation failure");
-                    inboundChannel.close();
-                }
+                outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
+                        securityConfig, validProxyCookie);
             }
         });
     }

@@ -29,7 +29,6 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
     }
 
     /**
-     * Currently configured to connect to xkcd for demonstration purposes.
      *
      * @param ctx
      * @param msg Either a HttpRequest, HttpContent or HttpLastContent object.

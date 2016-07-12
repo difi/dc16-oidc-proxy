@@ -48,11 +48,11 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         try {
             return new URIBuilder(LOGINURL)
                     .addParameter("scope", securityConfig.getScope())
-                    .addParameter("client_id", securityConfig.getClient_id())
+                    .addParameter("client_id", securityConfig.getClientId())
                     .addParameter("response_type", securityConfig.getParameter("response_type"))
                     .addParameter("access_type", securityConfig.getParameter("access_type"))
                     .addParameter("approval_prompt", securityConfig.getParameter("approval_prompt"))
-                    .addParameter("redirect_uri", securityConfig.getRedirect_uri())
+                    .addParameter("redirect_uri", securityConfig.getRedirectUri())
                     .build().toString();
         } catch (URISyntaxException e) {
             throw new IdentityProviderException(e.getMessage(), e);
@@ -78,8 +78,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
             HttpPost postRequest = new HttpPost(APIURL);
             List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("code", urlParameters.get("code")));
-            params.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirect_uri()));
-            params.add(new BasicNameValuePair("client_id", securityConfig.getClient_id()));
+            params.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
+            params.add(new BasicNameValuePair("client_id", securityConfig.getClientId()));
             params.add(new BasicNameValuePair("client_secret", securityConfig.getPassword()));
             params.add(new BasicNameValuePair("scope", securityConfig.getScope())); // orElse("")
             params.add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
