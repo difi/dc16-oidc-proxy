@@ -20,20 +20,26 @@ public class RequestInterceptor {
 
     public static final String HEADERNAME = "X-DifiProxy-";
 
-
+    /**
+     *
+     * @param httpRequest
+     * @param userData
+     * @param securityConfig
+     */
     public static void insertUserDataToHeader(
             HttpRequest httpRequest, Map<String, String> userData, SecurityConfig securityConfig) {
         List<String> userDataNames = securityConfig.getUserDataNames();
-        for (int i = 0; i < userDataNames.size(); i++) {
-            httpRequest.headers().add(HEADERNAME + userDataNames.get(i),
-                    encodeUserDataForHeader(userData, userDataNames.get(i)));
-        }
+
+        userDataNames.stream().forEach(userDataName -> {
+            httpRequest.headers().add(HEADERNAME + userDataName, encodeUserDataForHeader(userData, userDataName));
+        });
         logger.debug("Inserted header to request:\n{}", httpRequest);
     }
 
     /**
      * Encodes a Map to a string in the standard format of HTTP headers.
      * @param userData
+     * @param userDataName
      * @return
      */
     private static String encodeUserDataForHeader(Map<String, String> userData, String userDataName) {
