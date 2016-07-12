@@ -152,4 +152,14 @@ public class DefaultSecurityConfigProviderTest {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getUnsecuredPaths());
         Assert.assertTrue(securityConfigWithIdpPathChecker.getUnsecuredPaths().contains("/studier"));
     }
+
+    @Test
+    public void testIsSecured(){
+        Assert.assertTrue(securityConfigWithIdpPathChecker.isSecured());
+    }
+
+    @Test
+    public void testToString(){
+        Assert.assertTrue(securityConfigWithIdpPathChecker.toString().contains("DefaultSecurityConfig"));
+    }
 }
