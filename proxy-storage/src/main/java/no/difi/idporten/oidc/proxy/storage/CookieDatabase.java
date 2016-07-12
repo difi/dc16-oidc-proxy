@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.storage;
 
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
-import org.h2.tools.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +9,6 @@ import java.sql.*;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.UUID;
 
 public class CookieDatabase {
     private final String JDBC_DRIVER = "org.h2.Driver";
@@ -20,15 +18,17 @@ public class CookieDatabase {
 
     private static Logger logger = LoggerFactory.getLogger(CookieDatabase.class);
     private static final int MINUTE = 60 * 1000;
-    Server server;
-    Connection connection;
-    Statement statement;
-    ResultSet resultSet;
 
+    private Statement statement;
+    private ResultSet resultSet;
+
+    /**
+     * Starting the database with specified driver, URL, user and password
+     */
     public CookieDatabase() {
         try {
             Class.forName(JDBC_DRIVER);
-            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+            Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
             statement = connection.createStatement();
         } catch (SQLException | ClassNotFoundException e){
             System.err.println("Exception caught in CookieDatabase.CookieDatabase(): " + e);
@@ -36,6 +36,20 @@ public class CookieDatabase {
         }
     }
 
+    /**
+     * Creates a table in the database for storing cookies.
+     *
+     * Columns:
+     * UUID - String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
+     * name - String of the cookie's name, specific to the host
+     * host - String of the hostname
+     * path - String of the path, starting with "/"
+     * touchPeriod - int value of amount of minutes a session is initially valid for
+     * maxExpiry - int value of amount of minutes a session is maximum valid for, from creation of cookie
+     * userData - String of a HashMap.toString() storing the JWT received from the authorization server
+     * created - BigInt (long) of created's Date.getTime() method, indicating creation-time in milliseconds
+     * lastUpdated - BigInt (long) of lastUpdated's Date.getTime() method, indicating creation-time in milliseconds
+     */
     public void createTable(){
         try{
             statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie " +
@@ -46,7 +60,7 @@ public class CookieDatabase {
                         "path VARCHAR(30) NOT NULL, " +
                         "touchPeriod INT NOT NULL, " +
                         "maxExpiry INT NOT NULL, " +
-                        "userData VARCHAR(400), " +
+                        "userData VARCHAR(500), " +
                         "created BIGINT NOT NULL, " +
                         "lastUpdated BIGINT NOT NULL" +
                     ");");
@@ -54,24 +68,21 @@ public class CookieDatabase {
         } catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.createTable(): " + e);
             e.printStackTrace();
-        } System.out.println("DB: Table 'PUBLIC.cookie' created in H2 database");
+        } System.out.println("\nDB: Table 'PUBLIC.cookie' created in the database\n");
     }
 
+    /**
+     * Takes in a ProxyCookie object and inputs it into the database. Sets the lastUpdated value to present time.
+     *
+     * @param cookie ProxyCookie
+     */
     public void insertCookie(ProxyCookie cookie){
-        // For Cookie variables expiry, maxExpiry, created and lastUpdated, Date's getTime() is used to store millisecond values in the database as BIGINT
-
-        long presentTimeInMillisec = new Date().getTime(); // lastUpdated
-        // TODO: Fix handling of userData conversion into SQL Blob. Now disregards input of userData
-        //String userData = cookie.getUserData().toString();
-//        System.out.println("Blob.class.toGenericString(): "+lol);
-//        System.out.println("cookie.getUserData().toString(): "+userData);
-        //if (userData.equals("{}")) userData = "null";
+        long now = new Date().getTime(); // lastUpdated
         String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
                         "VALUES ('%s','%s','%s','%s','%s','%s', '%s', '%s', '%s');", cookie.getUuid(), cookie.getName(), cookie.getHost(),
                         cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), cookie.getUserData().toString(),
-                        cookie.getCreated().getTime(), presentTimeInMillisec);
-
-         System.out.println("DB: Insert cookie query: " + query);
+                        cookie.getCreated().getTime(), now);
+         //System.out.println("DB: Insert cookie query: " + query);
         try {
             statement.executeUpdate(query);
             System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
@@ -81,11 +92,18 @@ public class CookieDatabase {
         }
     }
 
-    public HashMap<String, String> stringToHashMap(String str){
+    /**
+     * UserData is current saved in the database as VARCHAR(400) with value HashMaps.toString().
+     * This method is used for converting the String back til a HashMap.
+     *
+     * @param str toString of HashMap
+     * @return HashMap
+     */
+    public static HashMap<String, String> stringToHashMap(String str){
+        // If HashMap is empty (only containing "{}"), the object should be null
         if (str == null || str.equals("{}")) return null;
-        // String includes {} and spaces, removing these
-        String keyValues= str.substring(1, str.length()-1);
-        keyValues = keyValues.replaceAll("\\s", "");
+        // Removing curly braces, spaces and escape characters
+        String keyValues = str.replaceAll("[\\s\\{\\}]+", "");
         HashMap<String, String> hashMap = new HashMap<>();
         for (String pair : keyValues.split(",")){
             String[] elem = pair.split("=");
@@ -93,6 +111,14 @@ public class CookieDatabase {
         } return hashMap;
     }
 
+    /**
+     * Looks up entry with given uuid in the database. Creates a cookie object with it's created and lastUpdated
+     * values, later using these to validate it's validity. Returns an empty Optional if exception is caught or
+     * cookie is not found.
+     *
+     * @param uuid String
+     * @return Optional<ProxyCookie>
+     */
     public Optional<ProxyCookie> findCookie(String uuid){
         ProxyCookie cookie = null;
         try {
@@ -101,22 +127,20 @@ public class CookieDatabase {
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
                 String path = resultSet.getString("path");
-                //long expiry = resultSet.getLong("expiry");
                 int touchPeriod = resultSet.getInt("touchPeriod");
-                //long maxExpiry = resultSet.getLong("maxExpiry");
                 int maxExpiry = resultSet.getInt("maxExpiry");
+                // Handles empty userData HashMap "{}" in help-method, setting it to null
                 HashMap<String, String> userData = stringToHashMap(resultSet.getString("userData"));
+                Date created = new Date(resultSet.getLong("created"));
+                Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
-                // TODO: Handle conversion of userData object to HashMap<String, String>. Returns null object in ProxyCookie constructor until resolved
+                cookie = new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated);
 
-                //System.out.printf("\n%.65s %15s %20s %20s %20s %20s %20s\n", uuid, name, host, path, expiry, maxExpiry, userData);
-
-                //cookie = new DefaultProxyCookie(uuid, name, host, path, new Date(expiry), new Date(maxExpiry), null);
-                cookie = new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData);
-
-                System.out.println("DB: Found cookie with uuid " + uuid);
+                System.out.println("\\nDB: Found cookie in database: "+cookie);
+                /*System.out.printf("\nDB: Found cookie in database:\n%.65s %15s %20s %20s %5s %5s %20s %20s", uuid, name, host,
+                        path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString());*/
             } else {
-                System.err.println("DB: Cookie with this uuid does not exist: "+uuid);
+                System.err.println("\nDB: Cookie with given uuid does not exist: "+uuid);
             }
         }catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.findCookie(): " + e);
@@ -125,10 +149,15 @@ public class CookieDatabase {
         return Optional.ofNullable(cookie);
     }
 
-
-
+    /**
+     * Mostly for debug purposes, but might serve other purpose later. Retrieves entries in cookie database,
+     * instantiates ProxyCookie objects of the entries, and returns them as objects in a HashMap with the
+     * cookie's uuid as key.
+     *
+     * @return HashMap
+     */
     public HashMap<String, ProxyCookie> getAllCookies(){
-        HashMap<String , ProxyCookie> cookies = new HashMap<>();
+        HashMap<String, ProxyCookie> cookies = new HashMap<>();
         System.out.printf("getAllCookies()");
         try{
             resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie;");
@@ -137,18 +166,16 @@ public class CookieDatabase {
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
                 String path = resultSet.getString("path");
-                //long expiry = resultSet.getLong("expiry");
-                //long maxExpiry = resultSet.getLong("maxExpiry");
                 int touchPeriod = resultSet.getInt("touchPeriod");
                 int maxExpiry = resultSet.getInt("maxExpiry");
+                // Handles empty userData HashMap "{}" in stringToHashMap(), setting it to null
                 HashMap<String, String> userData = stringToHashMap(resultSet.getString("userData"));
+                Date created = new Date(resultSet.getLong("created"));
+                Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
-                // TODO: Handle conversion of userData object to HashMap<String, String>. Returns null object in ProxyCookie constructor until resolved
-
-                //System.out.printf("\n%.65s %15s %20s %20s %20s %20s %20s", uuid, name, host, path, expiry, maxExpiry, userData);
-                //cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, new Date(expiry), new Date(maxExpiry), null));
-                System.out.printf("\n%.65s %15s %20s %20s %20s %20s %20s", uuid, name, host, path, touchPeriod, maxExpiry, userData);
-                cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData));
+                System.out.printf("\n%.65s %15s %20s %20s %5s %5s %20s %20s", uuid, name, host,
+                        path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString());
+                cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
         } catch (SQLException e){
             System.err.println("SQLException caught in CookieDatabase.getAllCookies(): " + e);
@@ -157,6 +184,46 @@ public class CookieDatabase {
         return cookies;
     }
 
+
+    /**
+     * Removes all expired cookies from the database. Currently only deletes cookies based on
+     * expiry from lastUpdated + touchPeriod. Cases where (lastUpdated + touchPeriod) >
+     * (created + maxExpiry) is validated in DatabaseCookieStorage.findCookie() before cookie
+     * is returned.
+     */
+    public void removeExpiredCookies(){
+        try{
+            long now = new Date().getTime(); // present time in milliseconds
+            String expiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (lastUpdated + touchPeriod * "+MINUTE+") < " + now;
+            //String maxExpiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (created + maxExpiry * "+MINUTE+") < " + now;
+            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN ("+expiredEntries+");");
+            System.out.println("\nDB: Expired cookies removed from database");
+        } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): "+e);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Extends expiry of cookie with given UUID, by updating the lastUpdated value. Doesn't need
+     * to handle cases where (lastUpdated + touchPeriod) > (created + maxExpiry), as this is
+     * validated in DatabaseCookieStorage.findCookie() before cookie is returned.
+     *
+     * @param uuid String
+     */
+    public void extendCookieExpiry(String uuid){
+        try{
+            long now = new Date().getTime(); // present time in milliseconds
+            String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "';";
+            statement.executeUpdate(query);
+            System.out.println("\nDB: Updated expiry of cookie with uuid "+uuid);
+        } catch (SQLException e){
+            System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
+            e.printStackTrace();
+        }
+    }
+
+    // Debug
     public static void printCookie(ProxyCookie cookie){
         System.out.println("\ncookie.toString(): "+cookie);
         System.out.println("cookie.getName(): "+cookie.getName());
@@ -165,52 +232,8 @@ public class CookieDatabase {
         System.out.println("cookie.getTouchPeriod(): "+cookie.getTouchPeriod());
         System.out.println("cookie.getMaxExpiry(): "+cookie.getMaxExpiry());
         System.out.println("cookie.getUserData(): "+cookie.getUserData());
+        System.out.println("cookie.getCreated(): "+cookie.getCreated());
+        System.out.println("cookie.getLastUpdated(): "+cookie.getLastUpdated());
     }
-
-    // TODO: Fix to work with with new columns
-    public void removeExpiredCookies(){
-        System.out.println("removeExpiredCookies()");
-        try{
-            long presentTimeInMillisec = new Date().getTime();
-            //statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE expiry < "+presentTimeInMillisec+";");
-            String expiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (lastUpdated + touchPeriod * "+MINUTE+") < "+presentTimeInMillisec;
-            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN ("+expiredEntries+");");
-            System.out.println("DB: Expired cookies removed from database");
-        } catch (SQLException e){
-            System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): "+e);
-            e.printStackTrace();
-        }
-    }
-
-    // Return Optional<ProxyCookie>? Maybe not important as this method is only used if cookie is found, by the db-handling object
-    public Optional<ProxyCookie> extendCookieExpiry(String uuid){
-
-        // TODO: Handle expiry exceeding maxExpiry here? Might not be needed (here) anymore
-        Optional<ProxyCookie> cookie = Optional.empty();
-
-        long presentTimeInMillisec = new Date().getTime();
-        String query = "UPDATE PUBLIC.cookie SET lastUpdated = "+presentTimeInMillisec+" WHERE uuid = '"+uuid+"';";
-        try{
-            statement.executeUpdate(query);
-            //cookie =
-            System.out.println("DB: Updated expiry of cookie with uuid "+uuid);
-        } catch (SQLException e){
-            System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
-            e.printStackTrace();
-        } return cookie;
-    }
-
-    /*
-    public void extendCookieExpiry(String uuid, Date expiry){
-        long presentTimeInMillisec = new Date().getTime();
-        String query = "UPDATE PUBLIC.cookie SET expiry = "+expiry.getTime()+", lastUpdated = "+presentTimeInMillisec+" WHERE uuid = '"+uuid+"';";
-        try{
-            int foo = statement.executeUpdate(query);
-            System.out.println("DB: Updated expiry of cookie with uuid "+uuid+". New expiry: "+expiry);
-        } catch (SQLException e){
-            System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
-            e.printStackTrace();
-        }
-    }*/
 
 }
