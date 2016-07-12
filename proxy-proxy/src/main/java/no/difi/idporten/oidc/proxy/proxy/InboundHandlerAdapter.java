@@ -84,8 +84,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     // we need handle exceptions and nullPointers either in this class or somewhere else
                     // generate a JWTResponse with the user data inside the cookie
                     try {
-                        outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
-                                httpRequest, securityConfig, validProxyCookie);
+                        outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
+                                securityConfig, validProxyCookie);
                         return;
                         // stop this function from continuing
                     } catch (Exception exc) {
@@ -106,8 +106,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // need to get token here
                         try {
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
-                                    httpRequest, securityConfig, cookieHandler.generateCookie(userData));
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
+                                    securityConfig, cookieHandler.generateCookie(userData));
                         } catch (IdentityProviderException exc) {
                             exc.printStackTrace();
                             responseGenerator.generateDefaultResponse(ctx, host);
@@ -121,8 +121,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             } else {
                 // path is not secured
                 logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
-                        httpRequest, securityConfig, validProxyCookie);
+                outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
+                        securityConfig, validProxyCookie);
             }
         });
     }
