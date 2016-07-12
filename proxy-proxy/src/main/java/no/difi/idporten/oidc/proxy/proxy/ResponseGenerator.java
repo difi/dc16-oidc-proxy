@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class ResponseGenerator {
 
@@ -69,9 +70,9 @@ public class ResponseGenerator {
     /**
      * Generates and writes an appropriate JSON response based on userData with a correct 'Set-Cookie' header.
      *
-     * @param ctx
-     * @param userData
-     * @param proxyCookieObject
+     * @param ctx: ChannelHandlerContext
+     * @param userData: Information about the user, in which the service access is interested in.
+     * @param proxyCookieObject: Cookie to keep the user logged in.
      * @throws IdentityProviderException
      */
 
@@ -94,10 +95,10 @@ public class ResponseGenerator {
      * We could also direct IDP traffic this way instead of the the apache.http.HttpClient, but then we would need
      * SSL set up.
      *
-     * @param ctx
-     * @param securityConfig
-     * @param httpRequest
-     * @param proxyCookie
+     * @param ctx:
+     * @param securityConfig:
+     * @param httpRequest:
+     * @param proxyCookie:
      */
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
@@ -106,7 +107,7 @@ public class ResponseGenerator {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        if (proxyCookie != null) {
+        if (proxyCookie != null && !checkForUnsecuredPaths(securityConfig.getUnsecuredPaths(), httpRequest.uri())) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
         }
 
@@ -157,6 +158,17 @@ public class ResponseGenerator {
         });
         return outboundChannel;
 
+    }
+
+    /**
+     * Help method for generateProxyResponse
+     * @param unsecuredPaths:
+     * @param path:
+     * @return
+     */
+
+    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path){
+        return unsecuredPaths.stream().filter(unsecuredPath -> unsecuredPath.startsWith(path)).findFirst().isPresent();
     }
 
 

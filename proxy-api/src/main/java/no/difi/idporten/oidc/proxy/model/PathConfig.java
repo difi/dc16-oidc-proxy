@@ -13,4 +13,6 @@ public interface PathConfig {
     String getRedirectUri();
 
     String getScope();
+
+
 }

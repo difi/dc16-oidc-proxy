@@ -3,15 +3,14 @@ package no.difi.idporten.oidc.proxy.proxy;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.*;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.mockito.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +29,7 @@ public class ResponseGeneratorTest {
     private String host;
 
     private ResponseGenerator responseGenerator;
+
 
     /**
      * This one can capture and show you which arguments were passed to methods you spy on.
@@ -184,4 +184,6 @@ public class ResponseGeneratorTest {
             });
         }
     }
+
+
 }

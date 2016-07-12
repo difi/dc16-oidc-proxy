@@ -146,4 +146,10 @@ public class DefaultSecurityConfigProviderTest {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getUserDataNames());
         Assert.assertTrue(securityConfigWithIdpPathChecker.getUserDataNames().contains("pid"));
     }
+
+    @Test
+    public void testGetUnsecuredPaths(){
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getUnsecuredPaths());
+        Assert.assertTrue(securityConfigWithIdpPathChecker.getUnsecuredPaths().contains("/studier"));
+    }
 }

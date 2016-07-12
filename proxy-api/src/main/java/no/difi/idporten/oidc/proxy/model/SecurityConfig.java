@@ -36,5 +36,7 @@ public interface SecurityConfig {
 
     List<String> getUserDataNames();
 
+    List<String> getUnsecuredPaths();
+
     boolean isSecured();
 }
