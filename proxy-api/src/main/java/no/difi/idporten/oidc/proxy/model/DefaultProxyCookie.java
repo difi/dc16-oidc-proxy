@@ -16,56 +16,73 @@ public class DefaultProxyCookie implements ProxyCookie {
     private static final int MINUTE = 60 * 1000;
     private String uuid, host, path, name;
     private HashMap<String, String> userData;
-    private Date lastUpdated = new Date();
-    private final Date created = new Date();
-    private int touchPeriod;     // in minutes
-    private final int maxExpiry; // in minutes
+    private final int touchPeriod; // in minutes
+    private final int maxExpiry;  // in minutes
+    private final Date created;
+    private Date lastUpdated;
 
+    /**
+     * Constructor used for instantiating an object, with created and lastUpdated set to present time.
+     * Used in every case, except when an object is instantiated with values from the database.
+     *
+     * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
+     * @param name String (e.g. "google-cookie")
+     * @param host String (e.g. "www.google.com")
+     * @param path String (e.g. "/oauth")
+     * @param touchPeriod int (amount of minutes)
+     * @param maxExpiry int (amount of minutes)
+     * @param userData HashMap<String, String> (JWT from authorization server)
+     */
     public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData) {
-        System.err.println("\nDefaulProxyCookie constructor\n");
-        this.userData = userData;
-        this.uuid = uuid; // Universally unique identifier
+        this.uuid = uuid;
         this.name = name;
-        this.host = host; // Hostname (e.g. 'nav.no')
+        this.host = host;
         this.path = path;
-        this.touchPeriod = touchPeriod; // in minutes
-        this.maxExpiry = maxExpiry;     // in minutes
+        this.touchPeriod = touchPeriod;
+        this.maxExpiry = maxExpiry;
+        this.userData = userData;
+        this.created = new Date();
+        this.lastUpdated = new Date();
     }
 
+    /**
+     * Only used to instantiate a cookie from the database. Otherwise, DatabaseCookieStorage won't be able
+     * to validate the cookie with correct created and lastUpdated values. In every other case, use other
+     * constructor to create a cookie with created and lastUpdated values set to time of instantiation.
+     *
+     * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
+     * @param name String (e.g. "google-cookie")
+     * @param host String (e.g. "www.google.com")
+     * @param path String (e.g. "/oauth")
+     * @param touchPeriod int (amount of minutes)
+     * @param maxExpiry int (amount of minutes)
+     * @param userData HashMap<String, String> (JWT from authorization server)
+     * @param lastUpdated Date (last time the cookie was "touched" (extended expiry))
+     * @param created Date (time of creation)
+     */
+    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData, Date created, Date lastUpdated) {
+        this.uuid = uuid;
+        this.name = name;
+        this.host = host;
+        this.path = path;
+        this.touchPeriod = touchPeriod;
+        this.maxExpiry = maxExpiry;
+        this.userData = userData;
+        this.created = created;
+        this.lastUpdated = lastUpdated;
+    }
 
-
+    /**
+     * Checks if the cookie's expiry and maxExpiry is valid (not yet reached).
+     *
+     * @return Boolean (false if cookie has expired)
+     */
     @Override
     public boolean isValid() {
-        System.err.println("\nDefaultProxyCookie.isValid()\n");
-        //logger.debug("Checking if cookie is valid with expiry date: {}", expiry);
         Date now = new Date();
         Date expiry = new Date(lastUpdated.getTime() + touchPeriod * MINUTE);
         Date maxExpiry = new Date(created.getTime() + getMaxExpiry() * MINUTE);
         return expiry.after(now) && maxExpiry.after(now);
-    }
-
-    public Date getCreated() {
-        return created;
-    }
-
-    @Override
-    public int getMaxExpiry() {
-        return maxExpiry;
-    }
-
-    /*
-    public void setExpiry(Date expiry) {
-        if (expiry.after(getMaxExpiry())) {
-            this.expiry = getMaxExpiry();
-        } else {
-            this.expiry = expiry;
-        }
-        touch();
-    }
-    */
-
-    public Date getLastUpdated() {
-        return lastUpdated;
     }
 
     @Override
@@ -74,27 +91,13 @@ public class DefaultProxyCookie implements ProxyCookie {
     }
 
     @Override
-    public String getHost() {
-        return host;
-    }
-
-    private void touch() {
-        lastUpdated = new Date();
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s@%s%s", uuid, host, path);
-    }
-
-    @Override
-    public HashMap<String, String> getUserData() {
-        return userData;
-    }
-
-    @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getHost() {
+        return host;
     }
 
     @Override
@@ -105,5 +108,29 @@ public class DefaultProxyCookie implements ProxyCookie {
     @Override
     public int getTouchPeriod() {
         return touchPeriod;
+    }
+
+    @Override
+    public int getMaxExpiry() {
+        return maxExpiry;
+    }
+
+    @Override
+    public HashMap<String, String> getUserData() {
+        return userData;
+    }
+
+    @Override
+    public Date getCreated() {
+        return created;
+    }
+
+    public Date getLastUpdated() {
+        return lastUpdated;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s@%s%s", uuid, host, path);
     }
 }
