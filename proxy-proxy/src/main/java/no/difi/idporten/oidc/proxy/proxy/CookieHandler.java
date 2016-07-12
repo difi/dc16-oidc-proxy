@@ -7,10 +7,11 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
-import no.difi.idporten.oidc.proxy.storage.DatabaseCookieStorage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,21 +44,8 @@ public class CookieHandler {
         this.path = path;
     }
 
-    /**
-     * Generates a ProxyCookie using the CookieStorage which also saves it.
-     * @param userData
-     * @return
-     */
-    public ProxyCookie generateCookie(HashMap<String, String> userData) {
-        System.err.println("\nCookieHandler.generateCookie(HashMap<String, String> userData)\n");
-        //return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
-        return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
-    }
-
     public ProxyCookie generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry) {
-        System.err.println("\nCookieHandler.generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry)\n");
-        //return DatabaseCookieStorage.generateCookieAsObject(cookieName, host, path, userData);
-        //return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
+//        System.out.println("\nCookieHandler.generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry)");
         return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
@@ -75,17 +63,13 @@ public class CookieHandler {
             String uuid = nettyCookieOptional.get().value();
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
+            // cookieStorage.findCookie() validates on expiry, maxExpiry, host and path, so if a
+            // cookie is present in the optional, it is also a valid cookie
             if (proxyCookieOptional.isPresent()) {
-                if (proxyCookieOptional.get().isValid()) {
                     return proxyCookieOptional;
-                } else {
-                    logger.debug("Found cookie in storage, but it is not valid\n{}", proxyCookieOptional.get());
-                }
             } else {
-                logger.warn("Could not find cookie {}@{}{}", uuid, host, path);
-                // Cookie contains an UUID, but it is not found in the storage.
-                // This is an exception and it means something is wrong with either getting cookies or
-                // creating and writing UUIDs  ...or the user is messing with us
+                logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
+                // Cookie contains an UUID, but is either not found in the storage or not valid.
             }
         } else {
             logger.debug("Http request does not contain cookie {}", cookieName);
