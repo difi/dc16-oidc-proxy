@@ -43,7 +43,7 @@ public class RequestInterceptorTest {
     public void insertHeaderToRequest() {
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, host + path);
 
-        RequestInterceptor.insertUserDataToHeader(httpRequest, userData);
+        RequestInterceptor.insertUserDataToHeader(httpRequest, userData, null);
 
         HttpHeaders headers = httpRequest.headers();
 

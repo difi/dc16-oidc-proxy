@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.idp;
 
 import com.google.gson.JsonObject;
 import com.nimbusds.jwt.JWTParser;
-import com.typesafe.config.ConfigFactory;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
@@ -52,9 +51,9 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
         try {
             return new URIBuilder(LOGINURL)
                     .addParameter("scope", securityConfig.getScope())
-                    .addParameter("client_id", securityConfig.getClient_id())
+                    .addParameter("client_id", securityConfig.getClientId())
                     .addParameter("response_type", "code")
-                    .addParameter("redirect_uri", securityConfig.getRedirect_uri())
+                    .addParameter("redirect_uri", securityConfig.getRedirectUri())
                     .build().toString();
         } catch (URISyntaxException e) {
             throw new IdentityProviderException(e.getMessage(), e);
@@ -78,7 +77,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             // Create content to be posted
             List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {{
                 add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
-                add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirect_uri()));
+                add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
                 add(new BasicNameValuePair("code", urlParameters.get("code")));
             }};
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
@@ -86,7 +85,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             // Configure post request
             HttpPost httpPost = new HttpPost(APIURL);
             httpPost.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded");
-            httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString((securityConfig.getClient_id() + ":" + securityConfig.getPassword()).getBytes()));
+            httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString((securityConfig.getClientId() + ":" + securityConfig.getPassword()).getBytes()));
             httpPost.setEntity(new StringEntity(postContent));
 
             // Send request to api-server

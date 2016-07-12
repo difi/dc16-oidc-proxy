@@ -107,9 +107,9 @@ public class ResponseGenerator {
         int so_buf = 1048576;
 
         if (proxyCookie != null) {
-            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData());
-
+            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
         }
+
         Channel outboundChannel;
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();

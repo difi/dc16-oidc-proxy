@@ -88,7 +88,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         outboundChannel = responseGenerator.generateProxyResponse(ctx, securityConfig.getBackend(),
                                 httpRequest, securityConfig, validProxyCookie);
                         return;
-                        //responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserData(), validProxyCookie);
+                        //responseGenerator.generateJWTResponse(ctx, validProxyCookie.getUserDataNames(), validProxyCookie);
                         // stop this function from continuing
                     } catch (Exception exc) {
                         logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());

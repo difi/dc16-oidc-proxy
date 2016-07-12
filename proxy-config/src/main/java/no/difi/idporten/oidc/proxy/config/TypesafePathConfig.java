@@ -57,7 +57,7 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     @Override
-    public String getRedirect_uri() {
+    public String getRedirectUri() {
         return this.redirect_uri;
     }
 
