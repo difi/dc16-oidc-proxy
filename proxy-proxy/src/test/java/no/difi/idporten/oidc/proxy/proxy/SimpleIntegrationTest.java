@@ -221,6 +221,7 @@ public class SimpleIntegrationTest {
         Assert.assertTrue(headerMap.get(HttpHeaderNames.SET_COOKIE.toString()).contains(redirectCookieName));
     }
 
+    /*
     private ProxyCookie createValidGoogleCookie() {
         idPortenUserData = new HashMap<>();
         idPortenUserData.put("pid", pid);
@@ -229,4 +230,5 @@ public class SimpleIntegrationTest {
         storedIdportenCookie = cookieStorage.generateCookieAsObject(cookieName, remoteHostName, "/google", idPortenUserData);
         return storedIdportenCookie;
     }
+    */
 }

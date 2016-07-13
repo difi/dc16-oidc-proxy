@@ -34,6 +34,7 @@ public class CookieHandler {
 
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
+     *
      * @param cookieConfig
      * @param host
      * @param path
@@ -52,6 +53,7 @@ public class CookieHandler {
 
     /**
      * Convenient function for getting a valid proxy cookie or an empty optional which eases the flow of InboundHandler.
+     *
      * @param httpRequest
      * @return
      */
@@ -67,7 +69,7 @@ public class CookieHandler {
             // cookieStorage.findCookie() validates on expiry, maxExpiry, host and path, so if a
             // cookie is present in the optional, it is also a valid cookie
             if (proxyCookieOptional.isPresent()) {
-                    return proxyCookieOptional;
+                return proxyCookieOptional;
             } else {
                 logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
                 // Cookie contains an UUID, but is either not found in the storage or not valid.
@@ -94,6 +96,7 @@ public class CookieHandler {
     /**
      * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
      * object or an empty optional.
+     *
      * @param httpRequest
      * @return
      */

@@ -8,6 +8,7 @@ import no.difi.idporten.oidc.proxy.storage.DatabaseCookieStorage;
 public class TypesafeCookieConfig implements CookieConfig {
 
     private String name;
+
     private int touch;
     private int maxExpiry;
 

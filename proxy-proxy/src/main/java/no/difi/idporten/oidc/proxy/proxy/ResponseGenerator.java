@@ -70,8 +70,8 @@ public class ResponseGenerator {
     /**
      * Generates and writes an appropriate JSON response based on userData with a correct 'Set-Cookie' header.
      *
-     * @param ctx: ChannelHandlerContext
-     * @param userData: Information about the user, in which the service access is interested in.
+     * @param ctx:               ChannelHandlerContext
+     * @param userData:          Information about the user, in which the service access is interested in.
      * @param proxyCookieObject: Cookie to keep the user logged in.
      * @throws IdentityProviderException
      */
@@ -150,7 +150,7 @@ public class ResponseGenerator {
                             }
                         }
                     });
-                } else {// Close the connection if the connection attempt has failed.
+                } else { // Close the connection if the connection attempt has failed.
                     logger.debug("Outbound channel operation failure");
                     inboundChannel.close();
                 }
@@ -162,12 +162,13 @@ public class ResponseGenerator {
 
     /**
      * Help method for generateProxyResponse
+     *
      * @param unsecuredPaths:
      * @param path:
      * @return
      */
 
-    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path){
+    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path) {
         return unsecuredPaths.stream().filter(unsecuredPath -> unsecuredPath.startsWith(path)).findFirst().isPresent();
     }
 

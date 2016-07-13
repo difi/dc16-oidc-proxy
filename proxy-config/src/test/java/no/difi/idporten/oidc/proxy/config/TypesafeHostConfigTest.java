@@ -48,19 +48,17 @@ public class TypesafeHostConfigTest {
     }
 
     @Test
-    public void testGetCookieConfig(){
+    public void testGetCookieConfig() {
         Assert.assertNotNull(hostConfig.getCookieConfig());
         Assert.assertEquals(hostConfig.getCookieConfig().getName(), "dificookie");
         Assert.assertNotNull(hostConfig.getCookieConfig().getName(), "PROXYCOOKIE");
     }
 
     @Test
-    public void testGetUnsecuredPaths(){
+    public void testGetUnsecuredPaths() {
         Assert.assertNotNull(hostConfig.getUnsecuredPaths());
         Assert.assertTrue(hostConfig.getUnsecuredPaths().contains("/studier"));
     }
-
-
 
 
 }
