@@ -33,7 +33,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
-        responseGenerator = new ResponseGenerator();
+        this.responseGenerator = new ResponseGenerator();
     }
 
     /**
@@ -64,6 +64,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             logger.debug("Could not get SecurityConfig of host {}", host);
             responseGenerator.generateDefaultResponse(ctx, host);
         }
+
         securityConfigOptional.ifPresent(securityConfig -> {
             // do this if security config is present (not null)
             logger.debug("Has security config: {}", securityConfig);
@@ -79,7 +80,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 if (validProxyCookieOptional.isPresent()) {
                     validProxyCookie = validProxyCookieOptional.get();
                     logger.debug("Has validProxyCookie {}", validProxyCookie);
-
                     logger.debug("Cookie is valid");
                     // we need handle exceptions and nullPointers either in this class or somewhere else
                     // generate a JWTResponse with the user data inside the cookie
@@ -89,7 +89,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         return;
                         // stop this function from continuing
                     } catch (Exception exc) {
-                        logger.warn("Could not generate JWTResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
+                        logger.warn("Could not generate ProxyResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
                         exc.printStackTrace();
                     }
                 } else {

@@ -9,7 +9,7 @@ public class TypesafeCookieConfig implements CookieConfig {
 
     private String name;
 
-    public TypesafeCookieConfig(Config config){
+    public TypesafeCookieConfig(Config config) {
         this.name = config.getString("name");
     }
 

@@ -42,6 +42,7 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.user_data_names = idpConfig.getStringList("user_data_name");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
+
         logger.debug("Created IdpConfig:\n{}", this);
     }
 

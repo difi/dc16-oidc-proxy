@@ -161,7 +161,8 @@ public class ResponseGenerator {
     }
 
     /**
-     * Help method for generateProxyResponse
+     * Help method for generateProxyResponse.
+     * Checks if the path is unsecured and should not receive the userdata.
      * @param unsecuredPaths:
      * @param path:
      * @return
