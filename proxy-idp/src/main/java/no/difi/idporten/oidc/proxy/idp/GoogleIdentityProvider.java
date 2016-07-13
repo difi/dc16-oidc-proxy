@@ -5,6 +5,7 @@ import com.nimbusds.jwt.JWTParser;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -40,6 +41,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     /**
      * Generates a redirect URI to Google's login based on the current SecurityConfig
+     *
      * @return uri
      * @throws IdentityProviderException
      */
@@ -62,6 +64,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     /**
      * Uses a code from when a user has authorized Google to get some information about him to make a request
      * to the Google API.
+     *
      * @param uri containing a code and maybe some more information about the request.
      * @return UserData object containing information about the user.
      * @throws IdentityProviderException
@@ -92,13 +95,13 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
             logger.debug("Sending 'POST' request to URL : " + APIURL);
             logger.debug("Post parameters : " + params);
-            logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
-            logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
+            logger.debug("Got response back:\n{}", httpResponse);
+            String responseContent = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
+            logger.debug("Response content : " + responseContent);
 
-            // Must use complicated stream to read response and make it a json object
             JsonObject jsonResponse;
-            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
-                jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
+            try {
+                jsonResponse = gson.fromJson(responseContent, JsonObject.class);
                 return new UserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
             } catch (IOException exc) {
                 throw new IdentityProviderException(exc.getMessage(), exc);
@@ -110,6 +113,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     /**
      * Decodes a signed JWT token to a human-readable string.
+     *
      * @param idToken
      * @return
      * @throws Exception
