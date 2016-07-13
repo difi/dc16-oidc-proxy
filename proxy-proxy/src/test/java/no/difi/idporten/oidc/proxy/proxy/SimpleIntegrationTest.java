@@ -82,6 +82,8 @@ public class SimpleIntegrationTest {
 
     @Test
     public void testUnsecuredConfigured() throws Exception {
+        logger.info("With an unsecured path for a configured host, the server should work as a normal proxy and " +
+                "hopefully return a 200 OK success response if the remote server is up.");
         HttpGet getRequest = new HttpGet(BASEURL);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), remoteHostName);
 
@@ -92,6 +94,9 @@ public class SimpleIntegrationTest {
 
     @Test
     public void testUnsecuredConfiguredWithPath() throws Exception {
+        logger.info("With an unsecured path for a configured host, the server should work as a normal proxy and " +
+                "hopefully return a 200 OK success response if the remote server is up. Must also work if the path " +
+                "is not the default path");
         String url = BASEURL + "/robots.txt";
 
         HttpGet getRequest = new HttpGet(url);
@@ -105,6 +110,8 @@ public class SimpleIntegrationTest {
 
     @Test
     public void testSecuredConfiguredGoogle() throws Exception {
+        logger.info("With a secured path on a configured host, the server should respond with a response " +
+                "that redirects the client to a remote login server like Idporten or Google login.");
         String url = BASEURL + "/google";
         String expectedRedirectUrlFragment = "accounts.google.com";
         HttpGet getRequest = new HttpGet(url);
@@ -121,6 +128,8 @@ public class SimpleIntegrationTest {
 
     @Test
     public void testSecuredConfiguredIdporten() throws Exception {
+        logger.info("With a secured path on a configured host, the server should respond with a response " +
+                "that redirects the client to a remote login server like Idporten or Google login.");
         String url = BASEURL + "/idporten";
         String expectedRedirectUrlFragment = "difi";
         HttpGet getRequest = new HttpGet(url);
@@ -137,6 +146,8 @@ public class SimpleIntegrationTest {
 
     @Test
     public void testUnconfiguredHost() throws Exception {
+        logger.info("With an unconfigured host, the server should respond with an error response telling the " +
+                "client that the host is not configured.");
         HttpGet getRequest = new HttpGet(BASEURL);
         String host = "not.configured.url";
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), host);
@@ -151,6 +162,9 @@ public class SimpleIntegrationTest {
 
     @Test(enabled = false) // must have better configuration for this test
     public void testIdportenWithValidCookie() throws Exception {
+        logger.info("With a valid cookie on a secured path on a configured host, the server should work as a " +
+                "normal proxy while inserting the correct headers into the request before it reaches " +
+                "the intended resource like www.nav.no");
         String url = BASEURL + "/idporten";
         String cookieUuid = storedIdportenCookie.getUuid();
         HttpGet getRequest = new HttpGet(url);
@@ -173,6 +187,9 @@ public class SimpleIntegrationTest {
     // Need to mock some of the IdentityProvider / External server / InboundHandler to make this work
     @Test(enabled = false)
     public void testValidCookieWithGoogle() throws Exception {
+        logger.info("With a valid cookie on a secured path on a configured host, the server should work as a " +
+                "normal proxy while inserting the correct headers into the request before it reaches " +
+                "the intended resource like www.nav.no");
         String url = BASEURL + "/google";
         String cookieUuid = "uuidForValidCookie";
         HttpGet getRequest = new HttpGet(url);
@@ -187,6 +204,9 @@ public class SimpleIntegrationTest {
 
     @Test(enabled = false)
     public void testFirstRedirectResponseHasCookieForSavingPath() throws Exception {
+        logger.info("With a secured path on a configured host, the server should respond with a redirect " +
+                "response that has a Set-Cookie header in order to allow the server to remember the " +
+                "original path the client requested after she has been redirected.");
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
 
