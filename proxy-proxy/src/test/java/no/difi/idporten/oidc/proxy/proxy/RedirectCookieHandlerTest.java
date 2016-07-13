@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.cookie.Cookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -33,7 +34,8 @@ public class RedirectCookieHandlerTest {
 
         Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest).isPresent());
 
-        redirectCookieHandler.insertCookieToResponse(httpResponse);
+        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse);
+        CookieHandler.insertCookieToRequest(httpRequest, insertedCookie.name(), insertedCookie.value());
 
         Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest);
 

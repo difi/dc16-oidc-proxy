@@ -33,7 +33,7 @@ public class ResponseGenerator {
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig) {
+    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
 
@@ -50,7 +50,7 @@ public class ResponseGenerator {
             new RedirectCookieHandler(
                     securityConfig.getCookieConfig(),
                     securityConfig.getHostname(),
-                    securityConfig.getPath()).insertCookieToResponse(response);
+                    requestPath).insertCookieToResponse(response);
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -128,11 +128,14 @@ public class ResponseGenerator {
         Channel outboundChannel;
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
+
         boolean setCookie = proxyCookie != null;
 
         // Changing path if RedirectCookieHandler has an original path for this request
         RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
-            httpRequest.setUri(originalPath);
+            logger.debug("Changing path of request because we found the original path: {}", originalPath);
+            httpRequest.setUri(originalPath + httpRequest.uri());
+            logger.debug(httpRequest.toString());
         });
 
 

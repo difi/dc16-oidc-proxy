@@ -2,6 +2,8 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.DefaultCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +15,7 @@ public class RedirectCookieHandler {
 
     private static Logger logger = LoggerFactory.getLogger(RedirectCookieHandler.class);
 
-    private final String cookieName;
+    private final static String redirectCookieName = "redirectCookie";
 
     private final String host;
 
@@ -29,15 +31,16 @@ public class RedirectCookieHandler {
      * @param path
      */
     public RedirectCookieHandler(CookieConfig cookieConfig, String host, String path) {
-        this.cookieName = cookieConfig.getName();
         this.host = host;
         this.path = path;
     }
 
-    public void insertCookieToResponse(HttpResponse response) {
+    public Cookie insertCookieToResponse(HttpResponse response) {
         String hash = generateCookieHash(path);
-        CookieHandler.insertCookieToResponse(response, "redirectCookie", hash);
+        Cookie cookieToInsert = new DefaultCookie(redirectCookieName, hash);
+        CookieHandler.insertCookieToResponse(response, redirectCookieName, hash);
         hashToPathMap.put(hash, path);
+        return cookieToInsert;
     }
 
     private static String generateCookieHash(String path) {
@@ -45,13 +48,16 @@ public class RedirectCookieHandler {
     }
 
     public static Optional<String> findRedirectCookiePath(HttpRequest request) {
-        if (hashToPathMap.containsKey(generateCookieHash(request.uri()))) {
-            String hashForRequest = generateCookieHash(request.uri());
-            String result = hashToPathMap.get(hashForRequest);
-            hashToPathMap.remove(hashForRequest);
-            return Optional.of(result);
-        } else {
-            return Optional.empty();
+        Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(request, redirectCookieName);
+        if (nettyCookieOptional.isPresent()) {
+            String redirectCookieValue = nettyCookieOptional.get().value();
+            if (hashToPathMap.containsKey(redirectCookieValue)) {
+                String result = hashToPathMap.get(redirectCookieValue);
+                hashToPathMap.remove(redirectCookieValue);
+                logger.debug("Found original path for request after redirect: {}", result);
+                return Optional.of(result);
+            }
         }
+        return Optional.empty();
     }
 }
