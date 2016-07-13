@@ -14,6 +14,7 @@ abstract class AbstractHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
         logger.warn(cause.getMessage(), cause);
         closeOnFlush(ctx.channel());
     }
