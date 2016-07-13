@@ -6,9 +6,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
-import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.mockito.*;
@@ -26,7 +26,10 @@ public class ResponseGeneratorTest {
 
     private static Logger logger = LoggerFactory.getLogger(ResponseGeneratorTest.class);
 
-    private String host;
+    private String notConfiguredHostName;
+    private String configuredHostName;
+    private String securedPath;
+    private String redirectCookieName;
 
     private ResponseGenerator responseGenerator;
 
@@ -45,22 +48,39 @@ public class ResponseGeneratorTest {
     private ChannelHandlerContext ctxMock;
     @Mock
     private SecurityConfig securityConfigMock;
+    @Mock
+    private CookieConfig cookieConfigMock;
+
+    @BeforeTest
+    public void setUpBeforeAllTests() {
+        this.notConfiguredHostName = "not.configured.host";
+        this.configuredHostName = "configured.host.com";
+        this.securedPath = "/secured-path";
+        this.redirectCookieName = "redirectCookie";
+        this.responseGenerator = new ResponseGenerator();
+
+        cookieConfigMock = Mockito.mock(CookieConfig.class);
+        Mockito.doReturn(redirectCookieName).when(cookieConfigMock).getName();
+    }
 
 
     @BeforeTest
-    public void injectIdpConfigProvider() {
-        Injector injector = Guice.createInjector(new ConfigModule(), new ProxyModule());
-
-        this.host = "not.configured.host";
-        this.responseGenerator = new ResponseGenerator();
-
+    public void setUpChannelHandlerContextMock() {
         // Instantiating mock
         this.ctxMock = Mockito.mock(ChannelHandlerContext.class);
         MockitoAnnotations.initMocks(this); // Needed for httpResponseCaptor to work
     }
 
+    @BeforeTest
+    public void setUpSecurityConfigMock() {
+        securityConfigMock = Mockito.mock(SecurityConfig.class);
+        Mockito.doReturn(configuredHostName).when(securityConfigMock).getHostname();
+        Mockito.doReturn(securedPath).when(securityConfigMock).getPath();
+        Mockito.doReturn(cookieConfigMock).when(securityConfigMock).getCookieConfig();
+    }
+
     @BeforeMethod
-    public void setUp() {
+    public void setUpBeforeEachTest() {
         //Empty body
     }
 
@@ -131,7 +151,7 @@ public class ResponseGeneratorTest {
     public void generateDefaultResponse() {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         try {
-            responseGeneratorSpy.generateDefaultResponse(ctxMock, host);
+            responseGeneratorSpy.generateDefaultResponse(ctxMock, notConfiguredHostName);
         } catch (NullPointerException exc) {
 
         } finally {
@@ -144,7 +164,7 @@ public class ResponseGeneratorTest {
             Assert.assertEquals(actual.status(), HttpResponseStatus.BAD_REQUEST);
             Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
                     .TEXT_HTML));
-            Assert.assertTrue(content.contains(host));
+            Assert.assertTrue(content.contains(notConfiguredHostName));
         }
     }
 
@@ -162,7 +182,7 @@ public class ResponseGeneratorTest {
         userData.put("pid", pid);
         userData.put("tokenType", "JWTToken");
         userData.put("aud", "dificamp");
-        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, farFutureDate, farFutureDate,
+        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, notConfiguredHostName, path, farFutureDate, farFutureDate,
                 userData);
         try {
             responseGeneratorSpy.generateJWTResponse(ctxMock, userData, proxyCookie);
