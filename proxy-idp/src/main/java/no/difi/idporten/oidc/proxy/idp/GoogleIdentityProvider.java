@@ -31,8 +31,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
     private final SecurityConfig securityConfig;
-    private final String APIURL = "https://www.googleapis.com/oauth2/v3/token"; // Google's api services
-    private final String LOGINURL = "https://accounts.google.com/o/oauth2/auth"; // For logging in/authorizing with Google
+    private static String APIURL = "https://www.googleapis.com/oauth2/v3/token"; // Google's api services
+    private static String LOGINURL = "https://accounts.google.com/o/oauth2/auth"; // For logging in/authorizing with Google
 
     public GoogleIdentityProvider(SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
