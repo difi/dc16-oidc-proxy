@@ -114,7 +114,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         }
                     } else {
                         // redirect response
-                        responseGenerator.generateRedirectResponse(ctx, idp);
+                        responseGenerator.generateRedirectResponse(ctx, idp, securityConfig);
                         // should not continue life of request after this
                     }
                 });

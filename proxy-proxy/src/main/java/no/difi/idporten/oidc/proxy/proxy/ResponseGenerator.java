@@ -26,13 +26,14 @@ public class ResponseGenerator {
 
     private static Logger logger = LoggerFactory.getLogger(InboundHandlerAdapter.class);
 
+
     /**
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
+    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
             StringBuilder content = new StringBuilder(redirectUrl);
@@ -42,6 +43,9 @@ public class ResponseGenerator {
             result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
             result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
+            // Inserting redirect cookie to remember the original path requested
+            new RedirectCookieHandler(securityConfig.getCookieConfig(), securityConfig.getHostname(), securityConfig.getPath()).insertCookieToResponse(result);
             logger.debug(String.format("Created redirect response:\n%s", result));
             ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
         } catch (IdentityProviderException exc) {
@@ -117,6 +121,11 @@ public class ResponseGenerator {
         CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(),
                 securityConfig.getHostname(), securityConfig.getPath());
         boolean setCookie = cookieHandler.getValidProxyCookie(httpRequest) != null;
+
+        // Changing path if RedirectCookieHandler has an original path for this request
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
+            httpRequest.setUri(originalPath);
+        });
 
 
         Bootstrap b = new Bootstrap();

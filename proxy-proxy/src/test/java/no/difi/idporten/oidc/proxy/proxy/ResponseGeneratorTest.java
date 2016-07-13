@@ -43,6 +43,8 @@ public class ResponseGeneratorTest {
      */
     @Mock
     private ChannelHandlerContext ctxMock;
+    @Mock
+    private SecurityConfig securityConfigMock;
 
 
     @BeforeTest
@@ -81,13 +83,13 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         // Because of exceptions we need to wrap tests in these ugly try/catch things
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock);
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock);
         } catch (NullPointerException exc) {
 
         } finally {
             // All we need to test here is that the correct methods have been called and maybe which arguments
             // they were called with.
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
 
             /* Not sure whether it's this method's responsibility to create an error when this goes south.
@@ -108,11 +110,11 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         Mockito.doReturn(validRedirectUrl).when(identityProviderMock).generateRedirectURI();
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock);
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock);
         } catch (NullPointerException exc) {
 
         } finally {
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
             Mockito.atLeastOnce();
             Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
