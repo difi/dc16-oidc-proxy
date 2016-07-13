@@ -26,6 +26,8 @@ public class TypesafeHostConfig implements HostConfig {
 
     private CookieConfig cookieConfig;
 
+    private List<String> unsecuredPaths;
+
 
     public TypesafeHostConfig(Config hostConfig, Config globalConfig) {
         this.hostname = hostConfig.getString("hostname");
@@ -43,6 +45,9 @@ public class TypesafeHostConfig implements HostConfig {
 
         this.cookieConfig = new TypesafeCookieConfig(hostConfig.withFallback(globalConfig).getConfig("cookie"));
 
+        this.unsecuredPaths = hostConfig.getStringList("unsecured_paths")
+                .stream()
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -69,5 +74,10 @@ public class TypesafeHostConfig implements HostConfig {
     @Override
     public CookieConfig getCookieConfig() {
         return cookieConfig;
+    }
+
+    @Override
+    public List<String> getUnsecuredPaths() {
+        return this.unsecuredPaths;
     }
 }

@@ -22,9 +22,9 @@ public class RequestInterceptor {
 
     /**
      *
-     * @param httpRequest
-     * @param userData
-     * @param securityConfig
+     * @param httpRequest:
+     * @param userData:
+     * @param securityConfig:
      */
     public static void insertUserDataToHeader(
             HttpRequest httpRequest, Map<String, String> userData, SecurityConfig securityConfig) {
@@ -38,8 +38,8 @@ public class RequestInterceptor {
 
     /**
      * Encodes a Map to a string in the standard format of HTTP headers.
-     * @param userData
-     * @param userDataName
+     * @param userData:
+     * @param userDataName:
      * @return
      */
     private static String encodeUserDataForHeader(Map<String, String> userData, String userDataName) {

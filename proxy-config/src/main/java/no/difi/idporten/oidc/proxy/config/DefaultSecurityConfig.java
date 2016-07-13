@@ -82,6 +82,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public List<String> getUnsecuredPaths() {
+        return HOST.getUnsecuredPaths();
+    }
+
+    @Override
     public String getParameter(String key) {
         return IDP.getParameter(key).orElse("");
     }

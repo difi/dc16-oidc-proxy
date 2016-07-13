@@ -29,7 +29,6 @@ public class TypesafePathConfig implements PathConfig {
             this.scope = config.getString("scope");
         }
 
-
     }
 
     public static PathConfig getUnsecuredPath() {
