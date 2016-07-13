@@ -34,11 +34,11 @@ public class DatabaseCookieStorage implements CookieStorage {
      * and returns the object. The cookie is available for the user only if the time of the request
      * precedes created [Date] + maxExpiry [int] and lastUpdated [Date] + touchPeriod [int].
      *
-     * @param cookieName String (e.g. "google-cookie")
-     * @param host String (e.g. "www.google.com")
-     * @param path String (e.g. "/oauth")
+     * @param cookieName  String (e.g. "google-cookie")
+     * @param host        String (e.g. "www.google.com")
+     * @param path        String (e.g. "/oauth")
      * @param touchPeriod int (in minutes)
-     * @param userData HashMap<String, String> (JWT from authorization server)
+     * @param userData    HashMap<String, String> (JWT from authorization server)
      * @return ProxyCookie (DefaultProxyCookie) object
      */
     @Override
@@ -64,20 +64,30 @@ public class DatabaseCookieStorage implements CookieStorage {
     public Optional<ProxyCookie> findCookie(String uuid, String host, String path) {
         Optional<ProxyCookie> result = db.findCookie(uuid);
 
-        if (result.isPresent()){
+        if (result.isPresent()) {
             // Check expiry and maxExpiry
-            if (!result.get().isValid()){
+            if (!result.get().isValid()) {
                 System.err.println("Cookie was found, but has expired");
                 return Optional.empty();
             }
             // Check host and path
-            if (result.get().getHost().equals(host) && result.get().getPath().equals(path)){
+            if (result.get().getHost().equals(host) && result.get().getPath().equals(path)) {
+                System.out.println("\nCookie is valid (host & path matches):");
+                CookieDatabase.printCookie(result.get());
+                extendCookieExpiry(result.get().getUuid());
+                // Cookie is returned with old expiry, but this doesn't matter, as no fixed expiry is set in browser
+                return result;
+                // Check host
+            } else if (result.get().getHost().equals(host)) {
+                System.out.println("\nCookie is valid (host matches):");
+                CookieDatabase.printCookie(result.get());
                 extendCookieExpiry(result.get().getUuid());
                 // Cookie is returned with old expiry, but this doesn't matter, as no fixed expiry is set in browser
                 return result;
             } else {
                 // Used for debug at the moment. 'else' is otherwise redundant, as the same is returned further down
-                System.err.println("Cookie is found, but host and/or path does not match");
+                System.err.println("Cookie is found, but host and/or path does not match:");
+                CookieDatabase.printCookie(result.get());
                 return Optional.empty();
             }
         }
@@ -103,7 +113,7 @@ public class DatabaseCookieStorage implements CookieStorage {
     }
 
     // Debug
-    public void printAllCookies(){
+    public void printAllCookies() {
         db.getAllCookies().values().forEach(CookieDatabase::printCookie);
     }
 

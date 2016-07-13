@@ -30,7 +30,7 @@ public class CookieDatabase {
             Class.forName(JDBC_DRIVER);
             Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
             statement = connection.createStatement();
-        } catch (SQLException | ClassNotFoundException e){
+        } catch (SQLException | ClassNotFoundException e) {
             System.err.println("Exception caught in CookieDatabase.CookieDatabase(): " + e);
             e.printStackTrace();
         }
@@ -38,7 +38,7 @@ public class CookieDatabase {
 
     /**
      * Creates a table in the database for storing cookies.
-     *
+     * <p>
      * Columns:
      * UUID - String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
      * name - String of the cookie's name, specific to the host
@@ -50,25 +50,26 @@ public class CookieDatabase {
      * created - BigInt (long) of created's Date.getTime() method, indicating creation-time in milliseconds
      * lastUpdated - BigInt (long) of lastUpdated's Date.getTime() method, indicating creation-time in milliseconds
      */
-    public void createTable(){
-        try{
+    public void createTable() {
+        try {
             statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie " +
                     "(" +
-                        "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
-                        "name VARCHAR(30) NOT NULL, " +
-                        "host VARCHAR(30) NOT NULL, " +
-                        "path VARCHAR(30) NOT NULL, " +
-                        "touchPeriod INT NOT NULL, " +
-                        "maxExpiry INT NOT NULL, " +
-                        "userData VARCHAR(500), " +
-                        "created BIGINT NOT NULL, " +
-                        "lastUpdated BIGINT NOT NULL" +
+                    "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
+                    "name VARCHAR(30) NOT NULL, " +
+                    "host VARCHAR(30) NOT NULL, " +
+                    "path VARCHAR(30) NOT NULL, " +
+                    "touchPeriod INT NOT NULL, " +
+                    "maxExpiry INT NOT NULL, " +
+                    "userData VARCHAR(500), " +
+                    "created BIGINT NOT NULL, " +
+                    "lastUpdated BIGINT NOT NULL" +
                     ");");
             statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
-        } catch (SQLException e){
+        } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.createTable(): " + e);
             e.printStackTrace();
-        } System.out.println("\nDB: Table 'PUBLIC.cookie' created in the database\n");
+        }
+        System.out.println("\nDB: Table 'PUBLIC.cookie' created in the database\n");
     }
 
     /**
@@ -76,17 +77,17 @@ public class CookieDatabase {
      *
      * @param cookie ProxyCookie
      */
-    public void insertCookie(ProxyCookie cookie){
+    public void insertCookie(ProxyCookie cookie) {
         long now = new Date().getTime(); // lastUpdated
         String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
                         "VALUES ('%s','%s','%s','%s','%s','%s', '%s', '%s', '%s');", cookie.getUuid(), cookie.getName(), cookie.getHost(),
-                        cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), cookie.getUserData().toString(),
-                        cookie.getCreated().getTime(), now);
-         //System.out.println("DB: Insert cookie query: " + query);
+                cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), cookie.getUserData().toString(),
+                cookie.getCreated().getTime(), now);
+        //System.out.println("DB: Insert cookie query: " + query);
         try {
             statement.executeUpdate(query);
             System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
-        } catch (SQLException e){
+        } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.insertCookie(): " + e);
             e.printStackTrace();
         }
@@ -99,16 +100,17 @@ public class CookieDatabase {
      * @param str toString of HashMap
      * @return HashMap
      */
-    public static HashMap<String, String> stringToHashMap(String str){
+    public static HashMap<String, String> stringToHashMap(String str) {
         // If HashMap is empty (only containing "{}"), the object should be null
         if (str == null || str.equals("{}")) return null;
         // Removing curly braces, spaces and escape characters
         String keyValues = str.replaceAll("[\\s\\{\\}]+", "");
         HashMap<String, String> hashMap = new HashMap<>();
-        for (String pair : keyValues.split(",")){
+        for (String pair : keyValues.split(",")) {
             String[] elem = pair.split("=");
             hashMap.put(elem[0], elem[1]);
-        } return hashMap;
+        }
+        return hashMap;
     }
 
     /**
@@ -119,10 +121,10 @@ public class CookieDatabase {
      * @param uuid String
      * @return Optional<ProxyCookie>
      */
-    public Optional<ProxyCookie> findCookie(String uuid){
+    public Optional<ProxyCookie> findCookie(String uuid) {
         ProxyCookie cookie = null;
         try {
-            resultSet = statement.executeQuery("SELECT * from PUBLIC.cookie WHERE uuid = '"+uuid+"';");
+            resultSet = statement.executeQuery("SELECT * from PUBLIC.cookie WHERE uuid = '" + uuid + "';");
             if (resultSet.next()) {
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
@@ -136,13 +138,13 @@ public class CookieDatabase {
 
                 cookie = new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated);
 
-                System.out.println("\\nDB: Found cookie in database: "+cookie);
+                System.out.println("\nDB: Found cookie in database: " + cookie);
                 /*System.out.printf("\nDB: Found cookie in database:\n%.65s %15s %20s %20s %5s %5s %20s %20s", uuid, name, host,
                         path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString());*/
             } else {
-                System.err.println("\nDB: Cookie with given uuid does not exist: "+uuid);
+                System.err.println("\nDB: Cookie with given uuid does not exist: " + uuid);
             }
-        }catch (SQLException e){
+        } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.findCookie(): " + e);
             e.printStackTrace();
         }
@@ -156,12 +158,12 @@ public class CookieDatabase {
      *
      * @return HashMap
      */
-    public HashMap<String, ProxyCookie> getAllCookies(){
+    public HashMap<String, ProxyCookie> getAllCookies() {
         HashMap<String, ProxyCookie> cookies = new HashMap<>();
-        System.out.printf("getAllCookies()");
-        try{
+        System.out.println("\ngetAllCookies()");
+        try {
             resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie;");
-            while (resultSet.next()){
+            while (resultSet.next()) {
                 String uuid = resultSet.getString("uuid");
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
@@ -173,11 +175,11 @@ public class CookieDatabase {
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
-                System.out.printf("\n%.65s %15s %20s %20s %5s %5s %20s %20s", uuid, name, host,
-                        path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString());
+                System.out.printf("\n%.65s %15s %20s %20s %5s %5s %20s %20s %40s", uuid, name, host,
+                        path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString(), userData);
                 cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
-        } catch (SQLException e){
+        } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.getAllCookies(): " + e);
             e.printStackTrace();
         }
@@ -191,15 +193,15 @@ public class CookieDatabase {
      * (created + maxExpiry) is validated in DatabaseCookieStorage.findCookie() before cookie
      * is returned.
      */
-    public void removeExpiredCookies(){
-        try{
+    public void removeExpiredCookies() {
+        try {
             long now = new Date().getTime(); // present time in milliseconds
-            String expiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (lastUpdated + touchPeriod * "+MINUTE+") < " + now;
+            String expiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (lastUpdated + touchPeriod * " + MINUTE + ") < " + now;
             //String maxExpiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (created + maxExpiry * "+MINUTE+") < " + now;
-            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN ("+expiredEntries+");");
+            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN (" + expiredEntries + ");");
             System.out.println("\nDB: Expired cookies removed from database");
-        } catch (SQLException e){
-            System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): "+e);
+        } catch (SQLException e) {
+            System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): " + e);
             e.printStackTrace();
         }
     }
@@ -211,29 +213,29 @@ public class CookieDatabase {
      *
      * @param uuid String
      */
-    public void extendCookieExpiry(String uuid){
-        try{
+    public void extendCookieExpiry(String uuid) {
+        try {
             long now = new Date().getTime(); // present time in milliseconds
             String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "';";
             statement.executeUpdate(query);
-            System.out.println("\nDB: Updated expiry of cookie with uuid "+uuid);
-        } catch (SQLException e){
+            System.out.println("\nDB: Updated expiry of cookie with uuid " + uuid);
+        } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
             e.printStackTrace();
         }
     }
 
     // Debug
-    public static void printCookie(ProxyCookie cookie){
-        System.out.println("\ncookie.toString(): "+cookie);
-        System.out.println("cookie.getName(): "+cookie.getName());
-        System.out.println("cookie.getHost(): "+cookie.getHost());
-        System.out.println("cookie.getPath(): "+cookie.getPath());
-        System.out.println("cookie.getTouchPeriod(): "+cookie.getTouchPeriod());
-        System.out.println("cookie.getMaxExpiry(): "+cookie.getMaxExpiry());
-        System.out.println("cookie.getUserData(): "+cookie.getUserData());
-        System.out.println("cookie.getCreated(): "+cookie.getCreated());
-        System.out.println("cookie.getLastUpdated(): "+cookie.getLastUpdated());
+    public static void printCookie(ProxyCookie cookie) {
+        System.out.println("\ncookie.toString(): " + cookie);
+        System.out.println("cookie.getName(): " + cookie.getName());
+        System.out.println("cookie.getHost(): " + cookie.getHost());
+        System.out.println("cookie.getPath(): " + cookie.getPath());
+        System.out.println("cookie.getTouchPeriod(): " + cookie.getTouchPeriod());
+        System.out.println("cookie.getMaxExpiry(): " + cookie.getMaxExpiry());
+        System.out.println("cookie.getUserData(): " + cookie.getUserData());
+        System.out.println("cookie.getCreated(): " + cookie.getCreated());
+        System.out.println("cookie.getLastUpdated(): " + cookie.getLastUpdated());
     }
 
 }
