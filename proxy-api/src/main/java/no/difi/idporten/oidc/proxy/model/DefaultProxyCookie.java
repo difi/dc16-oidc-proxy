@@ -1,12 +1,11 @@
 package no.difi.idporten.oidc.proxy.model;
 
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.HashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class DefaultProxyCookie implements ProxyCookie {

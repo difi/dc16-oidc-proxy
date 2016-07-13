@@ -10,7 +10,9 @@ public interface PathConfig {
 
     String getSecurity();
 
-    String getRedirect_uri();
+    String getRedirectUri();
 
     String getScope();
+
+
 }

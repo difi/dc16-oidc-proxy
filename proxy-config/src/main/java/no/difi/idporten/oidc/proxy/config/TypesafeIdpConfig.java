@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,11 +17,19 @@ public class TypesafeIdpConfig implements IdpConfig {
 
 
     private String identifier;
+
     private String idpClass;
+
     private String client_id;
+
     private String password;
+
     private String scope;
+
     private String redirect_uri;
+
+    private List<String> user_data_names;
+
     private Map<String, String> parameters;
 
     public TypesafeIdpConfig(String identifier, Config idpConfig) {
@@ -30,6 +39,7 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
         this.redirect_uri = idpConfig.getString("redirect_uri");
+        this.user_data_names = idpConfig.getStringList("user_data_name");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
         logger.debug("Created IdpConfig:\n{}", this);
@@ -56,13 +66,18 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public String getRedirect_uri() {
+    public String getRedirectUri() {
         return this.redirect_uri;
     }
 
     @Override
-    public String getClient_Id() {
+    public String getClientId() {
         return this.client_id;
+    }
+
+    @Override
+    public List<String> getUserDataNames() {
+        return this.user_data_names;
     }
 
     @Override

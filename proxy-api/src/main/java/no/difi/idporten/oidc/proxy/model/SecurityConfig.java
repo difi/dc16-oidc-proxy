@@ -1,10 +1,9 @@
 package no.difi.idporten.oidc.proxy.model;
 
-import java.util.Map;
-
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Optional;
 
 public interface SecurityConfig {
@@ -21,7 +20,7 @@ public interface SecurityConfig {
 
     String getSecurity();
 
-    String getRedirect_uri();
+    String getRedirectUri();
 
     String getScope();
 
@@ -31,7 +30,13 @@ public interface SecurityConfig {
 
     String getParameter(String key);
 
-    String getClient_id();
+    String getClientId();
 
     String getPassword();
+
+    List<String> getUserDataNames();
+
+    List<String> getUnsecuredPaths();
+
+    boolean isSecured();
 }

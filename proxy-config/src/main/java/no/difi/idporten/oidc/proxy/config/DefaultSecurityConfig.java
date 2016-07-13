@@ -6,6 +6,7 @@ import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
 
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Optional;
 
 public class DefaultSecurityConfig implements SecurityConfig {
@@ -66,13 +67,23 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public String getClient_id() {
-        return IDP.getClient_Id();
+    public String getClientId() {
+        return IDP.getClientId();
     }
 
     @Override
     public String getPassword() {
         return IDP.getPassword();
+    }
+
+    @Override
+    public List<String> getUserDataNames() {
+        return IDP.getUserDataNames();
+    }
+
+    @Override
+    public List<String> getUnsecuredPaths() {
+        return HOST.getUnsecuredPaths();
     }
 
     @Override
@@ -90,11 +101,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public String getRedirect_uri() {
-        if (PATH.getRedirect_uri() == null) {
-            return IDP.getRedirect_uri();
+    public String getRedirectUri() {
+        if (PATH.getRedirectUri() == null) {
+            return IDP.getRedirectUri();
         }
-        return PATH.getRedirect_uri();
+        return PATH.getRedirectUri();
     }
 
     @Override
@@ -103,6 +114,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
             return IDP.getScope();
         }
         return PATH.getScope();
+    }
+
+    @Override
+    public boolean isSecured() {
+        return !getSecurity().equals("0");
     }
 
     @Override
