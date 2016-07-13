@@ -26,13 +26,14 @@ public class ResponseGenerator {
 
     private static Logger logger = LoggerFactory.getLogger(InboundHandlerAdapter.class);
 
+
     /**
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
+    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
 
@@ -46,8 +47,12 @@ public class ResponseGenerator {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
 
-            logger.debug(String.format("Created redirect response:\n%s", response));
+            new RedirectCookieHandler(
+                    securityConfig.getCookieConfig(),
+                    securityConfig.getHostname(),
+                    securityConfig.getPath()).insertCookieToResponse(response);
 
+            logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 
         } catch (IdentityProviderException exc) {
@@ -80,8 +85,8 @@ public class ResponseGenerator {
     /**
      * Generates and writes an appropriate JSON response based on userData with a correct 'Set-Cookie' header.
      *
-     * @param ctx: ChannelHandlerContext
-     * @param userData: Information about the user, in which the service access is interested in.
+     * @param ctx:               ChannelHandlerContext
+     * @param userData:          Information about the user, in which the service access is interested in.
      * @param proxyCookieObject: Cookie to keep the user logged in.
      * @throws IdentityProviderException
      */
@@ -124,6 +129,11 @@ public class ResponseGenerator {
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
         boolean setCookie = proxyCookie != null;
+
+        // Changing path if RedirectCookieHandler has an original path for this request
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
+            httpRequest.setUri(originalPath);
+        });
 
 
         Bootstrap b = new Bootstrap();
@@ -170,12 +180,13 @@ public class ResponseGenerator {
     /**
      * Help method for generateProxyResponse.
      * Checks if the path is unsecured and should not receive the userdata.
+     *
      * @param unsecuredPaths:
      * @param path:
      * @return
      */
 
-    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path){
+    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path) {
         return unsecuredPaths.stream().filter(unsecuredPath -> unsecuredPath.startsWith(path)).findFirst().isPresent();
     }
 
