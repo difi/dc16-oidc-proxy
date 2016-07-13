@@ -167,46 +167,4 @@ public class ResponseGeneratorTest {
             Assert.assertTrue(content.contains(notConfiguredHostName));
         }
     }
-
-    @Test
-    public void generateJWTResponseWhenCorrectlyConfigured() throws Exception {
-        ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
-
-        String uuid = "uuid";
-        String cookieName = "TESTCOOKIE";
-        String path = "/beskyttet-side";
-        Date farFutureDate = new Date(new Date().getTime() + Integer.MAX_VALUE);
-
-        String pid = "08023549930";
-        HashMap<String, String> userData = new HashMap<>();
-        userData.put("pid", pid);
-        userData.put("tokenType", "JWTToken");
-        userData.put("aud", "dificamp");
-        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, notConfiguredHostName, path, farFutureDate, farFutureDate,
-                userData);
-        try {
-            responseGeneratorSpy.generateJWTResponse(ctxMock, userData, proxyCookie);
-        } catch (NullPointerException exc) {
-
-        } catch (IdentityProviderException exc) {
-
-        } finally {
-            Mockito.verify(responseGeneratorSpy).generateJWTResponse(Mockito.any(), Mockito.any(), Mockito.any());
-            Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
-
-            FullHttpResponse actual = httpResponseCaptor.getValue();
-            Assert.assertTrue(actual instanceof HttpResponse);
-            String content = actual.content().toString(Charset.forName("UTF-8"));
-            Assert.assertEquals(actual.status(), HttpResponseStatus.OK);
-            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
-                    .APPLICATION_JSON));
-            userData.entrySet().stream().forEach(entry -> {
-                Assert.assertTrue(content.contains(entry.getKey()));
-                Assert.assertTrue(content.contains(entry.getValue()));
-            });
-        }
-    }
-
-
-
 }
