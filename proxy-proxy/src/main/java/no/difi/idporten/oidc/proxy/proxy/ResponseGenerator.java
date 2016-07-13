@@ -32,7 +32,7 @@ public class ResponseGenerator {
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
+    protected static void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
             StringBuilder content = new StringBuilder(redirectUrl);
@@ -53,7 +53,7 @@ public class ResponseGenerator {
     /**
      * Default response for when nothing is configured for the host
      */
-    protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
+    protected static void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
         String content = String.format("Unknown host:  %s", host);
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
@@ -101,7 +101,7 @@ public class ResponseGenerator {
      * @param proxyCookie:
      */
 
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
+    public static Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig, ProxyCookie proxyCookie) {
 
         int connect_timeout_millis = 15000;
@@ -168,7 +168,7 @@ public class ResponseGenerator {
      * @return
      */
 
-    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path){
+    private static boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path){
         return unsecuredPaths.stream().filter(unsecuredPath -> unsecuredPath.startsWith(path)).findFirst().isPresent();
     }
 

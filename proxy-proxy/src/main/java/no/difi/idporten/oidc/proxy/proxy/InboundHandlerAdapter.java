@@ -27,13 +27,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private SecurityConfigProvider securityConfigProvider;
 
-    private ResponseGenerator responseGenerator;
-
     private ProxyCookie validProxyCookie;
+
+    private ProxyCookie proxyCookie;
 
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
-        this.responseGenerator = new ResponseGenerator();
     }
 
     /**
@@ -43,6 +42,10 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info(String.format("Activating source handler channel %s", ctx.channel()));
         ctx.read();
+    }
+
+    private boolean redirectedFromIdp(String path) {
+        return (path.contains("?code="));
     }
 
 
@@ -60,71 +63,108 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
-        if (!securityConfigOptional.isPresent()) {
-            logger.debug("Could not get SecurityConfig of host {}", host);
-            responseGenerator.generateDefaultResponse(ctx, host);
-        }
 
-        securityConfigOptional.ifPresent(securityConfig -> {
-            // do this if security config is present (not null)
-            logger.debug("Has security config: {}", securityConfig);
+        /////////////////////////////////////////////////////////////////////////
 
-            if (securityConfig.isSecured()) { // the requested resource IS secured
-                logger.debug("{}{} is secured", host, path);
-                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
+        try {
+            if (securityConfigOptional.isPresent()) {
+                securityConfigOptional.ifPresent(securityConfig -> {
+                    logger.debug("Has security config: {}", securityConfig);
 
-                // getting correct cookie from request
-                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
+                    if (securityConfig.isSecured()) {
+                        logger.debug("{}{} is secured", host, path);
+                        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
 
-                // This is the expression where a query to the database is necessary
-                if (validProxyCookieOptional.isPresent()) {
-                    validProxyCookie = validProxyCookieOptional.get();
-                    logger.debug("Has validProxyCookie {}", validProxyCookie);
-                    logger.debug("Cookie is valid");
-                    // we need handle exceptions and nullPointers either in this class or somewhere else
-                    // generate a JWTResponse with the user data inside the cookie
-                    try {
-                        outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
-                                securityConfig, validProxyCookie);
-                        return;
-                        // stop this function from continuing
-                    } catch (Exception exc) {
-                        logger.warn("Could not generate ProxyResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
-                        exc.printStackTrace();
-                    }
-                } else {
-                    logger.debug("Could not find valid ProxyCookie in storage");
-                }
-                Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
-                if (!idpOptional.isPresent()) { // for some reason, the path's IdentityProvider does not exist
-                    responseGenerator.generateDefaultResponse(ctx, host);
-                }
-                idpOptional.ifPresent(idp -> {
-                    logger.debug("Has identity provider: {}", idp);
-                    if (path.contains("?code=")) {
-                        logger.debug("TypesafePathConfig contains code: {}", path);
-                        // need to get token here
-                        try {
-                            HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
-                                    securityConfig, cookieHandler.generateCookie(userData));
-                        } catch (IdentityProviderException exc) {
-                            exc.printStackTrace();
-                            responseGenerator.generateDefaultResponse(ctx, host);
+                        Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
+
+                        if (validProxyCookieOptional.isPresent()) {
+                            validProxyCookie = validProxyCookieOptional.get();
+                            logger.debug("Has validProxyCookie {}", validProxyCookie);
+                            logger.debug("Cookie is valid");
+
+                            try {
+                                outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest,
+                                        securityConfig, validProxyCookie);
+                                return;
+                            } catch (Exception exc) {
+                                logger.warn("Could not generate ProxyResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
+                                exc.printStackTrace();
+                            }
+                        } else {
+                            logger.debug("Could not find valid ProxyCookie in storage");
                         }
+                        Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
+                        if (!idpOptional.isPresent()) {
+                            ResponseGenerator.generateDefaultResponse(ctx, host);
+                        }
+                        idpOptional.ifPresent(idp -> {
+                            logger.debug("Has identity provider: {}", idp);
+                            if (path.contains("?code=")) {
+                                logger.debug("TypesafePathConfig contains code: {}", path);
+                                try {
+                                    HashMap<String, String> userData = idp.getToken(path).getUserData();
+                                    outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest,
+                                            securityConfig, cookieHandler.generateCookie(userData));
+                                } catch (IdentityProviderException exc) {
+                                    exc.printStackTrace();
+                                    ResponseGenerator.generateDefaultResponse(ctx, host);
+                                }
+                            } else {
+                                ResponseGenerator.generateRedirectResponse(ctx, idp);
+                            }
+                        });
                     } else {
-                        // redirect response
-                        responseGenerator.generateRedirectResponse(ctx, idp);
-                        // should not continue life of request after this
+                        logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
+                        outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest,
+                                securityConfig, validProxyCookie);
                     }
                 });
+
+
+
+                /*SecurityConfig securityConfig = securityConfigOptional.get();
+
+                if (securityConfig.isSecured()) {
+                    CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
+                    Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
+                    Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
+
+                    if (validProxyCookieOptional.isPresent()) {
+                        proxyCookie = validProxyCookieOptional.get();
+
+                    } else if (idpOptional.isPresent()) {
+                        System.out.println("Is secured");
+                        IdentityProvider idp = idpOptional.get();
+                        HashMap<String, String> userData = idp.getToken(path).getUserData();
+                        proxyCookie = cookieHandler.generateCookie(userData);
+
+                        if (redirectedFromIdp(path)) {
+                            outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                        } else {
+                            ResponseGenerator.generateRedirectResponse(ctx, idp);
+                        }
+                    } else {
+                        ResponseGenerator.generateDefaultResponse(ctx, host);
+                    }
+                } else {
+                    outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                }
             } else {
-                // path is not secured
-                logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest,
-                        securityConfig, validProxyCookie);
+                logger.debug("Could not get SecurityConfig of host {}", host);
+                ResponseGenerator.generateDefaultResponse(ctx, host);
+            }*/
             }
-        });
+
+        } catch (Exception e){
+            System.out.println("EXCEPTION YO");
+            ResponseGenerator.generateDefaultResponse(ctx, host);
+        }
+
+
+        /////////////////////////////////////////////////////////////////////////
+
+
+
     }
 
 
