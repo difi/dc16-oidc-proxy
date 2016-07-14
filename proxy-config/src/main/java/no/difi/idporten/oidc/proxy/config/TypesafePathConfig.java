@@ -32,7 +32,6 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     public static PathConfig getUnsecuredPath() {
-        System.out.println("This path is unsecured");
         return new TypesafePathConfig("/", "0", "none");
     }
 

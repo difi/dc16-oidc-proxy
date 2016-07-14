@@ -6,9 +6,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
-import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.mockito.*;
@@ -26,7 +26,10 @@ public class ResponseGeneratorTest {
 
     private static Logger logger = LoggerFactory.getLogger(ResponseGeneratorTest.class);
 
-    private String host;
+    private String notConfiguredHostName;
+    private String configuredHostName;
+    private String securedPath;
+    private String redirectCookieName;
 
     private ResponseGenerator responseGenerator;
 
@@ -43,22 +46,41 @@ public class ResponseGeneratorTest {
      */
     @Mock
     private ChannelHandlerContext ctxMock;
+    @Mock
+    private SecurityConfig securityConfigMock;
+    @Mock
+    private CookieConfig cookieConfigMock;
+
+    @BeforeTest
+    public void setUpBeforeAllTests() {
+        this.notConfiguredHostName = "not.configured.host";
+        this.configuredHostName = "configured.host.com";
+        this.securedPath = "/secured-path";
+        this.redirectCookieName = "redirectCookie";
+        this.responseGenerator = new ResponseGenerator();
+
+        cookieConfigMock = Mockito.mock(CookieConfig.class);
+        Mockito.doReturn(redirectCookieName).when(cookieConfigMock).getName();
+    }
 
 
     @BeforeTest
-    public void injectIdpConfigProvider() {
-        Injector injector = Guice.createInjector(new ConfigModule(), new ProxyModule());
-
-        this.host = "not.configured.host";
-        this.responseGenerator = new ResponseGenerator();
-
+    public void setUpChannelHandlerContextMock() {
         // Instantiating mock
         this.ctxMock = Mockito.mock(ChannelHandlerContext.class);
         MockitoAnnotations.initMocks(this); // Needed for httpResponseCaptor to work
     }
 
+    @BeforeTest
+    public void setUpSecurityConfigMock() {
+        securityConfigMock = Mockito.mock(SecurityConfig.class);
+        Mockito.doReturn(configuredHostName).when(securityConfigMock).getHostname();
+        Mockito.doReturn(securedPath).when(securityConfigMock).getPath();
+        Mockito.doReturn(cookieConfigMock).when(securityConfigMock).getCookieConfig();
+    }
+
     @BeforeMethod
-    public void setUp() {
+    public void setUpBeforeEachTest() {
         //Empty body
     }
 
@@ -81,13 +103,13 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         // Because of exceptions we need to wrap tests in these ugly try/catch things
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock);
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock);
         } catch (NullPointerException exc) {
 
         } finally {
             // All we need to test here is that the correct methods have been called and maybe which arguments
             // they were called with.
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
 
             /* Not sure whether it's this method's responsibility to create an error when this goes south.
@@ -108,11 +130,11 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         Mockito.doReturn(validRedirectUrl).when(identityProviderMock).generateRedirectURI();
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock);
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock);
         } catch (NullPointerException exc) {
 
         } finally {
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
             Mockito.atLeastOnce();
             Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
@@ -129,7 +151,7 @@ public class ResponseGeneratorTest {
     public void generateDefaultResponse() {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         try {
-            responseGeneratorSpy.generateDefaultResponse(ctxMock, host);
+            responseGeneratorSpy.generateDefaultResponse(ctxMock, notConfiguredHostName);
         } catch (NullPointerException exc) {
 
         } finally {
@@ -142,49 +164,7 @@ public class ResponseGeneratorTest {
             Assert.assertEquals(actual.status(), HttpResponseStatus.BAD_REQUEST);
             Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
                     .TEXT_HTML));
-            Assert.assertTrue(content.contains(host));
+            Assert.assertTrue(content.contains(notConfiguredHostName));
         }
     }
-
-    @Test
-    public void generateJWTResponseWhenCorrectlyConfigured() throws Exception {
-        ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
-
-        String uuid = "uuid";
-        String cookieName = "TESTCOOKIE";
-        String path = "/beskyttet-side";
-        Date farFutureDate = new Date(new Date().getTime() + Integer.MAX_VALUE);
-
-        String pid = "08023549930";
-        HashMap<String, String> userData = new HashMap<>();
-        userData.put("pid", pid);
-        userData.put("tokenType", "JWTToken");
-        userData.put("aud", "dificamp");
-        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, farFutureDate, farFutureDate,
-                userData);
-        try {
-            responseGeneratorSpy.generateJWTResponse(ctxMock, userData, proxyCookie);
-        } catch (NullPointerException exc) {
-
-        } catch (IdentityProviderException exc) {
-
-        } finally {
-            Mockito.verify(responseGeneratorSpy).generateJWTResponse(Mockito.any(), Mockito.any(), Mockito.any());
-            Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
-
-            FullHttpResponse actual = httpResponseCaptor.getValue();
-            Assert.assertTrue(actual instanceof HttpResponse);
-            String content = actual.content().toString(Charset.forName("UTF-8"));
-            Assert.assertEquals(actual.status(), HttpResponseStatus.OK);
-            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
-                    .APPLICATION_JSON));
-            userData.entrySet().stream().forEach(entry -> {
-                Assert.assertTrue(content.contains(entry.getKey()));
-                Assert.assertTrue(content.contains(entry.getValue()));
-            });
-        }
-    }
-
-
-
 }
