@@ -4,6 +4,7 @@ import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -34,6 +35,8 @@ public class DefaultProxyCookie implements ProxyCookie {
         logger.debug("Checking if cookie is valid with expiry date: {}", expiry);
         return expiry.after(new Date());
     }
+
+
 
     public Date getCreated() {
         return created;

@@ -13,7 +13,10 @@ import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -113,6 +116,39 @@ public class CookieHandler {
         } else {
             return Optional.empty();
         }
+    }
+
+    private String encodeUuid(String uuid, String salt, List<String> parameters) {
+        String stringToBeHashed = uuid;
+        for (String parameter : parameters) {
+            stringToBeHashed += parameter;
+        }
+
+        try{
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.update(salt.getBytes());
+
+            byte[] bytes = messageDigest.digest(stringToBeHashed.getBytes());
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            for (int i = 0; i < bytes.length; i++) {
+                stringBuilder.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+
+            }
+            String hashedUuid = stringBuilder.toString();
+
+            return hashedUuid;
+        } catch (NoSuchAlgorithmException e){
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
+    public boolean checkIncomingUuid(String uuidHash, String uuid, String salt, List<String> parameters) throws Exception {
+        return (uuidHash.equals(encodeUuid(uuid, salt, parameters)));
+
     }
 
 }
