@@ -202,7 +202,7 @@ public class SimpleIntegrationTest {
         //Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
 
-    @Test(enabled = false)
+    @Test
     public void testFirstRedirectResponseHasCookieForSavingPath() throws Exception {
         logger.info("With a secured path on a configured host, the server should respond with a redirect " +
                 "response that has a Set-Cookie header in order to allow the server to remember the " +
