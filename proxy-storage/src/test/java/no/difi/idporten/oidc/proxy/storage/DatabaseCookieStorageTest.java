@@ -34,7 +34,6 @@ public class DatabaseCookieStorageTest {
     public void createSimpleCookieInStorage() {
         CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
-//        ProxyCookie proxyCookie = cookieStorage.generateCookieAsObject("PROXYCOOKIE", "example.com", "/app1", null);
         ProxyCookie proxyCookie = cookieStorage.generateCookieInDb("PROXYCOOKIE", "example.com", "/app1", touchPeriod, maxExpiry, null);
         Assert.assertNotNull(proxyCookie);
 
@@ -109,32 +108,6 @@ public class DatabaseCookieStorageTest {
         Assert.assertFalse(foundMaxExpiredCookie.isPresent());
 
     }
-/*
-    @Test
-    public void expiredDateIsNeverHigherThanMaxExpiryDate() {
-        CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
-
-        Date dateNow = new Date();
-
-        ProxyCookie cookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "valid", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry-10)), calculateDate(dateNow, -(touchPeriod-10))));
-
-        Date oldExpiry = ((DefaultProxyCookie) cookie).getCalculatedExpiry();
-
-        // This will also extend the expiry by updating
-        Optional<ProxyCookie> foundCookie = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getPath());
-
-        Assert.assertTrue(foundCookie.isPresent());
-
-
-
-
-        Date maxExpiryDate = proxyCookie.getMaxExpiry();
-
-        proxyCookie.setExpiry(new Date(dateNow.getTime() + 24 * 60 * 60 * 1000)); // 24 hours is longer than max expiry
-
-        Assert.assertEquals(maxExpiryDate, proxyCookie.getExpiry());
-    }*/
 
     private Date calculateDate(Date date, int minutes){
         return new Date(date.getTime() + minutes * MINUTE);

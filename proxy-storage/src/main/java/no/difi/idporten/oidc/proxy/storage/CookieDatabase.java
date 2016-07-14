@@ -142,8 +142,6 @@ public class CookieDatabase {
                 cookie = new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated);
 
                 //System.out.println("\nDB: Found cookie in database (" + cookie + ")");
-            } else {
-                System.err.println("\nDB: Cookie with given uuid does not exist: " + uuid);
             }
         } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.findCookie(): " + e);

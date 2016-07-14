@@ -64,7 +64,7 @@ public class CookieHandlerTest {
 
     @Test
     public void generateCookie() {
-        /*
+
         String pid = "08023549930";
         HashMap<String, String> userData = new HashMap<>();
         userData.put("pid", pid);
@@ -75,13 +75,12 @@ public class CookieHandlerTest {
         Assert.assertNotNull(cookieHandler);
 
         // Causing error at parameters here
-        ProxyCookie actualProxyCookie = cookieHandler.generateCookie(userData);
+        ProxyCookie actualProxyCookie = cookieHandler.generateCookie(userData, 20, 120);
 
         Assert.assertNotNull(actualProxyCookie);
         Assert.assertEquals(actualProxyCookie.getHost(), host);
         Assert.assertEquals(actualProxyCookie.getPath(), path);
         Assert.assertEquals(actualProxyCookie.getUserData().get("pid"), pid);
-        */
     }
 
     @Test

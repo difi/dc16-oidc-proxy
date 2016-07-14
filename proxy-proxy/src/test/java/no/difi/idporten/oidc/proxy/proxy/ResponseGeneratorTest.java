@@ -148,7 +148,7 @@ public class ResponseGeneratorTest {
 
     @Test
     public void generateJWTResponseWhenCorrectlyConfigured() throws Exception {
-        /*
+
         Mockito.reset(ctxMock); // It only works when resetting here
 
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
@@ -156,15 +156,13 @@ public class ResponseGeneratorTest {
         String uuid = "uuid";
         String cookieName = "TESTCOOKIE";
         String path = "/beskyttet-side";
-        Date farFutureDate = new Date(new Date().getTime() + Integer.MAX_VALUE);
 
         String pid = "08023549930";
         HashMap<String, String> userData = new HashMap<>();
         userData.put("pid", pid);
         userData.put("tokenType", "JWTToken");
         userData.put("aud", "dificamp");
-        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, farFutureDate, farFutureDate,
-                userData);
+        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, 20, 120, userData);
         try {
             responseGeneratorSpy.generateJWTResponse(ctxMock, userData, proxyCookie);
         } catch (NullPointerException exc) {
@@ -186,7 +184,6 @@ public class ResponseGeneratorTest {
                 Assert.assertTrue(content.contains(entry.getValue()));
             });
         }
-        */
     }
 
 

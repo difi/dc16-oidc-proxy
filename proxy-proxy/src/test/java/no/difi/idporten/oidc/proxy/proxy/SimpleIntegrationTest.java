@@ -7,6 +7,7 @@ import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -21,9 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -42,7 +41,7 @@ public class SimpleIntegrationTest {
     private String tokenType = "JWTToken";
     private String aud = "dificamp";
     private HashMap<String, String> idPortenUserData;
-    private DefaultProxyCookie storedIdportenCookie;
+    private ProxyCookie storedIdportenCookie;
 
 
     private static Map<String, String> getHeadersAsMap(Header[] headers) {
@@ -221,14 +220,15 @@ public class SimpleIntegrationTest {
         Assert.assertTrue(headerMap.get(HttpHeaderNames.SET_COOKIE.toString()).contains(redirectCookieName));
     }
 
-    /*
+
     private ProxyCookie createValidGoogleCookie() {
         idPortenUserData = new HashMap<>();
         idPortenUserData.put("pid", pid);
         idPortenUserData.put("tokenType", tokenType);
         idPortenUserData.put("aud", aud);
-        storedIdportenCookie = cookieStorage.generateCookieAsObject(cookieName, remoteHostName, "/google", idPortenUserData);
+        // Using hardcoded touchPeriod and maxExpiry value, as this isn't tested here
+        storedIdportenCookie = cookieStorage.generateCookieInDb(cookieName, remoteHostName, "/google", 20, 120, idPortenUserData);
         return storedIdportenCookie;
     }
-    */
+
 }
