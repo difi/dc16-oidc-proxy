@@ -114,9 +114,7 @@ public class ResponseGenerator {
         Channel outboundChannel;
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
-        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(),
-                securityConfig.getHostname(), securityConfig.getPath());
-        boolean setCookie = cookieHandler.getValidProxyCookie(httpRequest) != null;
+        boolean setCookie = proxyCookie != null;
 
 
         Bootstrap b = new Bootstrap();
@@ -139,18 +137,18 @@ public class ResponseGenerator {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    logger.debug("Outbound channel operation success");// connection complete start to read first data
+                    logger.debug("Outbound channel operation success");
                     outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) { // was able to flush out data, start to read the next chunk
+                            if (future.isSuccess()) {
                                 ctx.channel().read();
                             } else {
                                 future.channel().close();
                             }
                         }
                     });
-                } else {// Close the connection if the connection attempt has failed.
+                } else {
                     logger.debug("Outbound channel operation failure");
                     inboundChannel.close();
                 }

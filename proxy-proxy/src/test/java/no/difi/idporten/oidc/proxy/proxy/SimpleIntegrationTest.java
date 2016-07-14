@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
@@ -10,7 +11,6 @@ import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-import io.netty.handler.codec.http.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;

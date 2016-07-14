@@ -8,7 +8,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
-import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +25,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     private volatile Channel outboundChannel;
 
     private SecurityConfigProvider securityConfigProvider;
-
-    private ProxyCookie validProxyCookie;
 
     private ProxyCookie proxyCookie;
 
@@ -64,81 +61,35 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
 
-        /////////////////////////////////////////////////////////////////////////
-
         try {
             if (securityConfigOptional.isPresent()) {
-                securityConfigOptional.ifPresent(securityConfig -> {
-                    logger.debug("Has security config: {}", securityConfig);
+                SecurityConfig securityConfig = securityConfigOptional.get();
+                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
+                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
 
-                    if (securityConfig.isSecured()) {
-                        logger.debug("{}{} is secured", host, path);
-                        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
-
-                        Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
-
-                        if (validProxyCookieOptional.isPresent()) {
-                            validProxyCookie = validProxyCookieOptional.get();
-                            logger.debug("Has validProxyCookie {}", validProxyCookie);
-                            logger.debug("Cookie is valid");
-
-                            try {
-                                outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest,
-                                        securityConfig, validProxyCookie);
-                                return;
-                            } catch (Exception exc) {
-                                logger.warn("Could not generate ProxyResponse with cookie {} and UserData\n{}", validProxyCookie, validProxyCookie.getUserData());
-                                exc.printStackTrace();
-                            }
-                        } else {
-                            logger.debug("Could not find valid ProxyCookie in storage");
-                        }
-                        Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
-                        if (!idpOptional.isPresent()) {
-                            ResponseGenerator.generateDefaultResponse(ctx, host);
-                        }
-                        idpOptional.ifPresent(idp -> {
-                            logger.debug("Has identity provider: {}", idp);
-                            if (path.contains("?code=")) {
-                                logger.debug("TypesafePathConfig contains code: {}", path);
-                                try {
-                                    HashMap<String, String> userData = idp.getToken(path).getUserData();
-                                    outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest,
-                                            securityConfig, cookieHandler.generateCookie(userData));
-                                } catch (IdentityProviderException exc) {
-                                    exc.printStackTrace();
-                                    ResponseGenerator.generateDefaultResponse(ctx, host);
-                                }
-                            } else {
-                                ResponseGenerator.generateRedirectResponse(ctx, idp);
-                            }
-                        });
-                    } else {
-                        logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                        outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest,
-                                securityConfig, validProxyCookie);
-                    }
-                });
-
-
-
-                /*SecurityConfig securityConfig = securityConfigOptional.get();
+                logger.debug("Has security config: {}", securityConfig);
 
                 if (securityConfig.isSecured()) {
-                    CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
-                    Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
                     Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
 
+                    logger.debug("{}{} is secured", host, path);
+
                     if (validProxyCookieOptional.isPresent()) {
+                        logger.debug("Has valid ProxyCookie {}", proxyCookie);
+
                         proxyCookie = validProxyCookieOptional.get();
+                        outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
 
                     } else if (idpOptional.isPresent()) {
-                        System.out.println("Is secured");
                         IdentityProvider idp = idpOptional.get();
-                        HashMap<String, String> userData = idp.getToken(path).getUserData();
-                        proxyCookie = cookieHandler.generateCookie(userData);
+
+                        logger.debug("Has identity provider: {}", idp);
 
                         if (redirectedFromIdp(path)) {
+                            logger.debug("TypesafePathConfig contains code: {}", path);
+
+                            HashMap<String, String> userData = idp.getToken(path).getUserData();
+                            proxyCookie = cookieHandler.generateCookie(userData);
                             outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                         } else {
                             ResponseGenerator.generateRedirectResponse(ctx, idp);
@@ -147,23 +98,21 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         ResponseGenerator.generateDefaultResponse(ctx, host);
                     }
                 } else {
+                    logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
+
+                    if (validProxyCookieOptional.isPresent()) {
+                        proxyCookie = validProxyCookieOptional.get();
+                    }
                     outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                 }
             } else {
                 logger.debug("Could not get SecurityConfig of host {}", host);
                 ResponseGenerator.generateDefaultResponse(ctx, host);
-            }*/
             }
 
-        } catch (Exception e){
-            System.out.println("EXCEPTION YO");
+        } catch (Exception e) {
             ResponseGenerator.generateDefaultResponse(ctx, host);
         }
-
-
-        /////////////////////////////////////////////////////////////////////////
-
-
 
     }
 
@@ -176,13 +125,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.debug(String.format("Reading incoming request: %s", msg.getClass()));
 
-        // First message is always HttpRequest, use it to bootstrap outbound channel.
         if (msg instanceof HttpRequest) {
             handleHttpRequest(ctx, (HttpRequest) msg);
         } else if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {
-                    // was able to flush out data, start to read the next chunk
                     ctx.channel().read();
                 } else {
                     future.channel().close();
