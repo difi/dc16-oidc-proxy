@@ -45,9 +45,10 @@ public class DefaultProxyCookie implements ProxyCookie {
     }
 
     /**
-     * Only used to instantiate a cookie from the database. Otherwise, DatabaseCookieStorage won't be able
-     * to validate the cookie with correct created and lastUpdated values. In every other case, use other
-     * constructor to create a cookie with created and lastUpdated values set to time of instantiation.
+     * Only used to instantiate a cookie from the database. Also used for testing. Otherwise,
+     * DatabaseCookieStorage won't be able to validate the cookie with correct created and lastUpdated
+     * values. In every other case, use other constructor to create a cookie with created and
+     * lastUpdated values set to time of instantiation.
      *
      * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
      * @param name String (e.g. "google-cookie")
@@ -70,6 +71,8 @@ public class DefaultProxyCookie implements ProxyCookie {
         this.created = created;
         this.lastUpdated = lastUpdated;
     }
+
+
 
     /**
      * Checks if the cookie's expiry and maxExpiry is valid (not yet reached).
@@ -126,6 +129,10 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     public Date getLastUpdated() {
         return lastUpdated;
+    }
+
+    public void setLastUpdated(Date lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 
     @Override
