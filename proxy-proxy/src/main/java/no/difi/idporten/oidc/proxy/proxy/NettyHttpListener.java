@@ -20,11 +20,8 @@ public class NettyHttpListener implements Runnable {
     private static Logger logger = LoggerFactory.getLogger(NettyHttpListener.class);
 
     private int port = 8080;
-    private EventLoopGroup bossGroup;
-    private EventLoopGroup workerGroup;
 
     private int bossGroupSize = 1;
-    private int workerGroupSize = 8;
 
     private int maxConnectionsQueued = 64;
 
@@ -48,13 +45,9 @@ public class NettyHttpListener implements Runnable {
         logger.info("Starting the server...");
 
         commonEventLoopGroup = new NioEventLoopGroup(bossGroupSize);
-//      bossGroup = new NioEventLoopGroup(bossGroupSize);
-//      workerGroup = new NioEventLoopGroup(workerGroupSize);
-
         try {
             ServerBootstrap b = new ServerBootstrap();
 
-//          b.commonEventLoopGroup(bossGroup, workerGroup)
             b.group(commonEventLoopGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(inboundInitializer)
@@ -85,14 +78,10 @@ public class NettyHttpListener implements Runnable {
             }
         } finally {
             logger.info("Shutting down.");
-            // bossGroup.shutdownGracefully();
-            // workerGroup.shutdownGracefully();
         }
     }
 
     public void destroy() {
-//        bossGroup.shutdownGracefully();
-//        workerGroup.shutdownGracefully();
         commonEventLoopGroup.shutdownGracefully();
     }
 }

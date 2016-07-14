@@ -26,8 +26,8 @@ public class RequestInterceptor {
      * @param userData:
      * @param securityConfig:
      */
-    public static void insertUserDataToHeader(
-            HttpRequest httpRequest, Map<String, String> userData, SecurityConfig securityConfig) {
+    public static void insertUserDataToHeader(HttpRequest httpRequest,
+                                              Map<String, String> userData, SecurityConfig securityConfig) {
         List<String> userDataNames = securityConfig.getUserDataNames();
 
         userDataNames.stream().forEach(userDataName -> {
@@ -44,7 +44,7 @@ public class RequestInterceptor {
      */
     private static String encodeUserDataForHeader(Map<String, String> userData, String userDataName) {
         return userData.entrySet().stream()
-                .filter(e -> userDataName.equals(e.getKey()))
+                .filter(entry -> userDataName.equals(entry.getKey()))
                 .map(entry -> String.format("%s", entry.getValue()))
                 .collect(Collectors.joining(""));
     }

@@ -15,10 +15,8 @@ import org.slf4j.LoggerFactory;
 public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage> {
     private static Logger logger = LoggerFactory.getLogger(HttpRequestHandler.class);
 
-    private final int maxConnectionsQueued;
 
-    public HttpRequestHandler(int maxConnectionsQueued) {
-        this.maxConnectionsQueued = maxConnectionsQueued;
+    public HttpRequestHandler() {
 
     }
 
@@ -39,14 +37,10 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
         logger.debug(String.format("HttpRequestHandler reading message: %s", msg));
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
-
-
-
             String host = request.headers().getAsString(HttpHeaderNames.HOST);
+
             logger.debug(String.format("Trimmed host name: %s", host));
         }
-
-        // This notifies the next handler in the pipeline that this message is read and ready to move on
         ctx.fireChannelRead(msg);
     }
 }

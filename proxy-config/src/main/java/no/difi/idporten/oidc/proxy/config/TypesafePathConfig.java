@@ -2,8 +2,12 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TypesafePathConfig implements PathConfig {
+
+    private static Logger logger = LoggerFactory.getLogger(TypesafeIdpConfigProvider.class);
 
     private String path, security, redirect_uri, scope, idp;
 
@@ -25,14 +29,14 @@ public class TypesafePathConfig implements PathConfig {
             this.redirect_uri = config.getString("redirect_uri");
         }
 
-        if (checkForStringInConfig("scope", config)){
+        if (checkForStringInConfig("scope", config)) {
             this.scope = config.getString("scope");
         }
 
     }
 
     public static PathConfig getUnsecuredPath() {
-        System.out.println("This path is unsecured");
+        logger.info("This path is unsecured");
         return new TypesafePathConfig("/", "0", "none");
     }
 
@@ -66,15 +70,8 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     @Override
-    public String toString(){
-        return getPath();/*"path: " + path + ","
-                +"security: " + security
-                +", "
-                +"redirect_uri: "+redirect_uri
-                +", "
-                +"scope: "+ scope
-                +", "
-                +"idp: "+idp;*/
+    public String toString() {
+        return getPath();
     }
 
 

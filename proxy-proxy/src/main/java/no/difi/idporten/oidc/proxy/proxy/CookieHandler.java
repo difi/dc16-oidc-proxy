@@ -60,7 +60,6 @@ public class CookieHandler {
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest) {
         logger.debug("Looking for cookie with name {}", cookieName);
 
-        // get CookieObject from database with the uuid in the HttpCookie
         Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
         if (nettyCookieOptional.isPresent()) {
             String uuid = nettyCookieOptional.get().value();

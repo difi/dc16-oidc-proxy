@@ -31,8 +31,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
     private final SecurityConfig securityConfig;
-    private final String APIURL = "https://www.googleapis.com/oauth2/v3/token"; // Google's api services
-    private final String LOGINURL = "https://accounts.google.com/o/oauth2/auth"; // For logging in/authorizing with Google
+    private final String APIURL = "https://www.googleapis.com/oauth2/v3/token";
+    private final String LOGINURL = "https://accounts.google.com/o/oauth2/auth";
 
     public GoogleIdentityProvider(SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
@@ -40,6 +40,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     /**
      * Generates a redirect URI to Google's login based on the current SecurityConfig
+     *
      * @return uri
      * @throws IdentityProviderException
      */
@@ -62,6 +63,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     /**
      * Uses a code from when a user has authorized Google to get some information about him to make a request
      * to the Google API.
+     *
      * @param uri containing a code and maybe some more information about the request.
      * @return UserData object containing information about the user.
      * @throws IdentityProviderException
@@ -74,7 +76,6 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
                     .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
 
-            // Configure http post request
             HttpPost postRequest = new HttpPost(APIURL);
             List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("code", urlParameters.get("code")));
@@ -87,7 +88,6 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
             logger.debug(String.format("Created post request:\n%s\n%s\n%s", postRequest, postRequest.getAllHeaders(), postRequest.getEntity()));
 
-            // Send http post request
             HttpResponse httpResponse = httpClient.execute(postRequest);
 
             logger.debug("Sending 'POST' request to URL : " + APIURL);
@@ -95,7 +95,6 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
             logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
             logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
 
-            // Must use complicated stream to read response and make it a json object
             JsonObject jsonResponse;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
@@ -110,6 +109,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     /**
      * Decodes a signed JWT token to a human-readable string.
+     *
      * @param idToken
      * @return
      * @throws Exception

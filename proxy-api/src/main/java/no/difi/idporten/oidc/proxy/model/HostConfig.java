@@ -3,7 +3,6 @@ package no.difi.idporten.oidc.proxy.model;
 
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.Optional;
 
 public interface HostConfig {
 

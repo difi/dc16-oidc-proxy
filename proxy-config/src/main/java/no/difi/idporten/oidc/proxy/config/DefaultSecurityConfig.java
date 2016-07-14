@@ -30,7 +30,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         } catch (ClassNotFoundException exc) {
             exc.printStackTrace();
             return Optional.empty();
-        } catch (Exception exc) { // so many possible exceptions for this
+        } catch (Exception exc) {
             exc.printStackTrace();
             return Optional.empty();
         }
