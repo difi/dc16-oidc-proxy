@@ -58,6 +58,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
+        ResponseGenerator responseGenerator = new ResponseGenerator();
+
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
 
@@ -78,7 +80,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
 
                         proxyCookie = validProxyCookieOptional.get();
-                        outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                        outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
 
                     } else if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
@@ -90,12 +92,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
                             proxyCookie = cookieHandler.generateCookie(userData);
-                            outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                         } else {
-                            ResponseGenerator.generateRedirectResponse(ctx, idp);
+                            responseGenerator.generateRedirectResponse(ctx, idp);
                         }
                     } else {
-                        ResponseGenerator.generateDefaultResponse(ctx, host);
+                        responseGenerator.generateDefaultResponse(ctx, host);
                     }
                 } else {
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
@@ -103,15 +105,15 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     if (validProxyCookieOptional.isPresent()) {
                         proxyCookie = validProxyCookieOptional.get();
                     }
-                    outboundChannel = ResponseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                    outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                 }
             } else {
                 logger.debug("Could not get SecurityConfig of host {}", host);
-                ResponseGenerator.generateDefaultResponse(ctx, host);
+                responseGenerator.generateDefaultResponse(ctx, host);
             }
 
         } catch (Exception e) {
-            ResponseGenerator.generateDefaultResponse(ctx, host);
+            responseGenerator.generateDefaultResponse(ctx, host);
         }
 
     }
