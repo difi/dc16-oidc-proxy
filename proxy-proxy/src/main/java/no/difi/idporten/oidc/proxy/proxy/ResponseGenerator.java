@@ -26,24 +26,35 @@ public class ResponseGenerator {
 
     private static Logger logger = LoggerFactory.getLogger(InboundHandlerAdapter.class);
 
+
     /**
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
+    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
+
             StringBuilder content = new StringBuilder(redirectUrl);
-            FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+
+            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                     HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
-            result.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
-            result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-            result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
+
+            response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-            logger.debug(String.format("Created redirect response:\n%s", result));
-            ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
+
+            new RedirectCookieHandler(
+                    securityConfig.getCookieConfig(),
+                    securityConfig.getHostname(),
+                    requestPath).insertCookieToResponse(response);
+
+            logger.debug(String.format("Created redirect response:\n%s", response));
+            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+
         } catch (IdentityProviderException exc) {
             exc.printStackTrace();
             generateDefaultResponse(ctx, "");
@@ -55,15 +66,19 @@ public class ResponseGenerator {
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
         String content = String.format("Unknown host:  %s", host);
+
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.BAD_REQUEST,
                 Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(content.toString()), CharsetUtil.UTF_8));
+
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(
                 HttpHeaderNames.CONTENT_TYPE,
                 String.format("%s; %s=%s", TEXT_HTML, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
         logger.debug(String.format("Created default response:\n%s", response));
+
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
@@ -103,7 +118,6 @@ public class ResponseGenerator {
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig, ProxyCookie proxyCookie) {
-
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
@@ -114,9 +128,15 @@ public class ResponseGenerator {
         Channel outboundChannel;
         logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
-        CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(),
-                securityConfig.getHostname(), securityConfig.getPath());
-        boolean setCookie = cookieHandler.getValidProxyCookie(httpRequest) != null;
+
+        boolean setCookie = proxyCookie != null;
+
+        // Changing path if RedirectCookieHandler has an original path for this request
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
+            logger.debug("Changing path of request because we found the original path: {}", originalPath);
+            httpRequest.setUri(originalPath + httpRequest.uri());
+            logger.debug(httpRequest.toString());
+        });
 
 
         Bootstrap b = new Bootstrap();
@@ -139,18 +159,18 @@ public class ResponseGenerator {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    logger.debug("Outbound channel operation success");// connection complete start to read first data
+                    logger.debug("Outbound channel operation success");
                     outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) { // was able to flush out data, start to read the next chunk
+                            if (future.isSuccess()) {
                                 ctx.channel().read();
                             } else {
                                 future.channel().close();
                             }
                         }
                     });
-                } else { // Close the connection if the connection attempt has failed.
+                } else {
                     logger.debug("Outbound channel operation failure");
                     inboundChannel.close();
                 }
@@ -161,7 +181,8 @@ public class ResponseGenerator {
     }
 
     /**
-     * Help method for generateProxyResponse
+     * Help method for generateProxyResponse.
+     * Checks if the path is unsecured and should not receive the userdata.
      *
      * @param unsecuredPaths:
      * @param path:

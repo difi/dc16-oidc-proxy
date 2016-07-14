@@ -39,7 +39,7 @@ public class HTMLGenerator {
         Matcher matcher = regex.matcher(line);
         if (matcher.find()) {
             // Can be used to look up multiple variables from a map
-            //return matcher.replaceAll(String.format("%s", getVariable(matcher.group(1))));
+            // return matcher.replaceAll(String.format("%s", getVariable(matcher.group(1))));
             // But for now we only need one variable
             return matcher.replaceAll(String.format("%s", message));
         }

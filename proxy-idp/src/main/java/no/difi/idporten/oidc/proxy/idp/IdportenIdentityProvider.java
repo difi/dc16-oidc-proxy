@@ -43,6 +43,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
     /**
      * Generates a redirect URI to IDPorten's login based on the current SecurityConfig
+     *
      * @return uri
      * @throws IdentityProviderException
      */
@@ -63,6 +64,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     /**
      * Uses a code from when a user has authorized IDPorten to get some information about him to make a request
      * to the IDPorten API.
+     *
      * @param uri containing a code and maybe some more information about the request.
      * @return UserData object containing information about the user.
      * @throws IdentityProviderException
@@ -70,27 +72,24 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     @Override
     public UserData getToken(String uri) throws IdentityProviderException {
         try {
-            // Parsing parameters in provided uri
             Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()
                     .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
-            // Create content to be posted
             List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {
                 {
                     add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
                     add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
                     add(new BasicNameValuePair("code", urlParameters.get("code")));
-            }};
+                }
+            };
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
 
-            // Configure post request
             HttpPost httpPost = new HttpPost(APIURL);
             httpPost.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded");
             httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString(
                     (securityConfig.getClientId() + ":" + securityConfig.getPassword()).getBytes()));
             httpPost.setEntity(new StringEntity(postContent));
 
-            // Send request to api-server
             HttpResponse httpResponse = httpClient.execute(httpPost);
 
             logger.debug("\nSending 'POST' request to URL : " + APIURL);
@@ -98,7 +97,6 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
             logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
 
-            // Parse response
             JsonObject response;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 response = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
@@ -114,6 +112,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
     /**
      * Decodes a signed JWT token to a human-readable string.
+     *
      * @param idToken
      * @return
      * @throws Exception

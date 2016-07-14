@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
@@ -11,7 +12,6 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-import io.netty.handler.codec.http.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -201,7 +201,7 @@ public class SimpleIntegrationTest {
         //Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
 
-    @Test(enabled = false)
+    @Test
     public void testFirstRedirectResponseHasCookieForSavingPath() throws Exception {
         logger.info("With a secured path on a configured host, the server should respond with a redirect " +
                 "response that has a Set-Cookie header in order to allow the server to remember the " +

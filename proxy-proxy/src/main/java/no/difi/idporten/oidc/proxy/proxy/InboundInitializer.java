@@ -13,7 +13,6 @@ public class InboundInitializer extends ChannelInitializer<SocketChannel> {
 
     private SecurityConfigProvider securityConfigProvider;
 
-    private int connections = 64;
 
     @Inject
     public InboundInitializer(SecurityConfigProvider securityConfigProvider) {
@@ -24,7 +23,7 @@ public class InboundInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel ch) throws Exception {
         ch.pipeline()
                 .addLast(new HttpServerCodec(102400, 102400, 102400))
-                .addLast(new HttpRequestHandler(connections))
+                .addLast(new HttpRequestHandler())
                 .addLast(new InboundHandlerAdapter(securityConfigProvider))
         ;
     }

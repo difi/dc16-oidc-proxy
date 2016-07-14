@@ -1,9 +1,9 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.cookie.ClientCookieEncoder;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
@@ -60,7 +60,6 @@ public class CookieHandler {
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest) {
         logger.debug("Looking for cookie with name {}", cookieName);
 
-        // get CookieObject from database with the uuid in the HttpCookie
         Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
         if (nettyCookieOptional.isPresent()) {
             String uuid = nettyCookieOptional.get().value();
@@ -101,6 +100,17 @@ public class CookieHandler {
      * @return
      */
     private Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest) {
+        return getCookieFromRequest(httpRequest, cookieName);
+    }
+
+    /**
+     * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
+     * object or an empty optional.
+     *
+     * @param httpRequest
+     * @return
+     */
+    public static Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest, String cookieName) {
         if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
 
             String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
@@ -111,6 +121,18 @@ public class CookieHandler {
         } else {
             return Optional.empty();
         }
+    }
+
+    /**
+     * A utility method that can be used by anyone.
+     *
+     * @param httpRequest
+     * @param cookieName
+     * @param cookieValue
+     */
+    public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String cookieValue) {
+        httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
+
     }
 
 }

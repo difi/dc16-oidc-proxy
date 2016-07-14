@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  */
 public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
-    private final Channel inboundChannel; // Inbound channel on which to write responses
+    private final Channel inboundChannel;
 
     private static Logger logger = LoggerFactory.getLogger(OutboundHandlerAdapter.class);
 
