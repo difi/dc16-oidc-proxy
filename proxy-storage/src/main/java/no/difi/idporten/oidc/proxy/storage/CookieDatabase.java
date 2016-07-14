@@ -69,7 +69,7 @@ public class CookieDatabase {
             System.err.println("SQLException caught in CookieDatabase.createTable(): " + e);
             e.printStackTrace();
         }
-        System.out.println("\nDB: Table 'PUBLIC.cookie' created in the database\n");
+        System.out.println("\nDB: Database initialized with cookie table\n");
     }
 
     /**
@@ -78,15 +78,18 @@ public class CookieDatabase {
      * @param cookie ProxyCookie
      */
     public void insertCookie(ProxyCookie cookie) {
-        long now = new Date().getTime(); // lastUpdated
+        //long now = new Date().getTime(); // lastUpdated
+        String userData;
+        if (cookie.getUserData() == null) userData = null;
+        else userData = cookie.getUserData().toString();
         String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
                         "VALUES ('%s','%s','%s','%s','%s','%s', '%s', '%s', '%s');", cookie.getUuid(), cookie.getName(), cookie.getHost(),
-                cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), cookie.getUserData().toString(),
-                cookie.getCreated().getTime(), now);
+                cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), userData,
+                cookie.getCreated().getTime(), cookie.getLastUpdated().getTime());
         //System.out.println("DB: Insert cookie query: " + query);
         try {
             statement.executeUpdate(query);
-            System.out.println("DB: Cookie inserted into the database with uuid " + cookie.getUuid());
+            //System.out.println("DB: Cookie inserted into the database (" + cookie + ")");
         } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.insertCookie(): " + e);
             e.printStackTrace();
@@ -102,7 +105,7 @@ public class CookieDatabase {
      */
     public static HashMap<String, String> stringToHashMap(String str) {
         // If HashMap is empty (only containing "{}"), the object should be null
-        if (str == null || str.equals("{}")) return null;
+        if (str == null || str.equals("null") || str.equals("{}")) return null;
         // Removing curly braces, spaces and escape characters
         String keyValues = str.replaceAll("[\\s\\{\\}]+", "");
         HashMap<String, String> hashMap = new HashMap<>();
@@ -138,9 +141,7 @@ public class CookieDatabase {
 
                 cookie = new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated);
 
-                System.out.println("\nDB: Found cookie in database: " + cookie);
-                /*System.out.printf("\nDB: Found cookie in database:\n%.65s %15s %20s %20s %5s %5s %20s %20s", uuid, name, host,
-                        path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString());*/
+                //System.out.println("\nDB: Found cookie in database (" + cookie + ")");
             } else {
                 System.err.println("\nDB: Cookie with given uuid does not exist: " + uuid);
             }
@@ -213,12 +214,12 @@ public class CookieDatabase {
      *
      * @param uuid String
      */
-    public void extendCookieExpiry(String uuid) {
+    public void extendCookieExpiry(String uuid, Date lastUpdated) {
         try {
-            long now = new Date().getTime(); // present time in milliseconds
+            long now = lastUpdated.getTime(); // present time in milliseconds
             String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "';";
             statement.executeUpdate(query);
-            System.out.println("\nDB: Updated expiry of cookie with uuid " + uuid);
+            //System.out.println("\nDB: Updated expiry of cookie (UUID: " + uuid + ")");
         } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
             e.printStackTrace();
@@ -235,7 +236,7 @@ public class CookieDatabase {
         System.out.println("cookie.getMaxExpiry(): " + cookie.getMaxExpiry());
         System.out.println("cookie.getUserData(): " + cookie.getUserData());
         System.out.println("cookie.getCreated(): " + cookie.getCreated());
-        System.out.println("cookie.getLastUpdated(): " + cookie.getLastUpdated());
+        System.out.println("cookie.getLastUpdated(): " + cookie.getLastUpdated() + "\n");
     }
 
 }
