@@ -170,7 +170,7 @@ public class IntegrationTestWithMockServer {
 
         HttpResponse response = httpClient.execute(getRequest);
 
-        verify((getRequestedFor(urlMatching("/google\\?code=.*"))));
+        verify((getRequestedFor(urlMatching("/google"))));
 
         logger.debug(response.toString());
 
@@ -192,7 +192,7 @@ public class IntegrationTestWithMockServer {
 
         HttpResponse response = httpClient.execute(getRequest);
 
-        verify(getRequestedFor(urlEqualTo("/google?code=aValidCode"))
+        verify(getRequestedFor(urlEqualTo("/google"))
                 .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
                 .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
@@ -218,11 +218,10 @@ public class IntegrationTestWithMockServer {
         getRequest = new HttpGet(BASEURL + "/google?code=aValidCode");
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
-        getRequest.setHeader("TULL", "LSDFLKSD");
 
         response = httpClient.execute(getRequest);
 
-        verify(getRequestedFor(urlPathMatching(specificPathWithGoogle + ".*")));
+        verify(getRequestedFor(urlPathEqualTo(specificPathWithGoogle)));
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
 
