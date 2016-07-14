@@ -1,5 +1,7 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -40,6 +42,8 @@ public class IntegrationTestWithMockServer {
     private String mockServerHostName = "www.mockhost.com";
     private String cookieName = "PROXYCOOKIE";
 
+    private WireMockServer wireMockServer;
+
     private static Map<String, String> getHeadersAsMap(Header[] headers) {
         return Arrays.stream(headers)
                 .collect(Collectors.toMap(Header::getName, Header::getValue));
@@ -52,6 +56,9 @@ public class IntegrationTestWithMockServer {
     @BeforeClass
     public void beforeClass() throws Exception {
         Injector injector = Guice.createInjector(new ConfigModule(), new ProxyModule(), new StorageModule());
+
+        wireMockServer =  new WireMockServer(WireMockConfiguration.options().port(8081));
+        wireMockServer.start();
 
         thread = new Thread(injector.getInstance(NettyHttpListener.class));
 

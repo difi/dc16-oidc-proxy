@@ -10,6 +10,12 @@
     <artifactId>proxy-proxy</artifactId>
 
     <dependencies>
+        <!-- Mock server -->
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock</artifactId>
+            <version>2.1.6</version>
+        </dependency>
         <!-- Proxy -->
         <dependency>
             <groupId>no.difi.idporten.oidc</groupId>
@@ -53,19 +59,13 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
-        <!-- Mock server -->
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock</artifactId>
-            <version>2.1.6</version>
-            <scope>test</scope>
-        </dependency>
 
         <!-- Proxy-IDP -->
         <dependency>
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-idp</artifactId>
         </dependency>
+
 
 
     </dependencies>
