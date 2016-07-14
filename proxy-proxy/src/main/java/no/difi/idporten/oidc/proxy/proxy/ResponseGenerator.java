@@ -35,15 +35,21 @@ public class ResponseGenerator {
     protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
+
             StringBuilder content = new StringBuilder(redirectUrl);
-            FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+
+            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                     HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
-            result.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
-            result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-            result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
+
+            response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-            logger.debug(String.format("Created redirect response:\n%s", result));
-            ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
+
+            logger.debug(String.format("Created redirect response:\n%s", response));
+
+            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+
         } catch (IdentityProviderException exc) {
             exc.printStackTrace();
             generateDefaultResponse(ctx, "");
@@ -55,15 +61,19 @@ public class ResponseGenerator {
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
         String content = String.format("Unknown host:  %s", host);
+
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.BAD_REQUEST,
                 Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(content.toString()), CharsetUtil.UTF_8));
+
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(
                 HttpHeaderNames.CONTENT_TYPE,
                 String.format("%s; %s=%s", TEXT_HTML, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
         logger.debug(String.format("Created default response:\n%s", response));
+
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
@@ -103,7 +113,6 @@ public class ResponseGenerator {
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig, ProxyCookie proxyCookie) {
-
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 

@@ -5,7 +5,6 @@ import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 public class TypesafeIdpConfig implements IdpConfig {
 
     private static Logger logger = LoggerFactory.getLogger(TypesafeIdpConfig.class);
-
 
     private String identifier;
 
@@ -95,7 +93,8 @@ public class TypesafeIdpConfig implements IdpConfig {
                 ", password='" + password + '\'' +
                 ", scope='" + scope + '\'' +
                 ", redirect_uri='" + redirect_uri + '\'' +
-                ", parameters=" + parameters +
+                ", parameters=" + parameters + '\'' +
+                ", user_data_names" + user_data_names +
                 '}';
     }
 }

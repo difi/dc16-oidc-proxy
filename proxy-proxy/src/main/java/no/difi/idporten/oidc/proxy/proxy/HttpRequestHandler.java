@@ -41,7 +41,6 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
 
             logger.debug(String.format("Trimmed host name: %s", host));
         }
-        // This notifies the next handler in the pipeline that this message is read and ready to move on
         ctx.fireChannelRead(msg);
     }
 }
