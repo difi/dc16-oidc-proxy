@@ -50,7 +50,7 @@ public class ResponseGenerator {
             new RedirectCookieHandler(
                     securityConfig.getCookieConfig(),
                     securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(response);
+                    requestPath).insertCookieToResponse(response, securityConfig.getSalt());
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -109,7 +109,7 @@ public class ResponseGenerator {
 
         boolean setCookie = proxyCookie != null;
 
-        RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt()).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());

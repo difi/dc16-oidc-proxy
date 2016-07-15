@@ -15,4 +15,6 @@ public interface HostConfig {
     CookieConfig getCookieConfig();
 
     List<String> getUnsecuredPaths();
+
+    String getSalt();
 }

@@ -22,6 +22,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.HOST = hostConfigProvider.getByHostname(hostname);
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
+        System.out.println(HOST.getSalt());
     }
 
     public Optional<IdentityProvider> createIdentityProvider() {
@@ -77,6 +78,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public String getSalt() {
+        return HOST.getSalt();
+    }
+
+    @Override
     public List<String> getUserDataNames() {
         return IDP.getUserDataNames();
     }
@@ -90,6 +96,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
     public String getParameter(String key) {
         return IDP.getParameter(key).orElse("");
     }
+
+
 
     @Override
     public String getSecurity() {

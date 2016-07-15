@@ -36,23 +36,23 @@ public class RedirectCookieHandler {
         this.path = path;
     }
 
-    public Cookie insertCookieToResponse(HttpResponse response) {
-        String value = CookieHandler.encodeValue(path, "INSERTSALTHERE", new ArrayList<>()) + path;
+    public Cookie insertCookieToResponse(HttpResponse response, String salt) {
+        String value = CookieHandler.encodeValue(path, salt, new ArrayList<>()) + path;
         Cookie cookieToInsert = new DefaultCookie(redirectCookieName, value);
-        CookieHandler.insertCookieToResponse(response, redirectCookieName, path, "INSERTSALTHERE", new ArrayList<>());
+        CookieHandler.insertCookieToResponse(response, redirectCookieName, path, salt, new ArrayList<>());
         System.err.println(value);
         hashToPathMap.put(value, path);
         return cookieToInsert;
     }
 
 
-    public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest) {
+    public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest, String salt) {
         Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
             String hash = redirectCookieValue.substring(0, 64);
             String uuid = redirectCookieValue.substring(64);
-            if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(hash, uuid, "INSERTSALTHERE", new ArrayList<>())) {
+            if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(hash, uuid, salt, new ArrayList<>())) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);
                 logger.debug("Found original path for request after redirect: {}", result);

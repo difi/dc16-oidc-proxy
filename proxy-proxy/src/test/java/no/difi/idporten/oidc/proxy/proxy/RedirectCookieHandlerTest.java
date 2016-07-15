@@ -32,12 +32,12 @@ public class RedirectCookieHandlerTest {
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
 
-        Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest).isPresent());
+        Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt").isPresent());
 
-        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse);
+        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse, "salt");
         CookieHandler.insertCookieToRequest(httpRequest, insertedCookie.name(), insertedCookie.value());
 
-        Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest);
+        Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt");
 
         Assert.assertTrue(retrievedPathFromCookieOptional.isPresent());
 

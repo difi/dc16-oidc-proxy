@@ -67,7 +67,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
-                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
+                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt());
 
                 logger.debug("Has security config: {}", securityConfig);
 

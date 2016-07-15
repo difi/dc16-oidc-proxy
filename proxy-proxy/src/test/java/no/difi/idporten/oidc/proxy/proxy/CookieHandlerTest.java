@@ -108,7 +108,7 @@ public class CookieHandlerTest {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
 
         // Cookie storage is empty, so it should not get a valid cookie here
-        Assert.assertFalse(cookieHandler.getValidProxyCookie(httpRequest).isPresent());
+        Assert.assertFalse(cookieHandler.getValidProxyCookie(httpRequest, "salt").isPresent());
     }
 
 
