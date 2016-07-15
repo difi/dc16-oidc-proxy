@@ -82,28 +82,6 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    /**
-     * Generates and writes an appropriate JSON response based on userData with a correct 'Set-Cookie' header.
-     *
-     * @param ctx:               ChannelHandlerContext
-     * @param userData:          Information about the user, in which the service access is interested in.
-     * @param proxyCookieObject: Cookie to keep the user logged in.
-     * @throws IdentityProviderException
-     */
-
-    @Deprecated
-    protected void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData, ProxyCookie
-            proxyCookieObject) throws IdentityProviderException {
-        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
-                Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
-        result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-        result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
-                "%s; %s=%s", APPLICATION_JSON, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        logger.debug("Setting Set-Cookie to the response");
-        CookieHandler.insertCookieToResponse(result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
-        logger.debug(String.format("Created JWT response:\n%s", result));
-        ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
-    }
 
     /**
      * This is what happens when the proxy needs to work as a normal proxy.
@@ -131,7 +109,6 @@ public class ResponseGenerator {
 
         boolean setCookie = proxyCookie != null;
 
-        // Changing path if RedirectCookieHandler has an original path for this request
         RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
             httpRequest.setUri(originalPath);

@@ -8,6 +8,7 @@ import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -36,19 +37,17 @@ public class RedirectCookieHandler {
     }
 
     public Cookie insertCookieToResponse(HttpResponse response) {
-        String hash = generateCookieHash(path);
-        Cookie cookieToInsert = new DefaultCookie(redirectCookieName, hash);
-        CookieHandler.insertCookieToResponse(response, redirectCookieName, hash);
-        hashToPathMap.put(hash, path);
+        String value = CookieHandler.encodeValue(path, "INSERTSALTHERE", new ArrayList<>()) + path;
+        Cookie cookieToInsert = new DefaultCookie(redirectCookieName, value);
+        CookieHandler.insertCookieToResponse(response, redirectCookieName, path, "INSERTSALTHERE", new ArrayList<>());
+        System.err.println(value);
+        hashToPathMap.put(value, path);
         return cookieToInsert;
     }
 
-    private static String generateCookieHash(String path) {
-        return ("HASHASHASH" + path);
-    }
 
-    public static Optional<String> findRedirectCookiePath(HttpRequest request) {
-        Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(request, redirectCookieName);
+    public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest) {
+        Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
             if (hashToPathMap.containsKey(redirectCookieValue)) {

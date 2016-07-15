@@ -10,6 +10,8 @@ import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+
 /**
  * This handles incoming responses from the outbound server.
  */
@@ -45,7 +47,7 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpResponse && proxyCookie != null && setCookie) {
             CookieHandler.insertCookieToResponse((HttpResponse) msg,
-                    proxyCookie.getName(), proxyCookie.getUuid());
+                    proxyCookie.getName(), proxyCookie.getUuid(), "INSERTSALTHERE", new ArrayList<>());
         }
 
         logger.debug(String.format("Receiving response from server: %s", msg.getClass()));

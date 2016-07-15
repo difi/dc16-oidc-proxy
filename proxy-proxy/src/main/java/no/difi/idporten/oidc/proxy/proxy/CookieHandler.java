@@ -65,7 +65,12 @@ public class CookieHandler {
 
         Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
         if (nettyCookieOptional.isPresent()) {
-            String uuid = nettyCookieOptional.get().value();
+            String hash = nettyCookieOptional.get().value().substring(0, 64);
+            String uuid = nettyCookieOptional.get().value().substring(64);
+            System.out.println("HORE: "+nettyCookieOptional.get().value()+hash + " " + uuid);
+
+
+            //String uuid = nettyCookieOptional.get().value();
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
             if (proxyCookieOptional.isPresent()) {
@@ -87,10 +92,11 @@ public class CookieHandler {
      *
      * @param httpResponse
      * @param cookieName
-     * @param uuid
+     * @param value
      */
-    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String uuid) {
-        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
+    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, List<String> parameters) {
+        String cookieValue = encodeValue(value, salt, parameters) + value;
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
     /**
@@ -124,8 +130,8 @@ public class CookieHandler {
         }
     }
 
-    private String encodeUuid(String uuid, String salt, List<String> parameters) {
-        String stringToBeHashed = uuid;
+    public static String encodeValue(String value, String salt, List<String> parameters) {
+        String stringToBeHashed = value;
         for (String parameter : parameters) {
             stringToBeHashed += parameter;
         }
@@ -152,10 +158,6 @@ public class CookieHandler {
 
     }
 
-    public boolean checkIncomingUuid(String uuidHash, String uuid, String salt, List<String> parameters) throws Exception {
-        return (uuidHash.equals(encodeUuid(uuid, salt, parameters)));
-
-    }
 
     /**
      * A utility method that can be used by anyone.
