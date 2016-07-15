@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.*;
-import org.hamcrest.MatcherAssert;
 import no.difi.idporten.oidc.proxy.util.RegexMatcher;
 
 import java.lang.reflect.Field;
@@ -97,16 +96,16 @@ public class IntegrationTestWithMockServer {
                         .withStatus(HttpResponseStatus.OK.code())
                         .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
                         .withBody(apiResponseContent)));
+        stubFor(get(urlPathMatching("/google.*")) // using google idp
+                .willReturn(aResponse()
+                        .withStatus(HttpResponseStatus.OK.code())
+                        .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "text/plain")
+                        .withBody("du bruker google idp")));
         stubFor(get(urlPathMatching(specificPathWithGoogle + ".*")) // a path using google idp
                 .willReturn(aResponse()
                         .withStatus(HttpResponseStatus.OK.code())
                         .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "text/plain")
                         .withBody(contentOfASpecificPath)));
-        stubFor(get(urlPathMatching("/google")) // using google idp
-                .willReturn(aResponse()
-                        .withStatus(HttpResponseStatus.OK.code())
-                        .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "text/plain")
-                        .withBody("du bruker google idp")));
         stubFor(get(urlPathMatching("/idporten.*")) // using idporten
                 .willReturn(aResponse()
                         .withStatus(HttpResponseStatus.OK.code())
@@ -140,7 +139,7 @@ public class IntegrationTestWithMockServer {
 
         HttpResponse response = httpClient.execute(getRequest);
         logger.debug(response.toString());
-        assertThat(response.getStatusLine().getStatusCode(), is(equalTo(HttpStatus.SC_OK)));
+        assertThat(response.getStatusLine().getStatusCode(), is(HttpStatus.SC_OK));
     }
 
     @Test
@@ -179,7 +178,7 @@ public class IntegrationTestWithMockServer {
         Assert.assertTrue(response.containsHeader(HttpHeaderNames.SET_COOKIE.toString()));
         Header setCookieHeader = response.getFirstHeader(HttpHeaderNames.SET_COOKIE.toString());
         String expectedCookieName = cookieName;
-        MatcherAssert.assertThat("Cookie value should match a hex string with dashes",
+        assertThat("Cookie value should match a hex string with dashes",
                 setCookieHeader.getValue(), RegexMatcher.matchesRegex(expectedCookieName + "=[0-9a-f\\-]+"));
     }
 
@@ -242,6 +241,53 @@ public class IntegrationTestWithMockServer {
         String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         assertThat("The content of the response should be what the mock server serves for the specific path",
                 responseContent, is(contentOfASpecificPath));
+    }
+
+    /**
+     * Tests that the request has the Difi headers when requesting a secured resource with a valid cookie that we
+     * just generated from logging in.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSecuredConfiguredWithGeneratedValidCookie() throws Exception {
+        String url = BASEURL + "/google";
+        HttpGet getRequest = new HttpGet(url);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = httpClient.execute(getRequest);
+
+        verify((getRequestedFor(urlMatching("/google"))));
+
+        logger.debug(response.toString());
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+
+        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
+
+        Assert.assertTrue(response.containsHeader(HttpHeaderNames.SET_COOKIE.toString()));
+
+
+        httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
+        String securedPathToUse = "/google/some/secured/path";
+        getRequest = new HttpGet(BASEURL + securedPathToUse);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), headerMap.get(HttpHeaderNames.SET_COOKIE.toString()));
+
+        response = httpClient.execute(getRequest);
+
+        String expectedEmailInResponse = "vikfand@gmail.com";
+        String expectedSubInResponse = "108182803704140665355";
+
+        verify(1, getRequestedFor(urlEqualTo(securedPathToUse))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
+                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
+        );
+        String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+
+        assertThat("",
+                responseContent, is("du bruker google idp"));
     }
 
 
