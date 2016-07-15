@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -15,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,10 +31,13 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
     private final SecurityConfig securityConfig;
+
     private static String APIURL = "https://www.googleapis.com/oauth2/v3/token";
+
     private static String LOGINURL = "https://accounts.google.com/o/oauth2/auth";
 
     private List<String> redirectExtraParameters;
+
     private List<String> tokenExtraParameters;
 
     public GoogleIdentityProvider(SecurityConfig securityConfig) {
@@ -101,7 +103,10 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         HttpResponse httpResponse;
         try {
             postRequest.setEntity(new UrlEncodedFormEntity(params));
-            logger.debug("Created post request:\n{}\n{}\n{}", postRequest, postRequest.getAllHeaders(), postRequest.getEntity());
+            logger.debug("Created post request:\n{}\n{}\n{}",
+                    postRequest,
+                    postRequest.getAllHeaders(),
+                    postRequest.getEntity());
             httpResponse = httpClient.execute(postRequest);
         } catch (UnsupportedEncodingException exc) {
             throw new IdentityProviderException(exc.getMessage(), exc);
@@ -114,9 +119,12 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         logger.debug("Post parameters: {}", params);
         logger.debug("Got response back:\n{}", httpResponse);
 
+
         JsonObject jsonResponse;
-        try (InputStream inputStream = httpResponse.getEntity().getContent()) {
-            jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
+
+        try {
+            String responseContent = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
+            jsonResponse = gson.fromJson(responseContent, JsonObject.class);
             return new UserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
         } catch (Exception exc) {
             logger.warn("Could not read response from external server.");

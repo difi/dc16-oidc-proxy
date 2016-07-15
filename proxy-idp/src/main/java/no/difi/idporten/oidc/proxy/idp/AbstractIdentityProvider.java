@@ -14,6 +14,7 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
     private static Logger logger = LoggerFactory.getLogger(AbstractIdentityProvider.class);
 
     protected static Gson gson = new GsonBuilder().create();
+
     protected static HttpClient httpClient = HttpClients.createDefault();
 
     /**
@@ -26,5 +27,4 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
     protected String decodeIDToken(String idToken) throws Exception {
         return JWTParser.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
     }
-
 }
