@@ -17,10 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 
 public class CookieHandler {
@@ -67,13 +64,11 @@ public class CookieHandler {
         if (nettyCookieOptional.isPresent()) {
             String hash = nettyCookieOptional.get().value().substring(0, 64);
             String uuid = nettyCookieOptional.get().value().substring(64);
-            System.out.println("HORE: "+nettyCookieOptional.get().value()+hash + " " + uuid);
-
 
             //String uuid = nettyCookieOptional.get().value();
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
-            if (proxyCookieOptional.isPresent()) {
+            if (proxyCookieOptional.isPresent() && isCorrectHash(hash, uuid, "INSERTSALTHERE", new ArrayList<>())) {
                 return proxyCookieOptional;
             } else {
                 logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
@@ -156,6 +151,10 @@ public class CookieHandler {
         }
         return null;
 
+    }
+
+    public static boolean isCorrectHash(String hash, String value, String salt, List<String> parameters) {
+        return (hash.equals(encodeValue(value, salt, parameters)));
     }
 
 

@@ -27,9 +27,9 @@ public class RedirectCookieHandler {
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
      *
-     * @param cookieConfig
-     * @param host
-     * @param path
+     * @param cookieConfig:
+     * @param host:
+     * @param path:
      */
     public RedirectCookieHandler(CookieConfig cookieConfig, String host, String path) {
         this.host = host;
@@ -50,7 +50,9 @@ public class RedirectCookieHandler {
         Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
-            if (hashToPathMap.containsKey(redirectCookieValue)) {
+            String hash = redirectCookieValue.substring(0, 64);
+            String uuid = redirectCookieValue.substring(64);
+            if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(hash, uuid, "INSERTSALTHERE", new ArrayList<>())) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);
                 logger.debug("Found original path for request after redirect: {}", result);
