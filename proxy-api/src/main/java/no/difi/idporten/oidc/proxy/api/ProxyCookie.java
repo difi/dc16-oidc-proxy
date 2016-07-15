@@ -9,15 +9,11 @@ import java.util.HashMap;
  * Interface for the cookie object we use.
  */
 public interface ProxyCookie {
+
     /**
      * @return Whether the cookie is expired, but may be expanded to do other checks?
      */
     boolean isValid();
-
-    /**
-     * @return UserData object
-     */
-    HashMap<String, String> getUserData();
 
     String getUuid();
 
@@ -27,7 +23,13 @@ public interface ProxyCookie {
 
     String getPath();
 
-    Date getExpiry();
+    int getTouchPeriod();
 
-    Date getMaxExpiry();
+    int getMaxExpiry();
+
+    HashMap<String, String> getUserData();
+
+    Date getCreated();
+
+    Date getLastUpdated();
 }

@@ -1,15 +1,17 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.cookie.ClientCookieEncoder;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,7 @@ public class CookieHandler {
 
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
+     *
      * @param cookieConfig
      * @param host
      * @param path
@@ -46,17 +49,14 @@ public class CookieHandler {
         this.path = path;
     }
 
-    /**
-     * Generates a ProxyCookie using the CookieStorage which also saves it.
-     * @param userData
-     * @return
-     */
-    public ProxyCookie generateCookie(HashMap<String, String> userData) {
-        return cookieStorage.generateCookieAsObject(cookieName, host, path, userData);
+    public ProxyCookie generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry) {
+//        System.out.println("\nCookieHandler.generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry)");
+        return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
     /**
      * Convenient function for getting a valid proxy cookie or an empty optional which eases the flow of InboundHandler.
+     *
      * @param httpRequest
      * @return
      */
@@ -69,16 +69,10 @@ public class CookieHandler {
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
             if (proxyCookieOptional.isPresent()) {
-                if (proxyCookieOptional.get().isValid()) {
-                    return proxyCookieOptional;
-                } else {
-                    logger.debug("Found cookie in storage, but it is not valid\n{}", proxyCookieOptional.get());
-                }
+                return proxyCookieOptional;
             } else {
-                logger.warn("Could not find cookie {}@{}{}", uuid, host, path);
-                // Cookie contains an UUID, but it is not found in the storage.
-                // This is an exception and it means something is wrong with either getting cookies or
-                // creating and writing UUIDs  ...or the user is messing with us
+                logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
+                // Cookie contains an UUID, but is either not found in the storage or not valid.
             }
         } else {
             logger.debug("Http request does not contain cookie {}", cookieName);
@@ -102,10 +96,22 @@ public class CookieHandler {
     /**
      * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
      * object or an empty optional.
+     *
      * @param httpRequest
      * @return
      */
     private Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest) {
+        return getCookieFromRequest(httpRequest, cookieName);
+    }
+
+    /**
+     * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
+     * object or an empty optional.
+     *
+     * @param httpRequest
+     * @return
+     */
+    public static Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest, String cookieName) {
         if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
 
             String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
@@ -148,6 +154,18 @@ public class CookieHandler {
 
     public boolean checkIncomingUuid(String uuidHash, String uuid, String salt, List<String> parameters) throws Exception {
         return (uuidHash.equals(encodeUuid(uuid, salt, parameters)));
+
+    }
+
+    /**
+     * A utility method that can be used by anyone.
+     *
+     * @param httpRequest
+     * @param cookieName
+     * @param cookieValue
+     */
+    public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String cookieValue) {
+        httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
 
     }
 

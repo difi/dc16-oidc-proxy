@@ -6,5 +6,9 @@ public interface CookieConfig {
 
     String getName();
 
+    int getMaxExpiry();
+
+    int getTouch();
+
     CookieStorage getCookieStorage();
 }
