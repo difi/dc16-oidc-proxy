@@ -25,6 +25,14 @@ public interface CookieStorage {
     Optional<ProxyCookie> findCookie(String uuid, String host, String path);
 
     /**
+     * Removes cookie with given UUID. Used primarily for logout functionality,
+     * deleting the user's cookie in our database.
+     *
+     * @param uuid String
+     */
+    void removeCookie(String uuid);
+
+    /**
      * Remove all expired cookies in the storage.
      */
     void removeExpiredCookies();

@@ -134,6 +134,11 @@ public class DatabaseCookieStorage implements CookieStorage {
         logger.info("Removed expired cookies");
     }
 
+    public void removeCookie(String uuid) {
+        db.removeCookie(uuid);
+        logger.info("Removed cookie if it existed (UUID: " + uuid + ")");
+    }
+
     // Debug
     public void printAllCookies() {
         db.getAllCookies().values().forEach(CookieDatabase::printCookie);
