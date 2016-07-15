@@ -150,6 +150,16 @@ public class CookieDatabase {
         return Optional.ofNullable(cookie);
     }
 
+    public void removeCookie(String uuid) {
+        try {
+            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid = '" + uuid + "';");
+//            System.out.println("\nDB: Cookie removed from database if it existed (UUID: " + uuid + ")");
+        } catch (SQLException e) {
+            System.err.println("SQLException caught in CookieDatabase.removeCookie(): " + e);
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Mostly for debug purposes, but might serve other purpose later. Retrieves entries in cookie database,
      * instantiates ProxyCookie objects of the entries, and returns them as objects in a HashMap with the
