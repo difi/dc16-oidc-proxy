@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,12 +23,17 @@ public class DatabaseCookieStorageTest {
     private static final int MINUTE = 1000 * 60;
     private int touchPeriod= 20;
     private int maxExpiry= 120;
+    private HashMap<String, String> userData = new HashMap<>();
 
     private Injector injector;
 
     @Test
     public void beforeClass() {
         injector = Guice.createInjector(new StorageModule());
+        userData.put("pid", "31120012345");
+        userData.put("aud", "abcdefghij");
+        userData.put("sub", "1234567890");
+        userData.put("name", "Ola Nordmann");
     }
 
     @Test
@@ -106,6 +112,42 @@ public class DatabaseCookieStorageTest {
         Assert.assertTrue(foundValidCookie.isPresent());
         Assert.assertFalse(foundExpiredCookie.isPresent());
         Assert.assertFalse(foundMaxExpiredCookie.isPresent());
+    }
+
+    @Test
+    public void removeCookie(){
+        CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
+
+        ProxyCookie cookie = cookieStorage.generateCookieInDb("test-cookie", "host.com", "/auth", touchPeriod, maxExpiry, userData);
+        ProxyCookie cookie2 = cookieStorage.generateCookieInDb("test-cookie2", "google.com", "/maps", touchPeriod, maxExpiry, userData);
+
+        Optional<ProxyCookie> foundCookie = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getPath());
+        Optional<ProxyCookie> foundCookie2 = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie2.getPath());
+
+        Assert.assertTrue(foundCookie.isPresent());
+        Assert.assertTrue(foundCookie2.isPresent());
+        // Testing userData input in database is correctly stored and returned
+        Assert.assertTrue(foundCookie.get().getUserData().containsKey("pid"));
+        Assert.assertTrue(foundCookie.get().getUserData().containsKey("aud"));
+        Assert.assertTrue(foundCookie2.get().getUserData().containsKey("sub"));
+        Assert.assertTrue(foundCookie2.get().getUserData().containsKey("name"));
+
+        cookieStorage.removeCookie(cookie.getUuid());
+
+        Optional<ProxyCookie> foundCookieAfterRemoval = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getPath());
+        Optional<ProxyCookie> foundCookie2BeforeRemoval = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie.getPath());
+
+        Assert.assertFalse(foundCookieAfterRemoval.isPresent());
+        Assert.assertTrue(foundCookie2BeforeRemoval.isPresent());
+
+        cookieStorage.removeCookie(cookie.getUuid()); // Removing non-existent cookie
+        cookieStorage.removeCookie(cookie2.getUuid());
+
+        Optional<ProxyCookie> foundCookieAfterTwoRemovals = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie.getPath());
+        Optional<ProxyCookie> foundCookie2AfterRemoval = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie.getPath());
+
+        Assert.assertFalse(foundCookieAfterTwoRemovals.isPresent());
+        Assert.assertFalse(foundCookie2AfterRemoval.isPresent());
 
     }
 
