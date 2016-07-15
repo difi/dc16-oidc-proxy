@@ -91,7 +91,21 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             logger.debug("TypesafePathConfig contains code: {}", path);
 
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
-                            proxyCookie = cookieHandler.generateCookie(userData);
+
+                            // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
+                            // and generateJWTResponse sets the correct 'Set-Cookie' header.
+
+                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
+                            int touchPeriod = securityConfig.getCookieConfig().getTouch();  // in minutes
+
+                            // Host's config (falls back to default config if not present)
+                            System.out.println("\n\nsecurityConfig.getHostname(): " + securityConfig.getHostname());
+                            System.out.println("securityConfig.getPath(): " + securityConfig.getPath());
+                            System.out.println("securityConfig.getCookieConfig().getName(): " + securityConfig.getCookieConfig().getName());
+                            System.out.println("securityConfig.getCookieConfig().getMaxExpiry(): " + maxExpiry);
+                            System.out.println("securityConfig.getCookieConfig().getTouch(): " + touchPeriod + "\n\n");
+
+                            proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                         } else {
                             responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri());

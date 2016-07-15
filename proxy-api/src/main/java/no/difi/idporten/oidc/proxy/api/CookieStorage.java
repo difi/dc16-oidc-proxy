@@ -1,30 +1,31 @@
 package no.difi.idporten.oidc.proxy.api;
 
-import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
-import no.difi.idporten.oidc.proxy.model.UserData;
-
 import java.util.HashMap;
 import java.util.Optional;
 
 public interface CookieStorage {
 
     /**
-     * Generates a cookie and stores it in the database.
+     * Generates a cookie object, inputs it into a database, and returns the object.
      *
-     * @param host
-     * @param userData
-     * @return
+     * @param name String (e.g. "google-cookie")
+     * @param host String (e.g. "www.google.com")
+     * @param path String (e.g. "/oauth")
+     * @param touchPeriod int (amount of minutes)
+     * @param maxExpiry int (amount of minutes)
+     * @param userData HashMap<String, String> (JWT from authorization server)
+     * @return ProxyCookie implemented object
      */
-    DefaultProxyCookie generateCookieAsObject(String name, String host, String path, HashMap<String, String> userData);
+    ProxyCookie generateCookieInDb(String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData);
 
     /**
-     * If cookie with given uuid exist in 'cookies' list; return DefaultProxyCookie object, otherwise return null
-     * Updates expiry date of cookie.
+     * If cookie with given uuid exist in 'cookies' list; return object implementing ProxyCookie, otherwise return null.
+     * Updates expiry of cookie, by setting lastUpdated to present time.
      */
     Optional<ProxyCookie> findCookie(String uuid, String host, String path);
 
     /**
-     * Remove all expired cookies in 'cookies' list, by mutating the list.
+     * Remove all expired cookies in the storage.
      */
     void removeExpiredCookies();
 
