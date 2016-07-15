@@ -134,7 +134,7 @@ public class ResponseGenerator {
         // Changing path if RedirectCookieHandler has an original path for this request
         RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
-            httpRequest.setUri(originalPath + httpRequest.uri());
+            httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
         });
 
