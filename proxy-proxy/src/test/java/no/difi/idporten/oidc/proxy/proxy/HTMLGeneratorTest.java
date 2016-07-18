@@ -1,11 +1,11 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import junit.framework.Assert;
+import no.difi.idporten.oidc.proxy.util.RegexMatcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
-
-import java.util.regex.Pattern;
 
 public class HTMLGeneratorTest {
 
@@ -17,7 +17,9 @@ public class HTMLGeneratorTest {
         String notExpectedPattern = "\\{\\{\\w+\\}\\}";
         String actualHTML = HTMLGenerator.getErrorPage(expectedMessage);
 
-        Assert.assertTrue(actualHTML.contains(expectedMessage));
-        Assert.assertFalse(Pattern.matches(notExpectedPattern, actualHTML));
+        MatcherAssert.assertThat("",
+                actualHTML, Matchers.containsString(expectedMessage));
+        MatcherAssert.assertThat("Generated HTML should not contain the curly braces used around variables",
+                actualHTML, Matchers.not(RegexMatcher.matchesRegex(notExpectedPattern)));
     }
 }
