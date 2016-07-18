@@ -1,14 +1,13 @@
 package no.difi.idporten.oidc.proxy.model;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class UserData {
 
-
-    private HashMap<String, String> userData;
+    private Map<String, String> userData = new HashMap<>();
 
     public UserData(String id_token) {
-        userData = new HashMap<>();
         id_token = id_token.replace("\"", "").replace("{", "").replace("}", "");
         String[] tokens = id_token.split(",");
         for (String params : tokens) {
@@ -17,7 +16,7 @@ public class UserData {
         }
     }
 
-    public HashMap<String, String> getUserData() {
+    public Map<String, String> getUserData() {
         return userData;
     }
 

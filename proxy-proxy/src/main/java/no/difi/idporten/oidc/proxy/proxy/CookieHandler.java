@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,7 +47,7 @@ public class CookieHandler {
         this.path = path;
     }
 
-    public ProxyCookie generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry) {
+    public ProxyCookie generateCookie(Map<String, String> userData, int touchPeriod, int maxExpiry) {
         return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 

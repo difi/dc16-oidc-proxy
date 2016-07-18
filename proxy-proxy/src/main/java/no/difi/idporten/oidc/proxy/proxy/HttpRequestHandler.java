@@ -22,7 +22,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info(String.format("Http handler activating on channel %s", ctx.channel()));
+        logger.debug(String.format("Http handler activating on channel %s", ctx.channel()));
         super.channelActive(ctx);
     }
 

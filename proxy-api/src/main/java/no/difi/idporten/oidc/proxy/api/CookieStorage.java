@@ -1,6 +1,6 @@
 package no.difi.idporten.oidc.proxy.api;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CookieStorage {
@@ -17,7 +17,7 @@ public interface CookieStorage {
      * @return ProxyCookie implemented object
      */
     ProxyCookie generateCookieInDb(String name, String host, String path,
-                                   int touchPeriod, int maxExpiry, HashMap<String, String> userData);
+                                   int touchPeriod, int maxExpiry, Map<String, String> userData);
 
     /**
      * If cookie with given uuid exist in 'cookies' list; return object implementing ProxyCookie, otherwise return null.

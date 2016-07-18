@@ -16,7 +16,7 @@ public class Main {
 
     private Thread thread;
 
-    @Test
+    @Test(groups = "manual")
     public void main() throws Exception {
         Injector injector = Guice.createInjector(new ArrayList<Module>() {{
             add(new ConfigModule());
@@ -25,8 +25,9 @@ public class Main {
         }});
         thread = new Thread(injector.getInstance(NettyHttpListener.class));
         thread.start();
+        thread.join();
 
-        Thread.sleep(1_000);
-        thread.interrupt();
+        //Thread.sleep(1_000);
+        //thread.interrupt();
     }
 }

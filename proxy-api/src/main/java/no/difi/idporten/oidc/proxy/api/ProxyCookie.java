@@ -1,9 +1,7 @@
 package no.difi.idporten.oidc.proxy.api;
 
-import no.difi.idporten.oidc.proxy.model.UserData;
-
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Interface for the cookie object we use.
@@ -27,7 +25,7 @@ public interface ProxyCookie {
 
     int getMaxExpiry();
 
-    HashMap<String, String> getUserData();
+    Map<String, String> getUserData();
 
     Date getCreated();
 

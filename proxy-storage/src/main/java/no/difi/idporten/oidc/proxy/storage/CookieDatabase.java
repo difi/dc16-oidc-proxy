@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.Optional;
 
 public class CookieDatabase {
-    private final String JDBC_DRIVER = "org.h2.Driver";
-    private final String DB_URL = "jdbc:h2:mem:cookie";
-    private final String USER = "SA";
-    private final String PASS = "";
+    private static final String JDBC_DRIVER = "org.h2.Driver";
+    private static final String DB_URL = "jdbc:h2:mem:cookie";
+    private static final String USER = "SA";
+    private static final String PASS = "";
 
     private static Logger logger = LoggerFactory.getLogger(CookieDatabase.class);
     private static final int MINUTE = 60 * 1000;
@@ -31,8 +31,7 @@ public class CookieDatabase {
             Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
             statement = connection.createStatement();
         } catch (SQLException | ClassNotFoundException e) {
-            System.err.println("Exception caught in CookieDatabase.CookieDatabase(): " + e);
-            e.printStackTrace();
+            logger.error("Exception caught in CookieDatabase.CookieDatabase(): {}", e.getMessage(), e);
         }
     }
 
@@ -66,10 +65,9 @@ public class CookieDatabase {
                     ");");
             statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
         } catch (SQLException e) {
-            System.err.println("SQLException caught in CookieDatabase.createTable(): " + e);
-            e.printStackTrace();
+            logger.error("SQLException caught in CookieDatabase.createTable(): {}", e.getMessage(), e);
         }
-        System.out.println("\nDB: Database initialized with cookie table\n");
+        logger.debug("DB: Database initialized with cookie table");
     }
 
     /**
@@ -89,8 +87,7 @@ public class CookieDatabase {
         try {
             statement.executeUpdate(query);
         } catch (SQLException e) {
-            System.err.println("SQLException caught in CookieDatabase.insertCookie(): " + e);
-            e.printStackTrace();
+            logger.warn("SQLException caught in CookieDatabase.insertCookie(): {}", e.getMessage(), e);
         }
     }
 
@@ -142,8 +139,7 @@ public class CookieDatabase {
                 //System.out.println("\nDB: Found cookie in database (" + cookie + ")");
             }
         } catch (SQLException e) {
-            System.err.println("SQLException caught in CookieDatabase.findCookie(): " + e);
-            e.printStackTrace();
+            logger.warn("SQLException caught in CookieDatabase.findCookie(): {}", e.getMessage(), e);
         }
         return Optional.ofNullable(cookie);
     }
@@ -177,8 +173,7 @@ public class CookieDatabase {
                 cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
         } catch (SQLException e) {
-            System.err.println("SQLException caught in CookieDatabase.getAllCookies(): " + e);
-            e.printStackTrace();
+            logger.warn("SQLException caught in CookieDatabase.getAllCookies(): {}", e.getMessage(), e);
         }
         return cookies;
     }
@@ -196,10 +191,9 @@ public class CookieDatabase {
             String expiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (lastUpdated + touchPeriod * " + MINUTE + ") < " + now;
             //String maxExpiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (created + maxExpiry * "+MINUTE+") < " + now;
             statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN (" + expiredEntries + ");");
-            System.out.println("\nDB: Expired cookies removed from database");
+            logger.info("DB: Expired cookies removed from database");
         } catch (SQLException e) {
-            System.err.println("SQLException caught in CookieDatabase.removeExpiredCookies(): " + e);
-            e.printStackTrace();
+            logger.warn("SQLException caught in CookieDatabase.removeExpiredCookies(): {}", e.getMessage(), e);
         }
     }
 
@@ -216,8 +210,7 @@ public class CookieDatabase {
             String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "';";
             statement.executeUpdate(query);
         } catch (SQLException e) {
-            System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
-            e.printStackTrace();
+            logger.warn("SQLException caught in CookieDatabase.touchCookie(): {}", e.getMessage(), e);
         }
     }
 

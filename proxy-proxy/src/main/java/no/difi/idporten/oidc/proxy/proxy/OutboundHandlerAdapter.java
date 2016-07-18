@@ -33,7 +33,7 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
      * @param inboundChannel Channel on which to write responses
      */
     public OutboundHandlerAdapter(Channel inboundChannel, ProxyCookie proxyCookie, SecurityConfig securityConfig, boolean setCookie, HttpRequest httpRequest) {
-        logger.info(String.format("Initializing target pool with inbound channel %s", inboundChannel));
+        logger.debug(String.format("Initializing target pool with inbound channel %s", inboundChannel));
         this.inboundChannel = inboundChannel;
         this.proxyCookie = proxyCookie;
         this.setCookie = setCookie;
@@ -43,7 +43,7 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info(String.format("Activating outbound channel %s", ctx.channel()));
+        logger.debug("Activating outbound channel {}", ctx.channel());
         ctx.read();
         ctx.write(Unpooled.EMPTY_BUFFER);
     }

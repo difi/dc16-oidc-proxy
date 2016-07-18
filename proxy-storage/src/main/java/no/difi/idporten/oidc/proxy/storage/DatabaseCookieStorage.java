@@ -7,10 +7,7 @@ import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class DatabaseCookieStorage implements CookieStorage {
 
@@ -24,7 +21,7 @@ public class DatabaseCookieStorage implements CookieStorage {
     }
 
     private DatabaseCookieStorage() {
-        System.out.println("DatabaseCookieStorage instantiated");
+        logger.debug("DatabaseCookieStorage instantiated");
         db = new CookieDatabase();
         db.createTable();
     }
@@ -43,11 +40,11 @@ public class DatabaseCookieStorage implements CookieStorage {
      * @return ProxyCookie (DefaultProxyCookie) object
      */
     @Override
-    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData) {
+    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int touchPeriod, int maxExpiry, Map<String, String> userData) {
         String uuid = UUID.randomUUID().toString();
         ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, touchPeriod, maxExpiry, userData);
         db.insertCookie(proxyCookie);
-        System.out.println("Cookie generated and inserted into the database (" + proxyCookie + ")");
+        logger.info("Cookie generated and inserted into the database ({})", proxyCookie);
         return proxyCookie;
     }
 
@@ -60,7 +57,7 @@ public class DatabaseCookieStorage implements CookieStorage {
      */
     public ProxyCookie generateCookieInDb(ProxyCookie proxyCookie) {
         db.insertCookie(proxyCookie);
-        System.out.println("Cookie generated and inserted into the database (" + proxyCookie + ")");
+        logger.info("Cookie generated and inserted into the database ({})", proxyCookie);
         return proxyCookie;
     }
 
@@ -85,23 +82,23 @@ public class DatabaseCookieStorage implements CookieStorage {
             if (result.get().isValid()){
                 // Check host and path
                 if (result.get().getHost().equals(host) && result.get().getPath().equals(path)) {
-                    System.out.println("Cookie is valid - host and path matches (" + result.get() + ")");
+                    logger.info("Cookie is valid - host and path matches ({})", result.get());
                     //CookieDatabase.printCookie(result.get());
                     return Optional.of(extendCookieExpiry(result.get()));
                     // Check only host
                 } else if (result.get().getHost().equals(host)) {
-                    System.out.println("Cookie is valid - host matches (" + result.get() + ")");
+                    logger.info("Cookie is valid - host matches ({})", result.get());
                     //CookieDatabase.printCookie(result.get());
                     return Optional.of(extendCookieExpiry(result.get()));
                 } else {
                     //CookieDatabase.printCookie(result.get());
-                    System.err.println("Cookie was found, but host does not match (" + uuid + "@" + host + path + ")");
+                    logger.info("Cookie was found, but host does not match (" + uuid + "@" + host + path + ")");
                 }
             } else {
-                System.err.println("Cookie was found, but has expired (" + result.get() + ")");
+                logger.info("Cookie was found, but has expired ({})", result.get());
             }
         } else {
-            System.err.println("Cookie was not found (" + uuid + "@" + host + path + ")");
+            logger.info("Cookie was not found (" + uuid + "@" + host + path + ")");
         }
         return Optional.empty();
     }
@@ -119,12 +116,12 @@ public class DatabaseCookieStorage implements CookieStorage {
         Date calculatedMaxExpiry = calculateDate(proxyCookie.getCreated(), proxyCookie.getMaxExpiry());
         // Somewhat similar validation is performed in DatabaseCookieStorage.findCookie() using ProxyCookie.isValid()
         if (lastUpdated.after(calculatedMaxExpiry)) {
-            System.err.println("Cannot extend expiry of expired cookie (" + proxyCookie + ")");
+            logger.warn("Cannot extend expiry of expired cookie ({})", proxyCookie);
             return proxyCookie;
         }
         ((DefaultProxyCookie) proxyCookie).setLastUpdated(lastUpdated);
         db.extendCookieExpiry(proxyCookie.getUuid(), lastUpdated);
-        System.out.println("Extended expiry of cookie (" + proxyCookie + ")");
+        logger.info("Extended expiry of cookie ({})", proxyCookie);
         return proxyCookie;
     }
 

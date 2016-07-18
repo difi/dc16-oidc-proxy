@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.*;
-import no.difi.idporten.oidc.proxy.util.RegexMatcher;
+import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

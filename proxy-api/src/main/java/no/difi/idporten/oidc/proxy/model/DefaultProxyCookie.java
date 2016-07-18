@@ -1,20 +1,17 @@
 package no.difi.idporten.oidc.proxy.model;
 
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 
 public class DefaultProxyCookie implements ProxyCookie {
 
-    private static Logger logger = LoggerFactory.getLogger(DefaultProxyCookie.class);
-
     private static final int MINUTE = 60 * 1000;
     private String uuid, host, path, name;
-    private HashMap<String, String> userData;
+    private Map<String, String> userData;
     private final int touchPeriod; // in minutes
     private final int maxExpiry;  // in minutes
     private final Date created;
@@ -32,7 +29,7 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param maxExpiry int (amount of minutes)
      * @param userData HashMap<String, String> (JWT from authorization server)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData) {
+    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, Map<String, String> userData) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;
@@ -118,7 +115,7 @@ public class DefaultProxyCookie implements ProxyCookie {
     }
 
     @Override
-    public HashMap<String, String> getUserData() {
+    public Map<String, String> getUserData() {
         return userData;
     }
 

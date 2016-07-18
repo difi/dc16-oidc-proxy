@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
+import com.google.inject.Inject;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,7 +13,7 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -28,6 +29,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private ProxyCookie proxyCookie;
 
+    @Inject
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
     }
@@ -37,7 +39,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info(String.format("Activating source handler channel %s", ctx.channel()));
+        logger.debug(String.format("Activating source handler channel %s", ctx.channel()));
         ctx.read();
     }
 
@@ -52,7 +54,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      * source client.
      */
     private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception {
-        logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
+        logger.debug("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
         String path = httpRequest.uri();
         String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
@@ -90,7 +92,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         if (redirectedFromIdp(path)) {
                             logger.debug("TypesafePathConfig contains code: {}", path);
 
-                            HashMap<String, String> userData = idp.getToken(path).getUserData();
+                            Map<String, String> userData = idp.getToken(path).getUserData();
 
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
                             int touchPeriod = securityConfig.getCookieConfig().getTouch();

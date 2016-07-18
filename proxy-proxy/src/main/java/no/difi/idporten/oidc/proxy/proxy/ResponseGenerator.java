@@ -102,7 +102,7 @@ public class ResponseGenerator {
         }
 
         Channel outboundChannel;
-        logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
+        logger.debug(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
         boolean setCookie = proxyCookie != null;
