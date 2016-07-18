@@ -121,7 +121,7 @@ public class ResponseGenerator {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        if (proxyCookie != null && !checkForUnsecuredPaths(securityConfig.getUnsecuredPaths(), httpRequest.uri())) {
+        if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
         }
 
@@ -134,7 +134,7 @@ public class ResponseGenerator {
         // Changing path if RedirectCookieHandler has an original path for this request
         RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
-            httpRequest.setUri(originalPath + httpRequest.uri());
+            httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
         });
 
@@ -190,7 +190,7 @@ public class ResponseGenerator {
      */
 
     private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path) {
-        return unsecuredPaths.stream().filter(unsecuredPath -> unsecuredPath.startsWith(path)).findFirst().isPresent();
+        return unsecuredPaths.stream().filter(path::startsWith).findFirst().isPresent();
     }
 
 

@@ -1,7 +1,6 @@
 package no.difi.idporten.oidc.proxy.idp;
 
 import com.google.gson.JsonObject;
-import com.nimbusds.jwt.JWTParser;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
@@ -109,16 +108,4 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             throw new IdentityProviderException(exc.getMessage(), exc);
         }
     }
-
-    /**
-     * Decodes a signed JWT token to a human-readable string.
-     *
-     * @param idToken
-     * @return
-     * @throws Exception
-     */
-    private String decodeIDToken(String idToken) throws Exception {
-        return JWTParser.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
-    }
-
 }
