@@ -8,7 +8,7 @@ public interface CookieConfig {
 
     int getMaxExpiry();
 
-    int getTouch();
+    int getTouchPeriod();
 
     CookieStorage getCookieStorage();
 }

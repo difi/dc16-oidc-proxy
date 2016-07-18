@@ -96,7 +96,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             // and generateJWTResponse sets the correct 'Set-Cookie' header.
 
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
-                            int touchPeriod = securityConfig.getCookieConfig().getTouch();  // in minutes
+                            int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();  // in minutes
 
                             // Host's config (falls back to default config if not present)
                             System.out.println("\n\nsecurityConfig.getHostname(): " + securityConfig.getHostname());
