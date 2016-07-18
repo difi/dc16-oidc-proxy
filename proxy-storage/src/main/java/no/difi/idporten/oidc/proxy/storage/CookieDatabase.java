@@ -86,10 +86,8 @@ public class CookieDatabase {
                         "VALUES ('%s','%s','%s','%s','%s','%s', '%s', '%s', '%s');", cookie.getUuid(), cookie.getName(), cookie.getHost(),
                 cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), userData,
                 cookie.getCreated().getTime(), cookie.getLastUpdated().getTime());
-        //System.out.println("DB: Insert cookie query: " + query);
         try {
             statement.executeUpdate(query);
-            //System.out.println("DB: Cookie inserted into the database (" + cookie + ")");
         } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.insertCookie(): " + e);
             e.printStackTrace();
@@ -217,7 +215,6 @@ public class CookieDatabase {
             long now = lastUpdated.getTime(); // present time in milliseconds
             String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "';";
             statement.executeUpdate(query);
-            //System.out.println("\nDB: Updated expiry of cookie (UUID: " + uuid + ")");
         } catch (SQLException e) {
             System.err.println("SQLException caught in CookieDatabase.touchCookie(): " + e);
             e.printStackTrace();

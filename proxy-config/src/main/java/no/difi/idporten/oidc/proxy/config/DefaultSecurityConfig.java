@@ -22,7 +22,6 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.HOST = hostConfigProvider.getByHostname(hostname);
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
-        System.out.println(HOST.getSalt());
     }
 
     public Optional<IdentityProvider> createIdentityProvider() {

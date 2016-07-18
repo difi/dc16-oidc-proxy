@@ -107,7 +107,7 @@ public class ResponseGenerator {
 
         boolean setCookie = proxyCookie != null;
 
-        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), "MUSTBEFIXED").ifPresent(originalPath -> {
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent")).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());

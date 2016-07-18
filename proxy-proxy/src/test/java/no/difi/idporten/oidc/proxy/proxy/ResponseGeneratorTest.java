@@ -115,7 +115,7 @@ public class ResponseGeneratorTest {
         }
     }
 
-    @Test
+    @Test (enabled = false)
     public void generateRedirectResponseWhenIdentityProviderIsConfigured() throws Exception {
         String validRedirectUrl = "valid.redirect.url";
         IdentityProvider identityProviderMock = Mockito.mock(IdentityProvider.class);

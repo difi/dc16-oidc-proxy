@@ -61,6 +61,7 @@ public class CookieHandler {
 
         Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
         if (nettyCookieOptional.isPresent()) {
+            System.out.println(nettyCookieOptional.get().value());
             String uuid = nettyCookieOptional.get().value().substring(64);
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
@@ -152,7 +153,6 @@ public class CookieHandler {
      */
 
     public static boolean isCorrectHash(Cookie nettyCookieOptional, String salt, String userAgent) {
-        System.out.println("USERAGENT: " + userAgent);
         String hash = nettyCookieOptional.value().substring(0, 64);
         String value = nettyCookieOptional.value().substring(64);
         return (hash.equals(encodeValue(value, salt, userAgent)));
