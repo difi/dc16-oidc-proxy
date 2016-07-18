@@ -27,8 +27,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 
@@ -139,7 +139,7 @@ public class IntegrationTestWithMockServer {
 
         HttpResponse response = httpClient.execute(getRequest);
         logger.debug(response.toString());
-        assertThat(response.getStatusLine().getStatusCode(), is(HttpStatus.SC_OK));
+        MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.SC_OK));
     }
 
     @Test
@@ -178,7 +178,7 @@ public class IntegrationTestWithMockServer {
         Assert.assertTrue(response.containsHeader(HttpHeaderNames.SET_COOKIE.toString()));
         Header setCookieHeader = response.getFirstHeader(HttpHeaderNames.SET_COOKIE.toString());
         String expectedCookieName = cookieName;
-        assertThat("Cookie value should match a hex string with dashes",
+        MatcherAssert.assertThat("Cookie value should match a hex string with dashes",
                 setCookieHeader.getValue(), RegexMatcher.matchesRegex(expectedCookieName + "=[0-9a-f\\-]+"));
     }
 
@@ -239,8 +239,8 @@ public class IntegrationTestWithMockServer {
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
 
         String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-        assertThat("The content of the response should be what the mock server serves for the specific path",
-                responseContent, is(contentOfASpecificPath));
+        MatcherAssert.assertThat("The content of the response should be what the mock server serves for the specific path",
+                responseContent, Matchers.is(contentOfASpecificPath));
     }
 
     /**
@@ -286,8 +286,43 @@ public class IntegrationTestWithMockServer {
         );
         String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 
-        assertThat("",
-                responseContent, is("du bruker google idp"));
+        MatcherAssert.assertThat("",
+                responseContent, Matchers.is("du bruker google idp"));
+    }
+
+    @Test
+    public void testDifiHeadersNotInRequestToTotallyUnsecuredPathWithValidCookie() throws Exception {
+        String url = BASEURL + "/google";
+        HttpGet getRequest = new HttpGet(url);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = httpClient.execute(getRequest);
+
+        verify((getRequestedFor(urlMatching("/google"))));
+
+        logger.debug(response.toString());
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+
+        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
+
+        Assert.assertTrue(response.containsHeader(HttpHeaderNames.SET_COOKIE.toString()));
+
+
+        httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
+        String totallyUnsecuredPathToUse = "/something/totally/unsecured/like/a/logo/or/something.svg";
+        getRequest = new HttpGet(BASEURL + totallyUnsecuredPathToUse);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), headerMap.get(HttpHeaderNames.SET_COOKIE.toString()));
+
+        httpClient.execute(getRequest);
+
+        verify(1, getRequestedFor(urlEqualTo(totallyUnsecuredPathToUse)));
+        verify(0, getRequestedFor(urlEqualTo(totallyUnsecuredPathToUse))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", matching(".*"))
+                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
+        );
     }
 
 
