@@ -132,7 +132,9 @@ public class CookieHandler {
      */
     public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String cookieValue) {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
-
     }
 
+    public void removeCookie(String uuid){
+        cookieStorage.removeCookie(uuid);
+    }
 }
