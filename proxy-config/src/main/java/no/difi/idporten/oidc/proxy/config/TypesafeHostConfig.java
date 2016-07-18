@@ -80,4 +80,9 @@ public class TypesafeHostConfig implements HostConfig {
     public List<String> getUnsecuredPaths() {
         return this.unsecuredPaths;
     }
+
+    @Override
+    public boolean isTotallyUnsecured(String path) {
+        return unsecuredPaths.stream().filter(path::startsWith).findFirst().isPresent();
+    }
 }
