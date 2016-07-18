@@ -80,7 +80,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
      * to the Google API.
      *
      * @param uri containing a code and maybe some more information about the request.
-     * @return UserData object containing information about the user.
+     * @return DefaultUserData object containing information about the user.
      * @throws IdentityProviderException
      */
     @Override
@@ -125,7 +125,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         try {
             String responseContent = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
             jsonResponse = gson.fromJson(responseContent, JsonObject.class);
-            return new UserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
+            return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
         } catch (Exception exc) {
             logger.warn("Could not read response from external server.");
             throw new IdentityProviderException(exc.getMessage(), exc);

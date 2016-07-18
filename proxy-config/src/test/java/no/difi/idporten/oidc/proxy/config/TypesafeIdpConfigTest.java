@@ -10,12 +10,11 @@ import org.testng.annotations.Test;
 public class TypesafeIdpConfigTest {
 
     private IdpConfig idpConfig;
-    private IdpConfigProvider idpConfigProvider;
 
     @BeforeTest
     public void injectIdpConfigProvider() {
-        this.idpConfigProvider = new TypesafeIdpConfigProvider(ConfigFactory.load());
-        this.idpConfig = idpConfigProvider.getByIdentifier("idporten");
+        IdpConfigProvider provider = new TypesafeIdpConfigProvider(ConfigFactory.load());
+        this.idpConfig = provider.getByIdentifier("idporten");
     }
 
     @Test

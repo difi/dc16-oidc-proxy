@@ -91,7 +91,7 @@ public class CookieDatabase {
     }
 
     /**
-     * UserData is current saved in the database as VARCHAR(400) with value HashMaps.toString().
+     * DefaultUserData is current saved in the database as VARCHAR(400) with value HashMaps.toString().
      * This method is used for converting the String back til a HashMap.
      *
      * @param str toString of HashMap

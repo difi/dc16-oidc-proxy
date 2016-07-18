@@ -2,12 +2,8 @@ package no.difi.idporten.oidc.proxy.config;
 
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.model.PathConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TypesafePathConfig implements PathConfig {
-
-    private static Logger logger = LoggerFactory.getLogger(TypesafeIdpConfigProvider.class);
 
     private String path, security, redirect_uri, scope, idp;
 

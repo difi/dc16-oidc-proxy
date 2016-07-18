@@ -65,7 +65,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
      * to the IDPorten API.
      *
      * @param uri containing a code and maybe some more information about the request.
-     * @return UserData object containing information about the user.
+     * @return DefaultUserData object containing information about the user.
      * @throws IdentityProviderException
      */
     @Override
@@ -99,7 +99,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             JsonObject response;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 response = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
-                return new UserData(decodeIDToken(response.get("id_token").getAsString()));
+                return new DefaultUserData(decodeIDToken(response.get("id_token").getAsString()));
             } catch (IOException exc) {
                 throw new IdentityProviderException(exc.getMessage(), exc);
             }
