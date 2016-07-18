@@ -32,6 +32,7 @@ public class CookieHandlerTest {
     private String path;
     private String cookieName;
     private String uuid;
+    private String salt;
     private CookieHandler cookieHandler;
 
 
@@ -45,6 +46,7 @@ public class CookieHandlerTest {
         this.cookieName = cookieConfig.getName();
         this.uuid = "blablabla";
         this.cookieHandler = new CookieHandler(cookieConfig, host, path);
+        this.salt = "salt";
     }
 
 
@@ -55,7 +57,7 @@ public class CookieHandlerTest {
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         HttpHeaders headers = httpResponse.headers();
         Assert.assertFalse(headers.contains(HttpHeaderNames.SET_COOKIE));
-        CookieHandler.insertCookieToResponse(httpResponse, cookieName, cookieValue, "INSERTSALTHERE", new ArrayList<>());
+        CookieHandler.insertCookieToResponse(httpResponse, cookieName, cookieValue, salt);
         Set<Cookie> nettyCookies = ServerCookieDecoder.STRICT.decode(headers.getAsString(HttpHeaderNames.SET_COOKIE));
         Assert.assertEquals(nettyCookies.size(), 1);
         Assert.assertTrue(nettyCookies.stream()

@@ -5,6 +5,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 
 public class OutboundInitializer extends ChannelInitializer<SocketChannel> {
 
@@ -14,10 +15,13 @@ public class OutboundInitializer extends ChannelInitializer<SocketChannel> {
 
     private boolean setCookie;
 
-    public OutboundInitializer(Channel inbound, ProxyCookie proxyCookie, boolean setCookie) {
+    private SecurityConfig securityConfig;
+
+    public OutboundInitializer(Channel inbound, ProxyCookie proxyCookie, boolean setCookie, SecurityConfig securityConfig) {
         this.inbound = inbound;
         this.proxyCookie = proxyCookie;
         this.setCookie = setCookie;
+        this.securityConfig = securityConfig;
     }
 
     @Override
@@ -27,7 +31,7 @@ public class OutboundInitializer extends ChannelInitializer<SocketChannel> {
                 //Enable HTTPS if necessary.
                 .addLast("codec", new HttpClientCodec(102400, 102400, 102400))
                 .addLast(new HttpResponseHandler())
-                .addLast(new OutboundHandlerAdapter(inbound, proxyCookie, setCookie))
+                .addLast(new OutboundHandlerAdapter(inbound, proxyCookie, securityConfig, setCookie))
         ;
     }
 }

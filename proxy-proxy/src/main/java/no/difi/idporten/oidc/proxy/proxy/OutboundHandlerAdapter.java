@@ -7,10 +7,9 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponse;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
 
 /**
  * This handles incoming responses from the outbound server.
@@ -23,16 +22,19 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private ProxyCookie proxyCookie;
 
+    private SecurityConfig securityConfig;
+
     private boolean setCookie;
 
     /**
      * @param inboundChannel Channel on which to write responses
      */
-    public OutboundHandlerAdapter(Channel inboundChannel, ProxyCookie proxyCookie, boolean setCookie) {
+    public OutboundHandlerAdapter(Channel inboundChannel, ProxyCookie proxyCookie, SecurityConfig securityConfig, boolean setCookie) {
         logger.info(String.format("Initializing target pool with inbound channel %s", inboundChannel));
         this.inboundChannel = inboundChannel;
         this.proxyCookie = proxyCookie;
         this.setCookie = setCookie;
+        this.securityConfig = securityConfig;
     }
 
     @Override
@@ -47,7 +49,7 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpResponse && proxyCookie != null && setCookie) {
             CookieHandler.insertCookieToResponse((HttpResponse) msg,
-                    proxyCookie.getName(), proxyCookie.getUuid(), "INSERTSALTHERE", new ArrayList<>());
+                    proxyCookie.getName(), proxyCookie.getUuid(), securityConfig.getSalt());
         }
 
         logger.debug(String.format("Receiving response from server: %s", msg.getClass()));

@@ -1,6 +1,5 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import com.google.gson.Gson;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -15,7 +14,6 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class ResponseGenerator {
@@ -118,7 +116,7 @@ public class ResponseGenerator {
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie))
+        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie, securityConfig))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);

@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.Set;
 
 
 public class CookieHandler {
@@ -59,13 +61,10 @@ public class CookieHandler {
 
         Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
         if (nettyCookieOptional.isPresent()) {
-            String hash = nettyCookieOptional.get().value().substring(0, 64);
             String uuid = nettyCookieOptional.get().value().substring(64);
-
-            //String uuid = nettyCookieOptional.get().value();
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
-            if (proxyCookieOptional.isPresent() && isCorrectHash(hash, uuid, "INSERTSALTHERE", new ArrayList<>())) {
+            if (proxyCookieOptional.isPresent() && isCorrectHash(nettyCookieOptional, salt)) {
                 return proxyCookieOptional;
             } else {
                 logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
@@ -85,8 +84,8 @@ public class CookieHandler {
      * @param cookieName:
      * @param value:
      */
-    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, List<String> parameters) {
-        String cookieValue = encodeValue(value, salt, parameters) + value;
+    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt) {
+        String cookieValue = encodeValue(value, salt) + value;
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
@@ -121,12 +120,8 @@ public class CookieHandler {
         }
     }
 
-    public static String encodeValue(String value, String salt, List<String> parameters) {
+    public static String encodeValue(String value, String salt) {
         String stringToBeHashed = value;
-        for (String parameter : parameters) {
-            stringToBeHashed += parameter;
-        }
-
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(salt.getBytes());
@@ -148,8 +143,18 @@ public class CookieHandler {
 
     }
 
-    public static boolean isCorrectHash(String hash, String value, String salt, List<String> parameters) {
-        return (hash.equals(encodeValue(value, salt, parameters)));
+    /**
+     * Checks if the hash in the cookie matches the uuid made with the parameters given in the cookie.
+     *
+     * @param nettyCookieOptional:
+     * @param salt:
+     * @return
+     */
+
+    public static boolean isCorrectHash(Optional<Cookie> nettyCookieOptional, String salt) {
+        String hash = nettyCookieOptional.get().value().substring(0, 64);
+        String value = nettyCookieOptional.get().value().substring(64);
+        return (hash.equals(encodeValue(value, salt)));
     }
 
 
