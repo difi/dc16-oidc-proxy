@@ -14,10 +14,15 @@ import java.util.Optional;
 public class DefaultSecurityConfigProviderTest {
 
     private SecurityConfigProvider provider;
+
     private SecurityConfig securityConfigWithIdpPathChecker;
+
     private SecurityConfig securityConfigWithPathPathChecker;
+
     private final String HOST = "www.difi.no";
+
     private final String PathChecksIdpForScopeRedirectAndSecurity = "/";
+
     private final String PathChecksPathForScopeRedirectAndSecurity = "/app5/";
 
     @BeforeTest

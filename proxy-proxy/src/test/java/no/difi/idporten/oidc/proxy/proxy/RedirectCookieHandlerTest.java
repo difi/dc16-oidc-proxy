@@ -14,6 +14,7 @@ import java.util.Optional;
 public class RedirectCookieHandlerTest {
 
     private String host;
+
     private String path;
 
     @Mock

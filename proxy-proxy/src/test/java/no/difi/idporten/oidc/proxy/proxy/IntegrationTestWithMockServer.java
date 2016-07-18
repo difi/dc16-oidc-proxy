@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.idp.GoogleIdentityProvider;
+import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -16,44 +17,53 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.*;
-import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 
 public class IntegrationTestWithMockServer {
+
     private static Logger logger = LoggerFactory.getLogger(IntegrationTestWithMockServer.class);
+
     private static HttpClient httpClient;
+
     private Thread thread;
+
     private final String BASEURL = "http://localhost:8080";
+
     private String specificPathWithGoogle = "/google/a/specific/path";
+
     private String unsecuredPath = "/unsecured";
+
     private String contentOfASpecificPath = "content of a specific path";
+
     private String contentOfAnUnsecuredPath = "content of an unsecured path";
+
     private String mockServerHostName = "www.mockhost.com";
+
     private String cookieName = "PROXYCOOKIE";
 
     private WireMockServer wireMockServer;
+
+    private static String originalGoogleApiUrl;
+
+    private static String originalGoogleLoginUrl;
 
     private static Map<String, String> getHeadersAsMap(Header[] headers) {
         return Arrays.stream(headers)
                 .collect(Collectors.toMap(Header::getName, Header::getValue));
     }
-
-    private static String originalGoogleApiUrl;
-    private static String originalGoogleLoginUrl;
-
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -199,9 +209,9 @@ public class IntegrationTestWithMockServer {
         HttpResponse response = httpClient.execute(getRequest);
 
         verify(getRequestedFor(urlEqualTo("/google"))
-                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
-                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
-                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
+                        .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
+                        .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                        .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
         );
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
@@ -280,9 +290,9 @@ public class IntegrationTestWithMockServer {
         String expectedSubInResponse = "108182803704140665355";
 
         verify(1, getRequestedFor(urlEqualTo(securedPathToUse))
-                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
-                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
-                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
+                        .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
+                        .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                        .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
         );
         String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 
@@ -319,9 +329,9 @@ public class IntegrationTestWithMockServer {
 
         verify(1, getRequestedFor(urlEqualTo(totallyUnsecuredPathToUse)));
         verify(0, getRequestedFor(urlEqualTo(totallyUnsecuredPathToUse))
-                .withHeader(RequestInterceptor.HEADERNAME + "email", matching(".*"))
-                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
-                .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
+                        .withHeader(RequestInterceptor.HEADERNAME + "email", matching(".*"))
+                        .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                        .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
         );
     }
 

@@ -11,14 +11,13 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Created by Sondre on 13/07/16.
- */
 public class DatabaseCookieStorageTest {
 
     private static final int MINUTE = 1000 * 60;
-    private int touchPeriod= 20;
-    private int maxExpiry= 120;
+
+    private int touchPeriod = 20;
+
+    private int maxExpiry = 120;
 
     private Injector injector;
 
@@ -48,7 +47,7 @@ public class DatabaseCookieStorageTest {
         ProxyCookie proxyCookie = cookieStorage.generateCookieInDb("PROXYCOOKIE", "example.com", "/app1", touchPeriod, maxExpiry, null);
         Date initialExpiry = calculateDate(proxyCookie.getLastUpdated(), proxyCookie.getTouchPeriod());
         ProxyCookie maxExpiredCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "maxExpired", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry-5)), calculateDate(dateNow, -5)));
+                "maxExpired", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry - 5)), calculateDate(dateNow, -5)));
 
         Thread.sleep(100); // ms
 
@@ -56,7 +55,7 @@ public class DatabaseCookieStorageTest {
         Date expiryUponInstantiation = calculateDate(maxExpiredCookie.getLastUpdated(), maxExpiredCookie.getTouchPeriod());
 
         Optional<ProxyCookie> foundCookieOptional = cookieStorage.findCookie(proxyCookie.getUuid(), proxyCookie.getHost(), proxyCookie.getPath());
-        Optional<ProxyCookie> foundMaxExpiredOptional= cookieStorage.findCookie(maxExpiredCookie.getUuid(), maxExpiredCookie.getHost(), maxExpiredCookie.getPath());
+        Optional<ProxyCookie> foundMaxExpiredOptional = cookieStorage.findCookie(maxExpiredCookie.getUuid(), maxExpiredCookie.getHost(), maxExpiredCookie.getPath());
 
         Date extendedExpiry = calculateDate(foundMaxExpiredOptional.get().getLastUpdated(), foundMaxExpiredOptional.get().getTouchPeriod());
         Date newMaxExpiry = calculateDate(foundMaxExpiredOptional.get().getCreated(), foundMaxExpiredOptional.get().getMaxExpiry());
@@ -88,9 +87,9 @@ public class DatabaseCookieStorageTest {
         ProxyCookie validCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
                 "valid", "example.com", "/app1", touchPeriod, maxExpiry, null, dateNow, dateNow));
         ProxyCookie expiredCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "expired", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(touchPeriod+1)), calculateDate(dateNow, -(touchPeriod+1))));
+                "expired", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(touchPeriod + 1)), calculateDate(dateNow, -(touchPeriod + 1))));
         ProxyCookie maxExpiredCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "maxExpired", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry+1)), dateNow));
+                "maxExpired", "example.com", "/app1", touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry + 1)), dateNow));
 
         Assert.assertTrue(validCookie.isValid());
         Assert.assertFalse(expiredCookie.isValid());
@@ -106,7 +105,7 @@ public class DatabaseCookieStorageTest {
 
     }
 
-    private Date calculateDate(Date date, int minutes){
+    private Date calculateDate(Date date, int minutes) {
         return new Date(date.getTime() + minutes * MINUTE);
     }
 }

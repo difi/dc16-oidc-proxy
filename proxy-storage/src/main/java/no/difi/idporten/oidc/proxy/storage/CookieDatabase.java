@@ -11,15 +11,21 @@ import java.util.Map;
 import java.util.Optional;
 
 public class CookieDatabase {
+
     private static final String JDBC_DRIVER = "org.h2.Driver";
+
     private static final String DB_URL = "jdbc:h2:mem:cookie";
+
     private static final String USER = "SA";
+
     private static final String PASS = "";
 
     private static Logger logger = LoggerFactory.getLogger(CookieDatabase.class);
+
     private static final int MINUTE = 60 * 1000;
 
     private Statement statement;
+
     private ResultSet resultSet;
 
     /**

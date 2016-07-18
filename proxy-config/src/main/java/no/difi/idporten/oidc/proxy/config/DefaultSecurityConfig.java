@@ -12,8 +12,11 @@ import java.util.Optional;
 public class DefaultSecurityConfig implements SecurityConfig {
 
     private String hostname, path;
+
     private final PathConfig PATH;
+
     private final HostConfig HOST;
+
     private final IdpConfig IDP;
 
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {

@@ -18,9 +18,13 @@ import java.nio.charset.Charset;
 public class ResponseGeneratorTest {
 
     private String notConfiguredHostName;
+
     private String configuredHostName;
+
     private String securedPath;
+
     private String redirectCookieName;
+
     private String salt = "salt";
 
     private ResponseGenerator responseGenerator;
@@ -38,8 +42,10 @@ public class ResponseGeneratorTest {
      */
     @Mock
     private ChannelHandlerContext ctxMock;
+
     @Mock
     private SecurityConfig securityConfigMock;
+
     @Mock
     private CookieConfig cookieConfigMock;
 

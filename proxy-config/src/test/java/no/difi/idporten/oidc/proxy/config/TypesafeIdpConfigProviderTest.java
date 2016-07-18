@@ -10,22 +10,24 @@ import org.testng.annotations.Test;
 public class TypesafeIdpConfigProviderTest {
 
     private IdpConfigProvider provider;
+
     private static final String IDPORTENIDENTIFIER = "idporten";
+
     private static final String UNKNOWNIDENTIFIER = "facebook";
 
     @BeforeClass
-    public void injectIdpConfigProvider(){
+    public void injectIdpConfigProvider() {
         Injector injector = Guice.createInjector(new ConfigModule());
         provider = injector.getInstance(IdpConfigProvider.class);
     }
 
     @Test
-    public void testCanReturnKnownIdpConfig(){
+    public void testCanReturnKnownIdpConfig() {
         Assert.assertNotNull(provider.getByIdentifier(IDPORTENIDENTIFIER));
     }
 
     @Test
-    public void testReturnsNullWhenUnknownHostConfig(){
+    public void testReturnsNullWhenUnknownHostConfig() {
         Assert.assertNull(provider.getByIdentifier(UNKNOWNIDENTIFIER));
     }
 }

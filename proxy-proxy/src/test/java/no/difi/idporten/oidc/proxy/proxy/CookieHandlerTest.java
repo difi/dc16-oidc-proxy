@@ -20,13 +20,18 @@ import java.util.Set;
 public class CookieHandlerTest {
 
     private CookieConfig cookieConfig;
-    private String host;
-    private String path;
-    private String cookieName;
-    private String uuid;
-    private String salt;
-    private CookieHandler cookieHandler;
 
+    private String host;
+
+    private String path;
+
+    private String cookieName;
+
+    private String uuid;
+
+    private String salt;
+
+    private CookieHandler cookieHandler;
 
     @BeforeTest
     public void injectIdpConfigProvider() {

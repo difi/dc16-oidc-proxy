@@ -9,11 +9,17 @@ import java.util.Map;
 public class DefaultProxyCookie implements ProxyCookie {
 
     private static final int MINUTE = 60 * 1000;
+
     private String uuid, host, path, name;
+
     private Map<String, String> userData;
+
     private final int touchPeriod; // in minutes
+
     private final int maxExpiry;  // in minutes
+
     private final Date created;
+
     private Date lastUpdated;
 
     /**

@@ -11,6 +11,7 @@ import java.util.Optional;
 public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
 
     private HostConfigProvider hostConfigProvider;
+
     private IdpConfigProvider idpConfigProvider;
 
     @Inject
