@@ -38,7 +38,7 @@ public class SimpleIntegrationTest {
     private String pid = "08023549930";
     private String tokenType = "JWTToken";
     private String aud = "dificamp";
-    private HashMap<String, String> idPortenUserData;
+    private Map<String, String> idPortenUserData;
     private ProxyCookie storedIdportenCookie;
 
 

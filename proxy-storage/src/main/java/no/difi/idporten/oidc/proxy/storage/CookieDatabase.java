@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class CookieDatabase {
@@ -97,7 +98,7 @@ public class CookieDatabase {
      * @param str toString of HashMap
      * @return HashMap
      */
-    public static HashMap<String, String> stringToHashMap(String str) {
+    public static Map<String, String> stringToMap(String str) {
         // If HashMap is empty (only containing "{}"), the object should be null
         if (str == null || str.equals("null") || str.equals("{}")) return null;
         // Removing curly braces, spaces and escape characters
@@ -129,7 +130,7 @@ public class CookieDatabase {
                 int touchPeriod = resultSet.getInt("touchPeriod");
                 int maxExpiry = resultSet.getInt("maxExpiry");
                 // Handles empty userData HashMap "{}" in help-method, setting it to null
-                HashMap<String, String> userData = stringToHashMap(resultSet.getString("userData"));
+                Map<String, String> userData = stringToMap(resultSet.getString("userData"));
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
@@ -150,7 +151,7 @@ public class CookieDatabase {
      *
      * @return HashMap
      */
-    public HashMap<String, ProxyCookie> getAllCookies() {
+    public Map<String, ProxyCookie> getAllCookies() {
         HashMap<String, ProxyCookie> cookies = new HashMap<>();
         System.out.println("\ngetAllCookies()");
         try {
@@ -162,8 +163,8 @@ public class CookieDatabase {
                 String path = resultSet.getString("path");
                 int touchPeriod = resultSet.getInt("touchPeriod");
                 int maxExpiry = resultSet.getInt("maxExpiry");
-                // Handles empty userData HashMap "{}" in stringToHashMap(), setting it to null
-                HashMap<String, String> userData = stringToHashMap(resultSet.getString("userData"));
+                // Handles empty userData HashMap "{}" in stringToMap(), setting it to null
+                Map<String, String> userData = stringToMap(resultSet.getString("userData"));
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 

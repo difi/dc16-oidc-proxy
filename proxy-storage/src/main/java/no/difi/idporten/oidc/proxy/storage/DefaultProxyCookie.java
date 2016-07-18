@@ -3,7 +3,6 @@ package no.difi.idporten.oidc.proxy.storage;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -29,7 +28,8 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param maxExpiry int (amount of minutes)
      * @param userData HashMap<String, String> (JWT from authorization server)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, Map<String, String> userData) {
+    public DefaultProxyCookie(String uuid, String name, String host, String path,
+                              int touchPeriod, int maxExpiry, Map<String, String> userData) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;
@@ -57,7 +57,8 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param lastUpdated Date (last time the cookie was "touched" (extended expiry))
      * @param created Date (time of creation)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod, int maxExpiry, HashMap<String, String> userData, Date created, Date lastUpdated) {
+    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod,
+                              int maxExpiry, Map<String, String> userData, Date created, Date lastUpdated) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;

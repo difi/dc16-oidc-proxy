@@ -1,13 +1,10 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.typesafe.config.ConfigFactory;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.config.TypesafeCookieConfig;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
@@ -33,7 +30,6 @@ public class CookieHandlerTest {
 
     @BeforeTest
     public void injectIdpConfigProvider() {
-        Injector injector = Guice.createInjector(new ConfigModule(), new ProxyModule());
         this.cookieConfig = new TypesafeCookieConfig(ConfigFactory.load());
 
         this.host = "www.nav.no";
