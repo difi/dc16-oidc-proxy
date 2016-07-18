@@ -22,6 +22,10 @@ public interface SecurityConfig {
 
     String getRedirectUri();
 
+    String getLogoutRedirectUri();
+
+    String getLogoutPostUri();
+
     String getScope();
 
     String getIdp();

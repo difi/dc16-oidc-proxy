@@ -115,6 +115,16 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public String getLogoutRedirectUri() {
+        return HOST.getLogoutRedirectUri();
+    }
+
+    @Override
+    public String getLogoutPostUri(){
+        return HOST.getLogoutPostUri();
+    }
+
+    @Override
     public String getScope() {
         if (PATH.getScope() == null) {
             return IDP.getScope();
