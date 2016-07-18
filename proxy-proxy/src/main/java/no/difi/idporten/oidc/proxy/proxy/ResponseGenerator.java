@@ -121,7 +121,7 @@ public class ResponseGenerator {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        if (proxyCookie != null && !checkForUnsecuredPaths(securityConfig.getUnsecuredPaths(), httpRequest.uri())) {
+        if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
         }
 
@@ -190,7 +190,7 @@ public class ResponseGenerator {
      */
 
     private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path) {
-        return unsecuredPaths.stream().filter(unsecuredPath -> unsecuredPath.startsWith(path)).findFirst().isPresent();
+        return unsecuredPaths.stream().filter(path::startsWith).findFirst().isPresent();
     }
 
 
