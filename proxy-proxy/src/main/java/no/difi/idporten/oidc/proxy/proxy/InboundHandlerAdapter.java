@@ -98,7 +98,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                         } else {
-                            responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri());
+                            responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
                     } else {
                         responseGenerator.generateDefaultResponse(ctx, host);

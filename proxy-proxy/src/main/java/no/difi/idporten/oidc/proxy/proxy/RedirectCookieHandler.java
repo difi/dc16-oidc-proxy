@@ -49,6 +49,8 @@ public class RedirectCookieHandler {
         Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
+            System.out.println("FUCK: " + nettyCookieOptional.get().value() + " " + userAgent);
+            System.out.println(CookieHandler.isCorrectHash(nettyCookieOptional.get(), salt, userAgent));
             if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(nettyCookieOptional.get(), salt, userAgent)) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);

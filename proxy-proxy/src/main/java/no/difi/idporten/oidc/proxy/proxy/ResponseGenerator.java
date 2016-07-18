@@ -31,7 +31,7 @@ public class ResponseGenerator {
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath) {
+    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath, HttpRequest httpRequest) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
 
@@ -48,7 +48,7 @@ public class ResponseGenerator {
             new RedirectCookieHandler(
                     securityConfig.getCookieConfig(),
                     securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(response, securityConfig.getSalt(), "MUST BE FIXED");
+                    requestPath).insertCookieToResponse(response, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

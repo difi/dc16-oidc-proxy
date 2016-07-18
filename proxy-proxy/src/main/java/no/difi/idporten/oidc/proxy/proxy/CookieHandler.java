@@ -122,7 +122,8 @@ public class CookieHandler {
     }
 
     public static String encodeValue(String value, String salt, String userAgent) {
-        String stringToBeHashed = value ;//+ userAgent;
+        System.out.println(value + " " + salt + " " + userAgent);
+        String stringToBeHashed = value + userAgent;
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(salt.getBytes());
@@ -155,6 +156,7 @@ public class CookieHandler {
     public static boolean isCorrectHash(Cookie nettyCookieOptional, String salt, String userAgent) {
         String hash = nettyCookieOptional.value().substring(0, 64);
         String value = nettyCookieOptional.value().substring(64);
+        System.out.println(hash + " " + encodeValue(value, salt, userAgent));
         return (hash.equals(encodeValue(value, salt, userAgent)));
     }
 
