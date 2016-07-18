@@ -1,4 +1,4 @@
-package no.difi.idporten.oidc.proxy.api;
+package no.difi.idporten.oidc.proxy.model;
 
 import java.util.Date;
 import java.util.Map;

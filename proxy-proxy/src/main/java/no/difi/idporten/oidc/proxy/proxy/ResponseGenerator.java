@@ -8,7 +8,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;

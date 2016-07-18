@@ -1,6 +1,6 @@
-package no.difi.idporten.oidc.proxy.model;
+package no.difi.idporten.oidc.proxy.storage;
 
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 
 import java.util.Date;
 import java.util.HashMap;

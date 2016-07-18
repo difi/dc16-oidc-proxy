@@ -3,13 +3,10 @@ package no.difi.idporten.oidc.proxy.storage;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
-import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
-import org.h2.store.Data;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;

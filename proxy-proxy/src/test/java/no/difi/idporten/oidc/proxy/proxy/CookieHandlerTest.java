@@ -7,7 +7,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.*;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.config.TypesafeCookieConfig;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
@@ -18,7 +18,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;

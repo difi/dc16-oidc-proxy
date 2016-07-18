@@ -1,7 +1,6 @@
 package no.difi.idporten.oidc.proxy.storage;
 
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
-import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,5 +1,7 @@
 package no.difi.idporten.oidc.proxy.api;
 
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
+
 import java.util.Map;
 import java.util.Optional;
 

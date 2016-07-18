@@ -19,5 +19,4 @@ public class UserData {
     public Map<String, String> getUserData() {
         return userData;
     }
-
 }
