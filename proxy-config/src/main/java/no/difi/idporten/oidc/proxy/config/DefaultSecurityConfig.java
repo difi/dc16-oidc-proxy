@@ -77,6 +77,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public String getSalt() {
+        return HOST.getSalt();
+    }
+
+    @Override
     public List<String> getUserDataNames() {
         return IDP.getUserDataNames();
     }
@@ -96,6 +101,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
     public String getParameter(String key) {
         return IDP.getParameter(key).orElse("");
     }
+
+
 
     @Override
     public String getSecurity() {

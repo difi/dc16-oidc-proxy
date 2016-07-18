@@ -26,32 +26,32 @@ public class RedirectCookieHandler {
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
      *
-     * @param cookieConfig
-     * @param host
-     * @param path
+     * @param cookieConfig:
+     * @param host:
+     * @param path:
      */
     public RedirectCookieHandler(CookieConfig cookieConfig, String host, String path) {
         this.host = host;
         this.path = path;
     }
 
-    public Cookie insertCookieToResponse(HttpResponse response) {
-        String hash = generateCookieHash(path);
-        Cookie cookieToInsert = new DefaultCookie(redirectCookieName, hash);
-        CookieHandler.insertCookieToResponse(response, redirectCookieName, hash);
-        hashToPathMap.put(hash, path);
+    public Cookie insertCookieToResponse(HttpResponse response, String salt, String userAgent) {
+        String value = CookieHandler.encodeValue(path, salt, userAgent) + path;
+        Cookie cookieToInsert = new DefaultCookie(redirectCookieName, value);
+        CookieHandler.insertCookieToResponse(response, redirectCookieName, path, salt, userAgent);
+        System.err.println(value);
+        hashToPathMap.put(value, path);
         return cookieToInsert;
     }
 
-    private static String generateCookieHash(String path) {
-        return ("HASHASHASH" + path);
-    }
 
-    public static Optional<String> findRedirectCookiePath(HttpRequest request) {
-        Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(request, redirectCookieName);
+    public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest, String salt, String userAgent) {
+        Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
-            if (hashToPathMap.containsKey(redirectCookieValue)) {
+            System.out.println("FUCK: " + nettyCookieOptional.get().value() + " " + userAgent);
+            System.out.println(CookieHandler.isCorrectHash(nettyCookieOptional.get(), salt, userAgent));
+            if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(nettyCookieOptional.get(), salt, userAgent)) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);
                 logger.debug("Found original path for request after redirect: {}", result);

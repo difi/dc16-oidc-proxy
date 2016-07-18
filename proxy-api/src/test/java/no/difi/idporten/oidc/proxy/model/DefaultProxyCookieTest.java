@@ -8,7 +8,7 @@ import java.util.UUID;
 public class DefaultProxyCookieTest {
 
     @Test
-    public void createSimpleCookie() {
+    public void createSimpleCookie() throws Exception{
         String identifier = UUID.randomUUID().toString();
         /*DefaultProxyCookie cookie = new DefaultProxyCookie(identifier, "PROXYCOOKIE", "domain.com", "/", null, null, null);
 
