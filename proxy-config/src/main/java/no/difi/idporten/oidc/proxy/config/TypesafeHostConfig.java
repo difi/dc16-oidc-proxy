@@ -89,4 +89,9 @@ public class TypesafeHostConfig implements HostConfig {
     public String getSalt() {
         return this.salt;
     }
+
+    @Override
+    public boolean isTotallyUnsecured(String path) {
+        return unsecuredPaths.stream().filter(path::startsWith).findFirst().isPresent();
+    }
 }

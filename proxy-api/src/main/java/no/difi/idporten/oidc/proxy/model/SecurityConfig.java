@@ -42,4 +42,12 @@ public interface SecurityConfig {
 
 
     boolean isSecured();
+
+    /**
+     * Checks if the path is explicitly completely unsecured and should not receive the Difi headers.
+     *
+     * @param path
+     * @return
+     */
+    boolean isTotallyUnsecured(String path);
 }
