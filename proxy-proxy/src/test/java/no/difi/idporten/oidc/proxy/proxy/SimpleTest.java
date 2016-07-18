@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,11 +34,11 @@ public class SimpleTest {
     }
 
     @Test
-    public void testSecuredConfigured() throws Exception{
+    public void testSecuredConfigured() throws Exception {
         try {
             URL url = URI.create("http://localhost:8080/google").toURL();
             Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 302 Found]"));
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.info("Received '{}'.", e.getMessage(), e);
         }
     }
@@ -55,11 +54,11 @@ public class SimpleTest {
     }
 
     @Test
-    public void testUnconfigured() throws Exception{
+    public void testUnconfigured() throws Exception {
         try {
             URL url = URI.create("http://127.0.0.1:8080").toURL();
             Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 400 Bad Request]"));
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.info("Received '{}'.", e.getMessage(), e);
         }
     }

@@ -84,11 +84,6 @@ public class SimpleIntegrationTest {
         httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
     }
 
-    @AfterMethod
-    public void tearDown() {
-    }
-
-
     @Test
     public void testUnsecuredConfigured() throws Exception {
         logger.info("With an unsecured path for a configured host, the server should work as a normal proxy and " +

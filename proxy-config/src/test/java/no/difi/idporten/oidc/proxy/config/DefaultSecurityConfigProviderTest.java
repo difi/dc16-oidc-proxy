@@ -82,7 +82,7 @@ public class DefaultSecurityConfigProviderTest {
     }
 
     @Test
-    public void testgetClient_id() {
+    public void testgetClientId() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getClientId());
         Assert.assertEquals(securityConfigWithIdpPathChecker.getClientId(), "dificamp");
     }
@@ -111,13 +111,13 @@ public class DefaultSecurityConfigProviderTest {
     }
 
     @Test
-    public void testGetRedirect_uriFromPath() {
+    public void testGetRedirectUriFromPath() {
         Assert.assertNotNull(securityConfigWithPathPathChecker.getRedirectUri());
         Assert.assertEquals(securityConfigWithPathPathChecker.getRedirectUri(), "http://localhost:8080/redirect");
     }
 
     @Test
-    public void testGetRedirect_uriFromIdp() {
+    public void testGetRedirectUriFromIdp() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getRedirectUri());
         Assert.assertEquals(securityConfigWithIdpPathChecker.getRedirectUri(), "http://localhost:8080/");
     }

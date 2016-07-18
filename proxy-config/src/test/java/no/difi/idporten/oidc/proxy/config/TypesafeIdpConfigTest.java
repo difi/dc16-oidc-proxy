@@ -36,13 +36,13 @@ public class TypesafeIdpConfigTest {
     }
 
     @Test
-    public void testGetRedirect_uri() {
+    public void testGetRedirectUri() {
         Assert.assertNotNull(idpConfig.getRedirectUri());
         Assert.assertEquals(idpConfig.getRedirectUri(), "http://localhost:8080/");
     }
 
     @Test
-    public void testGetClient_id() {
+    public void testGetClientId() {
         Assert.assertNotNull(idpConfig.getClientId());
         Assert.assertEquals(idpConfig.getClientId(), "dificamp");
     }
@@ -51,6 +51,5 @@ public class TypesafeIdpConfigTest {
     public void testGetUserData() {
         Assert.assertNotNull(idpConfig.getUserDataNames());
         Assert.assertTrue(idpConfig.getUserDataNames().contains("pid"));
-
     }
 }

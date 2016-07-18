@@ -22,7 +22,10 @@ import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -126,10 +129,6 @@ public class IntegrationTestWithMockServer {
                         .withStatus(HttpResponseStatus.OK.code())
                         .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "text/plain")
                         .withBody(contentOfAnUnsecuredPath)));
-    }
-
-    @AfterMethod
-    public void tearDown() {
     }
 
     /**

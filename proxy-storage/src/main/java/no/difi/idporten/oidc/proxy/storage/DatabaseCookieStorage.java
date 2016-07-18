@@ -13,6 +13,7 @@ public class DatabaseCookieStorage implements CookieStorage {
     private static Logger logger = LoggerFactory.getLogger(DatabaseCookieStorage.class);
 
     private CookieDatabase db;
+
     private static DatabaseCookieStorage ourInstance = new DatabaseCookieStorage();
 
     public static DatabaseCookieStorage getInstance() {
@@ -78,7 +79,7 @@ public class DatabaseCookieStorage implements CookieStorage {
         // Check if cookie is found
         if (result.isPresent()) {
             // Check expiry and maxExpiry
-            if (result.get().isValid()){
+            if (result.get().isValid()) {
                 // Check host and path
                 if (result.get().getHost().equals(host) && result.get().getPath().equals(path)) {
                     logger.info("Cookie is valid - host and path matches ({})", result.get());

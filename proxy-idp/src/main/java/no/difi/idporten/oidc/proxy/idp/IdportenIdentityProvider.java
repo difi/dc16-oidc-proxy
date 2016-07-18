@@ -33,7 +33,9 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     private static Logger logger = LoggerFactory.getLogger(IdportenIdentityProvider.class);
 
     private SecurityConfig securityConfig;
+
     private String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
+
     private String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
 
     public IdportenIdentityProvider(SecurityConfig securityConfig) {
@@ -74,13 +76,10 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()
                     .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
-            List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {
-                {
-                    add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
-                    add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
-                    add(new BasicNameValuePair("code", urlParameters.get("code")));
-                }
-            };
+            List<NameValuePair> contentValues = new ArrayList<>();
+            contentValues.add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
+            contentValues.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
+            contentValues.add(new BasicNameValuePair("code", urlParameters.get("code")));
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
 
             HttpPost httpPost = new HttpPost(APIURL);
