@@ -36,7 +36,6 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     public static PathConfig getUnsecuredPath() {
-        logger.info("This path is unsecured");
         return new TypesafePathConfig("/", "0", "none");
     }
 
