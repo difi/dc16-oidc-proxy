@@ -8,14 +8,14 @@ import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,7 +46,7 @@ public class CookieHandler {
         this.path = path;
     }
 
-    public ProxyCookie generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry) {
+    public ProxyCookie generateCookie(Map<String, String> userData, int touchPeriod, int maxExpiry) {
         return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
@@ -170,7 +170,5 @@ public class CookieHandler {
      */
     public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String cookieValue) {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
-
     }
-
 }

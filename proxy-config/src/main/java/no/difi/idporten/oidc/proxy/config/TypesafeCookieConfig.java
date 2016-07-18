@@ -10,9 +10,10 @@ public class TypesafeCookieConfig implements CookieConfig {
     private String name;
 
     private int touch;
+
     private int maxExpiry;
 
-    public TypesafeCookieConfig(Config config){
+    public TypesafeCookieConfig(Config config) {
         this.name = config.getString("name");
         this.touch = config.getInt("touch");
         this.maxExpiry = config.getInt("maxExpiry");

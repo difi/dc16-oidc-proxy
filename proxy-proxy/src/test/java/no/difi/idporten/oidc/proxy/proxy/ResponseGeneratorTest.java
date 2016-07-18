@@ -6,8 +6,6 @@ import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.mockito.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -19,12 +17,14 @@ import java.nio.charset.Charset;
 
 public class ResponseGeneratorTest {
 
-    private static Logger logger = LoggerFactory.getLogger(ResponseGeneratorTest.class);
-
     private String notConfiguredHostName;
+
     private String configuredHostName;
+
     private String securedPath;
+
     private String redirectCookieName;
+
     private String salt = "salt";
 
     private ResponseGenerator responseGenerator;
@@ -42,8 +42,10 @@ public class ResponseGeneratorTest {
      */
     @Mock
     private ChannelHandlerContext ctxMock;
+
     @Mock
     private SecurityConfig securityConfigMock;
+
     @Mock
     private CookieConfig cookieConfigMock;
 

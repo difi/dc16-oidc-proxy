@@ -1,44 +1,40 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.typesafe.config.ConfigFactory;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.cookie.*;
 import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
-import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.config.TypesafeCookieConfig;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
 public class CookieHandlerTest {
 
-    private static Logger logger = LoggerFactory.getLogger(CookieHandlerTest.class);
-
     private CookieConfig cookieConfig;
-    private String host;
-    private String path;
-    private String cookieName;
-    private String uuid;
-    private String salt;
-    private CookieHandler cookieHandler;
 
+    private String host;
+
+    private String path;
+
+    private String cookieName;
+
+    private String uuid;
+
+    private String salt;
+
+    private CookieHandler cookieHandler;
 
     @BeforeTest
     public void injectIdpConfigProvider() {
-        Injector injector = Guice.createInjector(new ConfigModule(), new ProxyModule());
         this.cookieConfig = new TypesafeCookieConfig(ConfigFactory.load());
 
         this.host = "www.nav.no";

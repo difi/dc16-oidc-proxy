@@ -6,12 +6,8 @@ import com.nimbusds.jwt.JWTParser;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 abstract class AbstractIdentityProvider implements IdentityProvider {
-
-    private static Logger logger = LoggerFactory.getLogger(AbstractIdentityProvider.class);
 
     protected static Gson gson = new GsonBuilder().create();
 
