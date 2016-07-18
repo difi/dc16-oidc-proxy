@@ -35,21 +35,21 @@ public class RedirectCookieHandler {
         this.path = path;
     }
 
-    public Cookie insertCookieToResponse(HttpResponse response, String salt) {
-        String value = CookieHandler.encodeValue(path, salt) + path;
+    public Cookie insertCookieToResponse(HttpResponse response, String salt, String userAgent) {
+        String value = CookieHandler.encodeValue(path, salt, userAgent) + path;
         Cookie cookieToInsert = new DefaultCookie(redirectCookieName, value);
-        CookieHandler.insertCookieToResponse(response, redirectCookieName, path, salt);
+        CookieHandler.insertCookieToResponse(response, redirectCookieName, path, salt, userAgent);
         System.err.println(value);
         hashToPathMap.put(value, path);
         return cookieToInsert;
     }
 
 
-    public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest, String salt) {
+    public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest, String salt, String userAgent) {
         Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
-            if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(nettyCookieOptional, salt)) {
+            if (hashToPathMap.containsKey(redirectCookieValue) && CookieHandler.isCorrectHash(nettyCookieOptional.get(), salt, userAgent)) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);
                 logger.debug("Found original path for request after redirect: {}", result);

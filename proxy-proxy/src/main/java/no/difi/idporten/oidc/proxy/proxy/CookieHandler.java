@@ -56,7 +56,7 @@ public class CookieHandler {
      * @param httpRequest:
      * @return
      */
-    public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest, String salt) {
+    public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest, String salt, String userAgent) {
         logger.debug("Looking for cookie with name {}", cookieName);
 
         Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
@@ -64,7 +64,7 @@ public class CookieHandler {
             String uuid = nettyCookieOptional.get().value().substring(64);
             logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
             Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
-            if (proxyCookieOptional.isPresent() && isCorrectHash(nettyCookieOptional, salt)) {
+            if (proxyCookieOptional.isPresent() && isCorrectHash(nettyCookieOptional.get(), salt, userAgent)) {
                 return proxyCookieOptional;
             } else {
                 logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
@@ -84,8 +84,8 @@ public class CookieHandler {
      * @param cookieName:
      * @param value:
      */
-    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt) {
-        String cookieValue = encodeValue(value, salt) + value;
+    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
+        String cookieValue = encodeValue(value, salt, userAgent) + value;
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
@@ -120,8 +120,8 @@ public class CookieHandler {
         }
     }
 
-    public static String encodeValue(String value, String salt) {
-        String stringToBeHashed = value;
+    public static String encodeValue(String value, String salt, String userAgent) {
+        String stringToBeHashed = value ;//+ userAgent;
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(salt.getBytes());
@@ -148,13 +148,14 @@ public class CookieHandler {
      *
      * @param nettyCookieOptional:
      * @param salt:
-     * @return
+     * @return a boolean that tells whether the hash is correct or not.
      */
 
-    public static boolean isCorrectHash(Optional<Cookie> nettyCookieOptional, String salt) {
-        String hash = nettyCookieOptional.get().value().substring(0, 64);
-        String value = nettyCookieOptional.get().value().substring(64);
-        return (hash.equals(encodeValue(value, salt)));
+    public static boolean isCorrectHash(Cookie nettyCookieOptional, String salt, String userAgent) {
+        System.out.println("USERAGENT: " + userAgent);
+        String hash = nettyCookieOptional.value().substring(0, 64);
+        String value = nettyCookieOptional.value().substring(64);
+        return (hash.equals(encodeValue(value, salt, userAgent)));
     }
 
 

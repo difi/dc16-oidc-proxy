@@ -57,7 +57,7 @@ public class CookieHandlerTest {
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         HttpHeaders headers = httpResponse.headers();
         Assert.assertFalse(headers.contains(HttpHeaderNames.SET_COOKIE));
-        CookieHandler.insertCookieToResponse(httpResponse, cookieName, cookieValue, salt);
+        CookieHandler.insertCookieToResponse(httpResponse, cookieName, cookieValue, salt, "MUSTBEFIXED");
         Set<Cookie> nettyCookies = ServerCookieDecoder.STRICT.decode(headers.getAsString(HttpHeaderNames.SET_COOKIE));
         Assert.assertEquals(nettyCookies.size(), 1);
         Assert.assertTrue(nettyCookies.stream()
@@ -110,7 +110,7 @@ public class CookieHandlerTest {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
 
         // Cookie storage is empty, so it should not get a valid cookie here
-        Assert.assertFalse(cookieHandler.getValidProxyCookie(httpRequest, "salt").isPresent());
+        Assert.assertFalse(cookieHandler.getValidProxyCookie(httpRequest, "salt", "MUSTBEFIXED").isPresent());
     }
 
 

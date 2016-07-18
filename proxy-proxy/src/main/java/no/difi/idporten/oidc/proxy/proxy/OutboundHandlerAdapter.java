@@ -5,6 +5,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import no.difi.idporten.oidc.proxy.api.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
@@ -22,6 +23,8 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private ProxyCookie proxyCookie;
 
+    private HttpRequest httpRequest;
+
     private SecurityConfig securityConfig;
 
     private boolean setCookie;
@@ -29,12 +32,13 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
     /**
      * @param inboundChannel Channel on which to write responses
      */
-    public OutboundHandlerAdapter(Channel inboundChannel, ProxyCookie proxyCookie, SecurityConfig securityConfig, boolean setCookie) {
+    public OutboundHandlerAdapter(Channel inboundChannel, ProxyCookie proxyCookie, SecurityConfig securityConfig, boolean setCookie, HttpRequest httpRequest) {
         logger.info(String.format("Initializing target pool with inbound channel %s", inboundChannel));
         this.inboundChannel = inboundChannel;
         this.proxyCookie = proxyCookie;
         this.setCookie = setCookie;
         this.securityConfig = securityConfig;
+        this.httpRequest = httpRequest;
     }
 
     @Override
@@ -49,7 +53,7 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpResponse && proxyCookie != null && setCookie) {
             CookieHandler.insertCookieToResponse((HttpResponse) msg,
-                    proxyCookie.getName(), proxyCookie.getUuid(), securityConfig.getSalt());
+                    proxyCookie.getName(), proxyCookie.getUuid(), securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
         }
 
         logger.debug(String.format("Receiving response from server: %s", msg.getClass()));

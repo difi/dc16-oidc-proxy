@@ -48,7 +48,7 @@ public class ResponseGenerator {
             new RedirectCookieHandler(
                     securityConfig.getCookieConfig(),
                     securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(response, securityConfig.getSalt());
+                    requestPath).insertCookieToResponse(response, securityConfig.getSalt(), "MUST BE FIXED");
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -107,7 +107,7 @@ public class ResponseGenerator {
 
         boolean setCookie = proxyCookie != null;
 
-        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt()).ifPresent(originalPath -> {
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), "MUSTBEFIXED").ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
@@ -116,7 +116,7 @@ public class ResponseGenerator {
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie, securityConfig))
+        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie, securityConfig, httpRequest))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
