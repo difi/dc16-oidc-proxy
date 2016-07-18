@@ -44,7 +44,7 @@ public class CookieHandlerTest {
         this.host = "www.nav.no";
         this.path = "/trydgesøknad";
         this.cookieName = cookieConfig.getName();
-        this.uuid = "blablabla";
+        this.uuid = "aValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLong";
         this.cookieHandler = new CookieHandler(cookieConfig, host, path);
         this.salt = "salt";
     }
@@ -104,7 +104,7 @@ public class CookieHandlerTest {
         Assert.assertTrue(httpRequest.headers().getAsString(HttpHeaderNames.COOKIE).contains(uuid));
     }
 
-    @Test (enabled = false)
+    @Test
     public void getValidProxyCookie() {
         HttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, host + path);
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));

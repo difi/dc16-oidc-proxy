@@ -25,6 +25,7 @@ public class ResponseGeneratorTest {
     private String configuredHostName;
     private String securedPath;
     private String redirectCookieName;
+    private String salt = "salt";
 
     private ResponseGenerator responseGenerator;
 
@@ -72,6 +73,7 @@ public class ResponseGeneratorTest {
         Mockito.doReturn(configuredHostName).when(securityConfigMock).getHostname();
         Mockito.doReturn(securedPath).when(securityConfigMock).getPath();
         Mockito.doReturn(cookieConfigMock).when(securityConfigMock).getCookieConfig();
+        Mockito.doReturn(salt).when(securityConfigMock).getSalt();
     }
 
     @BeforeMethod
@@ -118,7 +120,7 @@ public class ResponseGeneratorTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void generateRedirectResponseWhenIdentityProviderIsConfigured() throws Exception {
         String validRedirectUrl = "valid.redirect.url";
         IdentityProvider identityProviderMock = Mockito.mock(IdentityProvider.class);
