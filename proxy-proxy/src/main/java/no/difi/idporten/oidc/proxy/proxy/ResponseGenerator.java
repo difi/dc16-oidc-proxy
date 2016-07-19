@@ -61,6 +61,31 @@ public class ResponseGenerator {
         }
     }
 
+    protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig) {
+        System.err.println("\ngenerateLogoutResponse()");
+        try {
+            String redirectUrl = securityConfig.getLogoutRedirectUri();
+            System.out.println("redirectUrl: "+redirectUrl);
+
+            StringBuilder content = new StringBuilder(redirectUrl);
+
+            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+
+            response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
+                    "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
+            logger.debug(String.format("Created logout response:\n%s", response));
+            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+
+        } catch (Exception exc) {
+            exc.printStackTrace();
+            generateDefaultResponse(ctx, "");
+        }
+    }
+
     /**
      * Default response for when nothing is configured for the host
      */
@@ -137,6 +162,7 @@ public class ResponseGenerator {
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
         });
+
 
 
         Bootstrap b = new Bootstrap();
