@@ -108,7 +108,7 @@ public class ResponseGeneratorTest {
         } finally {
             // All we need to test here is that the correct methods have been called and maybe which arguments
             // they were called with.
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString(), Mockito.any());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(IdentityProvider.class), Mockito.any(), Mockito.anyString(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
 
             /* Not sure whether it's this method's responsibility to create an error when this goes south.
@@ -133,7 +133,7 @@ public class ResponseGeneratorTest {
         } catch (NullPointerException exc) {
 
         } finally {
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString(), Mockito.any());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(IdentityProvider.class), Mockito.any(), Mockito.anyString(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
             Mockito.atLeastOnce();
             Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
