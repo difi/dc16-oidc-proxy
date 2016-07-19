@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -87,11 +86,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
                                 .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
                         if (cookieHasEnoughInformation) {
+                            logger.debug("Cookie did have the information required for this path");
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                             return;
                         }
-
-                    } if (idpOptional.isPresent()) {
+                        logger.debug("Cookie did not have the information required for this path");
+                    }
+                    if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
 
                         logger.debug("Has identity provider: {}", idp);

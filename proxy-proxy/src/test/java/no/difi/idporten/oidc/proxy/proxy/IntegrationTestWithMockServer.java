@@ -38,15 +38,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 public class IntegrationTestWithMockServer {
 
+    private static final String BASEURL = "http://localhost:8080";
+
     private static Logger logger = LoggerFactory.getLogger(IntegrationTestWithMockServer.class);
 
     private static HttpClient httpClient;
 
     private static HttpClient notFollowHttpClient;
-
-    private Thread thread;
-
-    private static final String BASEURL = "http://localhost:8080";
 
     private static String specificPathWithGoogle = "/google/a/specific/path";
 
@@ -70,14 +68,6 @@ public class IntegrationTestWithMockServer {
 
     private static String idportenLoginPath = "/idporten-oidc-provider/authorize";
 
-    private WireMockServer wireMockServer;
-
-
-    private static Map<String, String> getHeadersAsMap(Header[] headers) {
-        return Arrays.stream(headers)
-                .collect(Collectors.toMap(Header::getName, Header::getValue));
-    }
-
     private static String originalGoogleApiUrl;
 
     private static String originalGoogleLoginUrl;
@@ -86,6 +76,14 @@ public class IntegrationTestWithMockServer {
 
     private static String originalIdportenApiUrl;
 
+    private Thread thread;
+
+    private WireMockServer wireMockServer;
+
+    private static Map<String, String> getHeadersAsMap(Header[] headers) {
+        return Arrays.stream(headers)
+                .collect(Collectors.toMap(Header::getName, Header::getValue));
+    }
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -239,8 +237,8 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testFollowRedirectHasDifiHeader() throws Exception {
-        String expectedEmailInResponse = "vikfand@gmail.com";
-        String expectedSubInResponse = "108182803704140665355";
+        String expectedEmailInRequest = "vikfand@gmail.com";
+        String expectedSubInRequest = "108182803704140665355";
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
@@ -248,9 +246,26 @@ public class IntegrationTestWithMockServer {
         HttpResponse response = httpClient.execute(getRequest);
 
         verify(getRequestedFor(urlEqualTo("/google"))
-                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInRequest))
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
-                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInRequest))
+        );
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+
+    }
+
+    @Test
+    public void testIdportenFollowRedirectHasDifiHeader() throws Exception {
+        String expectedPidInRequest = "08023549930";
+        String url = BASEURL + "/idporten";
+        HttpGet getRequest = new HttpGet(url);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = httpClient.execute(getRequest);
+
+        verify(getRequestedFor(urlEqualTo("/idporten"))
+                .withHeader(RequestInterceptor.HEADERNAME + "pid", equalTo(expectedPidInRequest))
         );
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
@@ -325,8 +340,8 @@ public class IntegrationTestWithMockServer {
 
         notFollowHttpClient.execute(getRequest);
 
-        verify(1, getRequestedFor(urlEqualTo(totallyUnsecuredPathToUse)));
-        verify(0, getRequestedFor(urlEqualTo(totallyUnsecuredPathToUse))
+        verify(1, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse)));
+        verify(0, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse))
                 .withHeader(RequestInterceptor.HEADERNAME + "email", matching(".*"))
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
                 .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
