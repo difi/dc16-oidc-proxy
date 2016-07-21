@@ -9,6 +9,8 @@
 
     <artifactId>proxy-idp</artifactId>
 
+    <name>ID-porten OIDC :: Proxy :: IDP</name>
+
     <dependencies>
         <!-- Proxy -->
         <dependency>
@@ -32,6 +34,12 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
 
     </dependencies>

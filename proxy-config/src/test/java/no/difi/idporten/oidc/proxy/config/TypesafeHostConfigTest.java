@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TypesafeHostConfigTest {
 
     private HostConfig hostConfig;
+
     private HostConfigProvider hostConfigProvider = new TypesafeHostConfigProvider(ConfigFactory.load());
 
     @BeforeTest

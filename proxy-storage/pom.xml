@@ -9,6 +9,8 @@
 
     <artifactId>proxy-storage</artifactId>
 
+    <name>ID-porten OIDC :: Proxy :: Storage</name>
+
     <dependencies>
         <!-- Proxy -->
         <dependency>

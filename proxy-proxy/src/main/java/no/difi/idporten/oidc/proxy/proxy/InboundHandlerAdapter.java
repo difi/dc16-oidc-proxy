@@ -1,18 +1,19 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
+import com.google.inject.Inject;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -28,6 +29,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private ProxyCookie proxyCookie;
 
+    @Inject
     public InboundHandlerAdapter(SecurityConfigProvider securityConfigProvider) {
         this.securityConfigProvider = securityConfigProvider;
     }
@@ -37,7 +39,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info(String.format("Activating source handler channel %s", ctx.channel()));
+        logger.debug(String.format("Activating source handler channel %s", ctx.channel()));
         ctx.read();
     }
 
@@ -52,7 +54,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      * source client.
      */
     private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception {
-        logger.info("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
+        logger.debug("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
 
         String path = httpRequest.uri();
         String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
@@ -67,11 +69,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
-                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest);
+                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
 
                 logger.debug("Has security config: {}", securityConfig);
 
-                if (securityConfig.isSecured()) {
+                if (securityConfig.isSecured() && !securityConfig.isTotallyUnsecured(path)) {
                     Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
 
                     logger.debug("{}{} is secured", host, path);
@@ -95,9 +97,18 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         }
 
                         proxyCookie = validProxyCookieOptional.get();
-                        outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
 
-                    } else if (idpOptional.isPresent()) {
+                        // checks if the information in this cookie is enough for what the request needs
+                        boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
+                                .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
+                        if (cookieHasEnoughInformation) {
+                            logger.debug("Cookie did have the information required for this path");
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                            return;
+                        }
+                        logger.debug("Cookie did not have the information required for this path");
+                    }
+                    if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
 
                         logger.debug("Has identity provider: {}", idp);
@@ -105,7 +116,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         if (redirectedFromIdp(path)) {
                             logger.debug("TypesafePathConfig contains code: {}", path);
 
-                            HashMap<String, String> userData = idp.getToken(path).getUserData();
+                            Map<String, String> userData = idp.getToken(path).getUserData();
 
                             // Host's config (falls back to default config if not present)
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
@@ -116,7 +127,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                         } else {
-                            responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri());
+                            responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
                     } else {
                         responseGenerator.generateDefaultResponse(ctx, host);
@@ -135,6 +146,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             }
 
         } catch (Exception e) {
+            logger.error(e.getMessage(), e);
             responseGenerator.generateDefaultResponse(ctx, host);
             System.err.println("Error message: "+e.getMessage());
             e.printStackTrace();
@@ -143,6 +155,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     }
 
 
+    /**
     /**
      * Reading incoming messages from the local client. The first message for a new incoming connection will bootstrap
      * the outbound channel. The next messages will just be written to the outbound channel.

@@ -12,14 +12,19 @@ import java.util.Optional;
 
 public class DefaultSecurityConfig implements SecurityConfig {
 
-    private String hostname, path;
+    private String hostname;
+
+    private String path;
+
     private final PathConfig PATH;
+
     private final HostConfig HOST;
+
     private final IdpConfig IDP;
 
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
-        this.path = path;
         this.hostname = hostname;
+        this.path = path;
         this.HOST = hostConfigProvider.getByHostname(hostname);
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
@@ -78,6 +83,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public String getSalt() {
+        return HOST.getSalt();
+    }
+
+    @Override
     public List<String> getUserDataNames() {
         if (IDP != null) {
             return IDP.getUserDataNames();
@@ -101,6 +111,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
     public String getParameter(String key) {
         return IDP.getParameter(key).orElse("");
     }
+
 
     @Override
     public String getSecurity() {

@@ -11,7 +11,9 @@ import org.testng.annotations.Test;
 public class TypesafeHostConfigProviderTest {
 
     private HostConfigProvider provider;
+
     private static final String DIFIHOSTNAME = "www.difi.no"; // this is a hostname that should be configured and valid
+
     private static final String UNKNOWNHOSTNAME = "www.facebook.com"; // this is a hostname that should not be configured
 
     @BeforeClass

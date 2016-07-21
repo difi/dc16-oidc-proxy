@@ -1,22 +1,21 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 
 /**
  * ChannelInitializer for inbound messages.
  */
 public class InboundInitializer extends ChannelInitializer<SocketChannel> {
 
-    private SecurityConfigProvider securityConfigProvider;
-
+    private Injector injector;
 
     @Inject
-    public InboundInitializer(SecurityConfigProvider securityConfigProvider) {
-        this.securityConfigProvider = securityConfigProvider;
+    public InboundInitializer(Injector injector) {
+        this.injector = injector;
     }
 
     @Override
@@ -24,7 +23,7 @@ public class InboundInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline()
                 .addLast(new HttpServerCodec(102400, 102400, 102400))
                 .addLast(new HttpRequestHandler())
-                .addLast(new InboundHandlerAdapter(securityConfigProvider))
+                .addLast(injector.getInstance(InboundHandlerAdapter.class))
         ;
     }
 }

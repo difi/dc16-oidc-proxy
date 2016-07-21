@@ -9,6 +9,8 @@
 
     <artifactId>proxy-config</artifactId>
 
+    <name>ID-porten OIDC :: Proxy :: Config</name>
+
     <dependencies>
         <!-- Proxy -->
         <dependency>
@@ -19,6 +21,10 @@
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-idp</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>no.difi.idporten.oidc</groupId>
+            <artifactId>proxy-storage</artifactId>
         </dependency>
 
         <!-- Guice -->
@@ -42,10 +48,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>no.difi.idporten.oidc</groupId>
-            <artifactId>proxy-storage</artifactId>
         </dependency>
 
     </dependencies>
