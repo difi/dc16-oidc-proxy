@@ -6,6 +6,7 @@ import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
 
 import java.net.SocketAddress;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,7 +89,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public List<String> getUserDataNames() {
-        return IDP.getUserDataNames();
+        if (IDP != null) {
+            return IDP.getUserDataNames();
+        } else {
+            return new LinkedList<>();
+        }
     }
 
     @Override
@@ -106,7 +111,6 @@ public class DefaultSecurityConfig implements SecurityConfig {
     public String getParameter(String key) {
         return IDP.getParameter(key).orElse("");
     }
-
 
 
     @Override
