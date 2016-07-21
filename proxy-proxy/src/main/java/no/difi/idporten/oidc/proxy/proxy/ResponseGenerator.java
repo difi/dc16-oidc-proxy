@@ -98,7 +98,7 @@ public class ResponseGenerator {
         int so_buf = 1048576;
 
         if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
-            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
+            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData());
         }
 
         Channel outboundChannel;
