@@ -127,6 +127,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             }
 
         } catch (Exception e) {
+            logger.error(e.getMessage(), e);
             responseGenerator.generateDefaultResponse(ctx, host);
         }
 
