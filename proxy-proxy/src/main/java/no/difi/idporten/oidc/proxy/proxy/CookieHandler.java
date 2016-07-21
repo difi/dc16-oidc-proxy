@@ -15,9 +15,7 @@ import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 
 public class CookieHandler {
@@ -48,6 +46,7 @@ public class CookieHandler {
 
     public ProxyCookie generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry) {
 //        System.out.println("\nCookieHandler.generateCookie(HashMap<String, String> userData, int touchPeriod, int maxExpiry)");
+        System.err.println("\nCookieHandler.generateCookie()");
         return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
@@ -57,25 +56,26 @@ public class CookieHandler {
      * @param httpRequest
      * @return
      */
+
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest) {
+        System.err.println("\nCookieHandler.getValidProxyCookie()");
+        System.err.println("cookieName: "+cookieName+"\ncookieStorage: "+cookieStorage);
+        System.err.println("host: "+host+"\npath: "+path);
         logger.debug("Looking for cookie with name {}", cookieName);
 
-        Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
-        if (nettyCookieOptional.isPresent()) {
-            String uuid = nettyCookieOptional.get().value();
-            logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
-            Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
-            // cookieStorage.findCookie() validates on expiry, maxExpiry, host and path, so if a
-            // cookie is present in the optional, it is also a valid cookie
-            if (proxyCookieOptional.isPresent()) {
-                return proxyCookieOptional;
-            } else {
-                logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
-                // Cookie contains an UUID, but is either not found in the storage or not valid.
+        Optional<List<String>> cookieOptional = getCookiesFromRequest(httpRequest, cookieName);
+        if (cookieOptional.isPresent()) {
+            Optional<ProxyCookie> pc;
+            for (int i = 0; i < cookieOptional.get().size(); i++){
+                pc = cookieStorage.findCookie(cookieOptional.get().get(i), host, path);
+                if (pc.isPresent()) {
+                    System.err.println("Valid cookie was found: "+pc.get().getUuid());
+                    return pc;
+                }
             }
-        } else {
-            logger.debug("Http request does not contain cookie {}", cookieName);
         }
+        System.err.println("Valid cookie was not found");
+        logger.debug("Http request does not contain cookie {}", cookieName);
         return Optional.empty();
     }
 
@@ -89,6 +89,7 @@ public class CookieHandler {
      * @param uuid
      */
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String uuid) {
+        System.err.println("\nCookieHandler.insertCookieToResponse(): (uuid: "+uuid+")");
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
     }
 
@@ -122,6 +123,31 @@ public class CookieHandler {
             return Optional.empty();
         }
     }
+
+    public static Optional<List<String>> getCookiesFromRequest(HttpRequest httpRequest, String cookieName) {
+        if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
+            System.err.println("HttpHeaderNames.COOKIE: "+HttpHeaderNames.COOKIE);
+            System.err.println("cookieName: "+cookieName);
+
+            List<String> uuids = new ArrayList<>();
+
+            String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
+
+            System.err.println("CookieHandler.cookieString: "+cookieString);
+            for (String keyValue : cookieString.split("; ")){
+//                System.err.println("keyValue: "+keyValue);
+                if (keyValue.contains(HttpHeaderNames.COOKIE)){
+//                    System.err.println("uuid: "+keyValue.split("=")[1]);
+                    uuids.add(keyValue.split("=")[1]);
+                }
+            }
+            System.err.println("uuids: "+uuids.toString());
+
+            return Optional.of(uuids);
+        }
+        return Optional.empty();
+    }
+
 
     /**
      * A utility method that can be used by anyone.
