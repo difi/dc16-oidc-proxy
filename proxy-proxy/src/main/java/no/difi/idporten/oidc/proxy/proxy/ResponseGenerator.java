@@ -55,20 +55,26 @@ public class ResponseGenerator {
 
         } catch (IdentityProviderException exc) {
             exc.printStackTrace();
-            generateDefaultResponse(ctx, "");
+            generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()));
         }
+    }
+
+    protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message) {
+        generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    protected void generateUnknownHostResponse(ChannelHandlerContext ctx, String message) {
+        generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
     }
 
     /**
      * Default response for when nothing is configured for the host
      */
-    protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
-        String content = String.format("Unknown host:  %s", host);
-
+    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
-                HttpResponseStatus.BAD_REQUEST,
-                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(content.toString()), CharsetUtil.UTF_8));
+                responseStatus,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message), CharsetUtil.UTF_8));
 
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(

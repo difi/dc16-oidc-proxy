@@ -111,7 +111,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
                     } else {
-                        responseGenerator.generateDefaultResponse(ctx, host);
+                        responseGenerator.generateServerErrorResponse(ctx,
+                                String.format("Identity provider is not found for secured area %s%s", host, trimmedPath));
                     }
                 } else {
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
@@ -123,12 +124,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 }
             } else {
                 logger.debug("Could not get SecurityConfig of host {}", host);
-                responseGenerator.generateDefaultResponse(ctx, host);
+                responseGenerator.generateUnknownHostResponse(ctx, String.format("Host is unconfigured: %s", host));
             }
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            responseGenerator.generateDefaultResponse(ctx, host);
+            responseGenerator.generateServerErrorResponse(
+                    ctx,
+                    String.format("Some exception happened: %s\nPlease check if your configuration is valid", e));
         }
 
     }
