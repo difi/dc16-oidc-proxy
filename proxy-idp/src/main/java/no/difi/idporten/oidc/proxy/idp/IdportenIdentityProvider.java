@@ -34,9 +34,9 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
     private SecurityConfig securityConfig;
 
-    private String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
+    private static String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
 
-    private String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
+    private static String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
 
     public IdportenIdentityProvider(SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;

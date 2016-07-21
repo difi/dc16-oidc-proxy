@@ -73,18 +73,26 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                 logger.debug("Has security config: {}", securityConfig);
 
-                if (securityConfig.isSecured()) {
+                if (securityConfig.isSecured() && !securityConfig.isTotallyUnsecured(path)) {
                     Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
 
                     logger.debug("{}{} is secured", host, path);
 
                     if (validProxyCookieOptional.isPresent()) {
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
-
                         proxyCookie = validProxyCookieOptional.get();
-                        outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
 
-                    } else if (idpOptional.isPresent()) {
+                        // checks if the information in this cookie is enough for what the request needs
+                        boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
+                                .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
+                        if (cookieHasEnoughInformation) {
+                            logger.debug("Cookie did have the information required for this path");
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                            return;
+                        }
+                        logger.debug("Cookie did not have the information required for this path");
+                    }
+                    if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
 
                         logger.debug("Has identity provider: {}", idp);
