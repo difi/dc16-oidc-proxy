@@ -16,6 +16,8 @@ public interface HostConfig {
 
     List<String> getUnsecuredPaths();
 
+    String getSalt();
+
     boolean isTotallyUnsecured(String path);
 
     String getLogoutRedirectUri();

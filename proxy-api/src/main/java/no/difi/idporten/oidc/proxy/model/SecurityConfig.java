@@ -38,9 +38,12 @@ public interface SecurityConfig {
 
     String getPassword();
 
+    String getSalt();
+
     List<String> getUserDataNames();
 
     List<String> getUnsecuredPaths();
+
 
     boolean isSecured();
 

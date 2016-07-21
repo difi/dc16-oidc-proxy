@@ -14,6 +14,7 @@ import java.util.Optional;
 public class RedirectCookieHandlerTest {
 
     private String host;
+
     private String path;
 
     @Mock
@@ -32,12 +33,12 @@ public class RedirectCookieHandlerTest {
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
 
-        Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest).isPresent());
+        Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED").isPresent());
 
-        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse);
+        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse, "salt", "MUSTBEFIXED");
         CookieHandler.insertCookieToRequest(httpRequest, insertedCookie.name(), insertedCookie.value());
 
-        Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest);
+        Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED");
 
         Assert.assertTrue(retrievedPathFromCookieOptional.isPresent());
 

@@ -1,6 +1,5 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
-import com.google.gson.Gson;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -9,13 +8,12 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class ResponseGenerator {
@@ -33,7 +31,7 @@ public class ResponseGenerator {
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath) {
+    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath, HttpRequest httpRequest) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
 
@@ -50,7 +48,7 @@ public class ResponseGenerator {
             new RedirectCookieHandler(
                     securityConfig.getCookieConfig(),
                     securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(response);
+                    requestPath).insertCookieToResponse(response, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -107,28 +105,6 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    /**
-     * Generates and writes an appropriate JSON response based on userData with a correct 'Set-Cookie' header.
-     *
-     * @param ctx:               ChannelHandlerContext
-     * @param userData:          Information about the user, in which the service access is interested in.
-     * @param proxyCookieObject: Cookie to keep the user logged in.
-     * @throws IdentityProviderException
-     */
-
-    @Deprecated
-    protected void generateJWTResponse(ChannelHandlerContext ctx, HashMap<String, String> userData, ProxyCookie
-            proxyCookieObject) throws IdentityProviderException {
-        FullHttpResponse result = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
-                Unpooled.copiedBuffer(new Gson().toJson(userData), CharsetUtil.UTF_8));
-        result.headers().set(HttpHeaderNames.CONTENT_LENGTH, result.content().readableBytes());
-        result.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
-                "%s; %s=%s", APPLICATION_JSON, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        logger.debug("Setting Set-Cookie to the response");
-        CookieHandler.insertCookieToResponse(result, proxyCookieObject.getName(), proxyCookieObject.getUuid());
-        logger.debug(String.format("Created JWT response:\n%s", result));
-        ctx.writeAndFlush(result).addListener(ChannelFutureListener.CLOSE);
-    }
 
     /**
      * This is what happens when the proxy needs to work as a normal proxy.
@@ -151,13 +127,12 @@ public class ResponseGenerator {
         }
 
         Channel outboundChannel;
-        logger.info(String.format("Bootstrapping channel %s", ctx.channel()));
+        logger.debug(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
         boolean setCookie = proxyCookie != null;
 
-        // Changing path if RedirectCookieHandler has an original path for this request
-        RedirectCookieHandler.findRedirectCookiePath(httpRequest).ifPresent(originalPath -> {
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent")).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
@@ -167,7 +142,7 @@ public class ResponseGenerator {
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie))
+        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie, securityConfig, httpRequest))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);

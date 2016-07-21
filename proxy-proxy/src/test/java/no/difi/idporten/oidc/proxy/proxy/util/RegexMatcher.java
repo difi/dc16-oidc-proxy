@@ -1,4 +1,4 @@
-package no.difi.idporten.oidc.proxy.util;
+package no.difi.idporten.oidc.proxy.proxy.util;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;

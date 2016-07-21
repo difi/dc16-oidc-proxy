@@ -33,8 +33,10 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     private static Logger logger = LoggerFactory.getLogger(IdportenIdentityProvider.class);
 
     private SecurityConfig securityConfig;
-    private String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
-    private String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
+
+    private static String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
+
+    private static String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
 
     public IdportenIdentityProvider(SecurityConfig securityConfig) {
         this.securityConfig = securityConfig;
@@ -65,7 +67,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
      * to the IDPorten API.
      *
      * @param uri containing a code and maybe some more information about the request.
-     * @return UserData object containing information about the user.
+     * @return DefaultUserData object containing information about the user.
      * @throws IdentityProviderException
      */
     @Override
@@ -74,13 +76,10 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()
                     .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
-            List<NameValuePair> contentValues = new ArrayList<NameValuePair>() {
-                {
-                    add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
-                    add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
-                    add(new BasicNameValuePair("code", urlParameters.get("code")));
-                }
-            };
+            List<NameValuePair> contentValues = new ArrayList<>();
+            contentValues.add(new BasicNameValuePair("grant_type", securityConfig.getParameter("grant_type")));
+            contentValues.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
+            contentValues.add(new BasicNameValuePair("code", urlParameters.get("code")));
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
 
             HttpPost httpPost = new HttpPost(APIURL);
@@ -99,7 +98,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             JsonObject response;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 response = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
-                return new UserData(decodeIDToken(response.get("id_token").getAsString()));
+                return new DefaultUserData(decodeIDToken(response.get("id_token").getAsString()));
             } catch (IOException exc) {
                 throw new IdentityProviderException(exc.getMessage(), exc);
             }

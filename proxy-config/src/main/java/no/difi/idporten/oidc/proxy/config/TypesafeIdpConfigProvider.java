@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class TypesafeIdpConfigProvider implements IdpConfigProvider {
 
     private static Logger logger = LoggerFactory.getLogger(TypesafeIdpConfigProvider.class);
+
     private Map<String, IdpConfig> idps;
 
     @Inject
@@ -22,7 +23,7 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
         idps = config.getObject("idp").keySet().stream()
                 .map(key -> new TypesafeIdpConfig(key, config.getConfig(String.format("idp.%s", key))))
                 .collect(Collectors.toMap(IdpConfig::getIdentifier, Function.identity()));
-        }
+    }
 
     @Override
     public IdpConfig getByIdentifier(String identifier) {
@@ -30,9 +31,6 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
         logger.debug("Map of idps:\n{}", idps);
         return idps.get(identifier);
     }
-
-
-
 
 
 }

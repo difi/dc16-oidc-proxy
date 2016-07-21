@@ -6,22 +6,26 @@ import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.mockito.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import java.nio.charset.Charset;
 
 
 public class ResponseGeneratorTest {
 
-    private static Logger logger = LoggerFactory.getLogger(ResponseGeneratorTest.class);
-
     private String notConfiguredHostName;
+
     private String configuredHostName;
+
     private String securedPath;
+
     private String redirectCookieName;
+
+    private String salt = "salt";
 
     private ResponseGenerator responseGenerator;
 
@@ -38,8 +42,10 @@ public class ResponseGeneratorTest {
      */
     @Mock
     private ChannelHandlerContext ctxMock;
+
     @Mock
     private SecurityConfig securityConfigMock;
+
     @Mock
     private CookieConfig cookieConfigMock;
 
@@ -69,6 +75,7 @@ public class ResponseGeneratorTest {
         Mockito.doReturn(configuredHostName).when(securityConfigMock).getHostname();
         Mockito.doReturn(securedPath).when(securityConfigMock).getPath();
         Mockito.doReturn(cookieConfigMock).when(securityConfigMock).getCookieConfig();
+        Mockito.doReturn(salt).when(securityConfigMock).getSalt();
     }
 
     @BeforeMethod
@@ -95,13 +102,13 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         // Because of exceptions we need to wrap tests in these ugly try/catch things
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath);
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath, new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "MUSTFIX"));
         } catch (NullPointerException exc) {
 
         } finally {
             // All we need to test here is that the correct methods have been called and maybe which arguments
             // they were called with.
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
 
             /* Not sure whether it's this method's responsibility to create an error when this goes south.
@@ -122,11 +129,11 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         Mockito.doReturn(validRedirectUrl).when(identityProviderMock).generateRedirectURI();
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath);
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath, new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "MUSTFIX"));
         } catch (NullPointerException exc) {
 
         } finally {
-            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString());
+            Mockito.verify(responseGeneratorSpy).generateRedirectResponse(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString(), Mockito.any());
             Mockito.verify(identityProviderMock).generateRedirectURI();
             Mockito.atLeastOnce();
             Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());

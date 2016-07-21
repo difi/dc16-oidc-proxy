@@ -5,10 +5,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.api.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
-import no.difi.idporten.oidc.proxy.model.DefaultProxyCookie;
-import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -27,22 +25,34 @@ import java.util.stream.Collectors;
 
 
 public class SimpleIntegrationTest {
+
     private static Logger logger = LoggerFactory.getLogger(SimpleIntegrationTest.class);
+
     private static HttpClient httpClient;
+
     private Thread thread;
+
     private CookieStorage cookieStorage;
+
     private final String BASEURL = "http://localhost:8080";
+
     private String host = "localhost:8080";
+
     private String remoteHostName = "www.w3.org";
 
     private String cookieName = "PROXYCOOKIE";
-    private String redirectCookieName = "redirectCookie";
-    private String pid = "08023549930";
-    private String tokenType = "JWTToken";
-    private String aud = "dificamp";
-    private HashMap<String, String> idPortenUserData;
-    private ProxyCookie storedIdportenCookie;
 
+    private String redirectCookieName = "redirectCookie";
+
+    private String pid = "08023549930";
+
+    private String tokenType = "JWTToken";
+
+    private String aud = "dificamp";
+
+    private Map<String, String> idPortenUserData;
+
+    private ProxyCookie storedIdportenCookie;
 
     private static Map<String, String> getHeadersAsMap(Header[] headers) {
         return Arrays.stream(headers)
@@ -73,11 +83,6 @@ public class SimpleIntegrationTest {
         // A HttpClient that does not automatically follow redirects as the default one does
         httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
     }
-
-    @AfterMethod
-    public void tearDown() {
-    }
-
 
     @Test
     public void testUnsecuredConfigured() throws Exception {

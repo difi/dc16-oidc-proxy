@@ -9,6 +9,8 @@
 
     <artifactId>proxy-distribution</artifactId>
 
+    <name>ID-porten OIDC :: Proxy :: Distribution</name>
+
     <dependencies>
         <!-- Proxy -->
         <dependency>
