@@ -96,7 +96,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         params.add(new BasicNameValuePair("client_secret", securityConfig.getPassword()));
         params.add(new BasicNameValuePair("scope", securityConfig.getScope()));
 
-        redirectExtraParameters.stream().forEach(parameterKey -> {
+        tokenExtraParameters.stream().forEach(parameterKey -> {
             params.add(new BasicNameValuePair(parameterKey, securityConfig.getParameter(parameterKey)));
         });
 

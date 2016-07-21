@@ -24,14 +24,10 @@ public class RequestInterceptor {
      *
      * @param httpRequest:
      * @param userData:
-     * @param securityConfig:
      */
-    public static void insertUserDataToHeader(HttpRequest httpRequest,
-                                              Map<String, String> userData, SecurityConfig securityConfig) {
-        List<String> userDataNames = securityConfig.getUserDataNames();
-
-        userDataNames.stream().forEach(userDataName -> {
-            httpRequest.headers().add(HEADERNAME + userDataName, encodeUserDataForHeader(userData, userDataName));
+    public static void insertUserDataToHeader(HttpRequest httpRequest, Map<String, String> userData) {
+        userData.entrySet().stream().forEach(userDataEntry -> {
+            httpRequest.headers().add(HEADERNAME + userDataEntry.getKey(), userDataEntry.getValue());
         });
         logger.debug("Inserted header to request:\n{}", httpRequest);
     }

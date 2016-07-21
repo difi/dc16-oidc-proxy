@@ -128,6 +128,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         } catch (Exception e) {
             responseGenerator.generateDefaultResponse(ctx, host);
+            System.err.println("Error message: "+e.getMessage());
+            e.printStackTrace();
         }
 
     }
