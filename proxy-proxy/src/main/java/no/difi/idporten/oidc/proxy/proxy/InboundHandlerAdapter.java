@@ -77,7 +77,22 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     logger.debug("{}{} is secured", host, path);
 
                     if (validProxyCookieOptional.isPresent()) {
+                        System.err.println("validProxyCookieOptional.isPresent()");
+                        boolean requestsLogout = path.contains(securityConfig.getLogoutPostUri());
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
+
+                        // User has requested logout
+                        if (requestsLogout){
+                            System.err.println("\nUser has cookie and has requested logout\npath: "+path+"\nlogoutPostUri: "+securityConfig.getLogoutPostUri());
+                            System.err.println("logoutRedirectUri: "+securityConfig.getLogoutRedirectUri());
+                            proxyCookie = validProxyCookieOptional.get();
+                            System.err.println("proxyCookie: "+proxyCookie);
+                            cookieHandler.removeCookie(proxyCookie.getUuid());
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                        } else {
+                            proxyCookie = validProxyCookieOptional.get();
+                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                        }
 
                         proxyCookie = validProxyCookieOptional.get();
                         outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
@@ -92,18 +107,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             HashMap<String, String> userData = idp.getToken(path).getUserData();
 
-                            // Generating JWT response. CookieHandler creates and saves cookie with CookieStorage
-                            // and generateJWTResponse sets the correct 'Set-Cookie' header.
-
+                            // Host's config (falls back to default config if not present)
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
                             int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();  // in minutes
 
-                            // Host's config (falls back to default config if not present)
-                            System.out.println("\n\nsecurityConfig.getHostname(): " + securityConfig.getHostname());
-                            System.out.println("securityConfig.getPath(): " + securityConfig.getPath());
-                            System.out.println("securityConfig.getCookieConfig().getName(): " + securityConfig.getCookieConfig().getName());
-                            System.out.println("securityConfig.getCookieConfig().getMaxExpiry(): " + maxExpiry);
-                            System.out.println("securityConfig.getCookieConfig().getTouch(): " + touchPeriod + "\n\n");
+                            logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
