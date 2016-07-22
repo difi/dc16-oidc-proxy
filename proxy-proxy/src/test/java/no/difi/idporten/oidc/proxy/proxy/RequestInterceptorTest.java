@@ -46,7 +46,8 @@ public class RequestInterceptorTest {
     public void insertHeaderToRequest() {
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, host + path);
 
-        RequestInterceptor.insertUserDataToHeader(httpRequest, userData);
+        RequestInterceptor.insertUserDataToHeader(httpRequest, userData,
+                provider.getConfig("localhost:8080", "/idporten").get());
 
         HttpHeaders headers = httpRequest.headers();
 
