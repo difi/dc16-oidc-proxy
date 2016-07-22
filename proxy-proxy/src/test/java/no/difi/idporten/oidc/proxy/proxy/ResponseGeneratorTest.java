@@ -146,16 +146,15 @@ public class ResponseGeneratorTest {
         }
     }
 
-
     @Test
     public void generateDefaultResponse() {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         try {
-            responseGeneratorSpy.generateDefaultResponse(ctxMock, notConfiguredHostName, HttpResponseStatus.BAD_REQUEST);
+            responseGeneratorSpy.generateDefaultResponse(ctxMock, notConfiguredHostName);
         } catch (NullPointerException exc) {
 
         } finally {
-            Mockito.verify(responseGeneratorSpy).generateDefaultResponse(Mockito.any(), Mockito.anyString(), Mockito.any(HttpResponseStatus.class));
+            Mockito.verify(responseGeneratorSpy).generateDefaultResponse(Mockito.any(), Mockito.anyString());
             Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
 
             FullHttpResponse actual = httpResponseCaptor.getValue();
@@ -165,50 +164,6 @@ public class ResponseGeneratorTest {
             Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
                     .TEXT_HTML));
             Assert.assertTrue(content.contains(notConfiguredHostName));
-        }
-    }
-
-    @Test
-    public void generateServerErrorResponse() {
-        String expectedMessage = "This is an error message.";
-        ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
-        try {
-            responseGeneratorSpy.generateServerErrorResponse(ctxMock, expectedMessage);
-        } catch (NullPointerException exc) {
-
-        } finally {
-            Mockito.verify(responseGeneratorSpy).generateServerErrorResponse(Mockito.any(), Mockito.anyString());
-            Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
-
-            FullHttpResponse actual = httpResponseCaptor.getValue();
-            Assert.assertTrue(actual instanceof HttpResponse);
-            String content = actual.content().toString(Charset.forName("UTF-8"));
-            Assert.assertEquals(actual.status(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
-                    .TEXT_HTML));
-            Assert.assertTrue(content.contains(expectedMessage));
-        }
-    }
-
-    @Test
-    public void generateUnknownHostResponse() {
-        String expectedMessage = "Host is not configured: an.unknown.host";
-        ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
-        try {
-            responseGeneratorSpy.generateUnknownHostResponse(ctxMock, expectedMessage);
-        } catch (NullPointerException exc) {
-
-        } finally {
-            Mockito.verify(responseGeneratorSpy).generateUnknownHostResponse(Mockito.any(), Mockito.anyString());
-            Mockito.verify(ctxMock).writeAndFlush(httpResponseCaptor.capture());
-
-            FullHttpResponse actual = httpResponseCaptor.getValue();
-            Assert.assertTrue(actual instanceof HttpResponse);
-            String content = actual.content().toString(Charset.forName("UTF-8"));
-            Assert.assertEquals(actual.status(), HttpResponseStatus.BAD_REQUEST);
-            Assert.assertTrue(actual.headers().getAsString(HttpHeaderNames.CONTENT_TYPE).contains(ResponseGenerator
-                    .TEXT_HTML));
-            Assert.assertTrue(content.contains(expectedMessage));
         }
     }
 }
