@@ -37,7 +37,6 @@ public class SimpleTest {
     public void testSecuredConfigured() throws Exception {
         try {
             URL url = URI.create("http://localhost:8080/google").toURL();
-            System.out.println("SECCONF: " + url.openConnection().getHeaderFields().values().toString());
             Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 302 Found]"));
         } catch (Exception e) {
             logger.info("Received '{}'.", e.getMessage(), e);
@@ -48,7 +47,6 @@ public class SimpleTest {
     public void testUnsecuredConfigured() throws Exception {
         try {
             URL url = URI.create("http://localhost:8080/").toURL();
-            System.out.println("UNSECCONF: " + url.openConnection().getHeaderFields().values().toString());
             Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 200 OK]"));
         } catch (Exception e) {
             logger.info("Received '{}'.", e.getMessage(), e);
@@ -59,7 +57,6 @@ public class SimpleTest {
     public void testUnconfigured() throws Exception {
         try {
             URL url = URI.create("http://127.0.0.1:8080").toURL();
-            System.out.println("UNCONF: " + url.openConnection().getHeaderFields().values().toString());
             Assert.assertTrue(url.openConnection().getHeaderFields().values().toString().contains("[HTTP/1.1 400 Bad Request]"));
         } catch (Exception e) {
             logger.info("Received '{}'.", e.getMessage(), e);
