@@ -236,7 +236,7 @@ public class IntegrationTestWithMockServer {
      * @throws Exception
      */
     @Test
-    public void testFollowRedirectHasDifiHeader() throws Exception {
+    public void testGoogleFollowRedirectHasDifiHeader() throws Exception {
         String expectedEmailInRequest = "vikfand@gmail.com";
         String expectedSubInRequest = "108182803704140665355";
         String url = BASEURL + "/google";
@@ -297,6 +297,15 @@ public class IntegrationTestWithMockServer {
 
         response = notFollowHttpClient.execute(getRequest);
 
+        headerMap = getHeadersAsMap(response.getAllHeaders());
+        cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
+        getRequest = new HttpGet(BASEURL + headerMap.get(HttpHeaderNames.LOCATION.toString()));
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
+
+        httpClient = HttpClientBuilder.create().build();
+        response = httpClient.execute(getRequest);
+
         verify(getRequestedFor(urlPathEqualTo(specificPathWithGoogle)));
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
@@ -322,7 +331,7 @@ public class IntegrationTestWithMockServer {
         String expectedEmailInResponse = "vikfand@gmail.com";
         String expectedSubInResponse = "108182803704140665355";
 
-        verify(1, getRequestedFor(urlPathEqualTo(securedPathToUse))
+        verify(1, getRequestedFor(urlEqualTo(securedPathToUse))
                 .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
                 .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))

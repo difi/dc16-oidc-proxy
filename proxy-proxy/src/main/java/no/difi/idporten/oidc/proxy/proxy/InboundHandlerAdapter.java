@@ -97,6 +97,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                         logger.debug("Has identity provider: {}", idp);
 
+
                         if (redirectedFromIdp(path)) {
                             logger.debug("TypesafePathConfig contains code: {}", path);
 
@@ -106,7 +107,16 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             int touchPeriod = securityConfig.getCookieConfig().getTouch();
 
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
-                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+
+                            Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+
+                            if (originalPathOptional.isPresent()) {
+                                logger.debug("Request had original redirect. Creating new redirect.");
+                                responseGenerator.generateRedirectResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
+                            } else {
+                                outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                            }
+
                         } else {
                             responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
@@ -116,7 +126,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     }
                 } else {
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-
                     if (validProxyCookieOptional.isPresent()) {
                         proxyCookie = validProxyCookieOptional.get();
                     }
