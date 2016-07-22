@@ -60,12 +60,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
 
+
         ResponseGenerator responseGenerator = new ResponseGenerator();
 
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
 
         try {
+            logger.info("Request on: {}{}", httpRequest.headers().getAsString(HttpHeaderNames.HOST), path);
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
@@ -79,21 +81,17 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     logger.debug("{}{} is secured", host, path);
 
                     if (validProxyCookieOptional.isPresent()) {
-                        System.err.println("validProxyCookieOptional.isPresent()");
                         boolean requestsLogout = path.contains(securityConfig.getLogoutPostUri());
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
 
                         // User has requested logout
                         if (requestsLogout){
-                            System.err.println("\nUser has cookie and has requested logout\npath: "+path+"\nlogoutPostUri: "+securityConfig.getLogoutPostUri());
-                            System.err.println("logoutRedirectUri: "+securityConfig.getLogoutRedirectUri());
                             proxyCookie = validProxyCookieOptional.get();
-                            System.err.println("proxyCookie: "+proxyCookie);
+                            logger.info("User has valid cookie and has requested logout ({})", proxyCookie);
                             cookieHandler.removeCookie(proxyCookie.getUuid());
+                            logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
                             responseGenerator.generateLogoutResponse(ctx, securityConfig);
-                        } else {
-                            proxyCookie = validProxyCookieOptional.get();
-                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                            return;
                         }
 
                         proxyCookie = validProxyCookieOptional.get();
@@ -102,11 +100,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
                                 .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
                         if (cookieHasEnoughInformation) {
-                            logger.debug("Cookie did have the information required for this path");
+                            logger.debug("Cookie has the correct information required for this path");
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                             return;
                         }
-                        logger.debug("Cookie did not have the information required for this path");
+                        logger.debug("Cookie was found but does not have the information required for this path");
                     }
                     if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
@@ -146,9 +144,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             }
 
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
             responseGenerator.generateDefaultResponse(ctx, host);
-            System.err.println("Error message: "+e.getMessage());
+            logger.error(e.getMessage(), e);
             e.printStackTrace();
         }
 

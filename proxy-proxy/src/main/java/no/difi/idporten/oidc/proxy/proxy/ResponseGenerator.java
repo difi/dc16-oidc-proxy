@@ -60,10 +60,10 @@ public class ResponseGenerator {
     }
 
     protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig) {
-        System.err.println("\ngenerateLogoutResponse()");
+        logger.debug("ResponseGenerator.generateLogoutResponse()");
         try {
             String redirectUrl = securityConfig.getLogoutRedirectUri();
-            System.out.println("redirectUrl: "+redirectUrl);
+            logger.debug("logoutRedirectUri: {}", redirectUrl);
 
             StringBuilder content = new StringBuilder(redirectUrl);
 
