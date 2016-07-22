@@ -38,7 +38,7 @@ public class SimpleIntegrationTest {
 
     private String host = "localhost:8080";
 
-    private String remoteHostName = "www.w3.org";
+    private String remoteHostName = "www.ntnu.no";
 
     private String cookieName = "PROXYCOOKIE";
 

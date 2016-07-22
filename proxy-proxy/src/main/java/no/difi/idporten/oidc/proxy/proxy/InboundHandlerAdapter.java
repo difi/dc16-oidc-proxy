@@ -111,6 +111,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                         logger.debug("Has identity provider: {}", idp);
 
+
                         if (redirectedFromIdp(path)) {
                             logger.debug("TypesafePathConfig contains code: {}", path);
 
@@ -123,16 +124,25 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
-                            outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+
+                            Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+
+                            if (originalPathOptional.isPresent()) {
+                                logger.debug("Request had original redirect. Creating new redirect.");
+                                responseGenerator.generateRedirectResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
+                            } else {
+                                outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
+                            }
+
                         } else {
                             responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
                     } else {
-                        responseGenerator.generateDefaultResponse(ctx, host);
+                        responseGenerator.generateServerErrorResponse(ctx,
+                                String.format("Identity provider is not found for secured area %s%s", host, trimmedPath));
                     }
                 } else {
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-
                     if (validProxyCookieOptional.isPresent()) {
                         proxyCookie = validProxyCookieOptional.get();
                     }
@@ -140,13 +150,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 }
             } else {
                 logger.debug("Could not get SecurityConfig of host {}", host);
-                responseGenerator.generateDefaultResponse(ctx, host);
+                responseGenerator.generateUnknownHostResponse(ctx, String.format("Host is unconfigured: %s", host));
             }
 
         } catch (Exception e) {
-            responseGenerator.generateDefaultResponse(ctx, host);
             logger.error(e.getMessage(), e);
-            e.printStackTrace();
+            responseGenerator.generateServerErrorResponse(
+                    ctx,
+                    String.format("Some exception happened: %s\nPlease check if your configuration is valid", e));
         }
 
     }

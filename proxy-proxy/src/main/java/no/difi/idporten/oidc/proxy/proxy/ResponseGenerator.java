@@ -5,6 +5,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
@@ -31,7 +32,12 @@ public class ResponseGenerator {
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx, IdentityProvider identityProvider, SecurityConfig securityConfig, String requestPath, HttpRequest httpRequest) {
+    protected void generateRedirectResponse(
+            ChannelHandlerContext ctx,
+            IdentityProvider identityProvider,
+            SecurityConfig securityConfig,
+            String requestPath,
+            HttpRequest httpRequest) {
         try {
             String redirectUrl = identityProvider.generateRedirectURI();
 
@@ -48,14 +54,17 @@ public class ResponseGenerator {
             new RedirectCookieHandler(
                     securityConfig.getCookieConfig(),
                     securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(response, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+                    requestPath).insertCookieToResponse(
+                    response,
+                    securityConfig.getSalt(),
+                    httpRequest.headers().get("User-Agent"));
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 
         } catch (IdentityProviderException exc) {
             exc.printStackTrace();
-            generateDefaultResponse(ctx, "");
+            generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()));
         }
     }
 
@@ -80,20 +89,60 @@ public class ResponseGenerator {
 
         } catch (Exception exc) {
             exc.printStackTrace();
-            generateDefaultResponse(ctx, "");
         }
+    }
+
+    protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message) {
+        generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    protected void generateUnknownHostResponse(ChannelHandlerContext ctx, String message) {
+        generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Generates redirect response with a 'Set-Cookie' header for a ProxyCookie.
+     * Is used when doing a second redirect to the original path after successfully logging in.
+     *
+     * @return
+     */
+    protected void generateRedirectResponse(ChannelHandlerContext ctx,
+                                            SecurityConfig securityConfig,
+                                            HttpRequest httpRequest,
+                                            String redirectUrlPath,
+                                            ProxyCookie proxyCookie) {
+        StringBuilder content = new StringBuilder(httpRequest.setUri(redirectUrlPath).uri());
+
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+
+        response.headers().set(HttpHeaderNames.LOCATION, httpRequest.setUri(redirectUrlPath).uri());
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
+                "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+        response.headers().set(HttpHeaderNames.SET_COOKIE,
+                ServerCookieEncoder.STRICT.encode(proxyCookie.getName(), proxyCookie.getUuid()));
+
+        CookieHandler.insertCookieToResponse(
+                response,
+                proxyCookie.getName(),
+                proxyCookie.getUuid(),
+                securityConfig.getSalt(),
+                httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+
+
+        logger.debug(String.format("Created redirect response:\n%s", response));
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
      * Default response for when nothing is configured for the host
      */
-    protected void generateDefaultResponse(ChannelHandlerContext ctx, String host) {
-        String content = String.format("Unknown host:  %s", host);
-
+    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
-                HttpResponseStatus.BAD_REQUEST,
-                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(content.toString()), CharsetUtil.UTF_8));
+                responseStatus,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message), CharsetUtil.UTF_8));
 
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(
@@ -132,7 +181,9 @@ public class ResponseGenerator {
 
         boolean setCookie = proxyCookie != null;
 
-        RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent")).ifPresent(originalPath -> {
+        RedirectCookieHandler.findRedirectCookiePath(httpRequest,
+                securityConfig.getSalt(),
+                httpRequest.headers().get("User-Agent")).ifPresent(originalPath -> {
             logger.debug("Changing path of request because we found the original path: {}", originalPath);
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
