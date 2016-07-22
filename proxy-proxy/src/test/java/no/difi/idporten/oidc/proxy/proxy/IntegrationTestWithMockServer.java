@@ -375,6 +375,21 @@ public class IntegrationTestWithMockServer {
         */
     }
 
+    @Test
+    public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
+        HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.code());
+        verify(1, getRequestedFor(urlPathEqualTo("/unsecured"))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", matching(".*"))
+                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
+        );
+
+    }
+
     private static HttpGet getRequestWithValidGoogleCookie(String path) throws Exception {
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
