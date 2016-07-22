@@ -13,7 +13,6 @@ import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import java.util.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -46,7 +45,7 @@ public class CookieHandler {
     }
 
     public ProxyCookie generateCookie(Map<String, String> userData, int touchPeriod, int maxExpiry) {
-        logger.info("CookieHandler.generateCookie()");
+        logger.debug("CookieHandler.generateCookie()");
         return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
@@ -56,7 +55,6 @@ public class CookieHandler {
      * @param httpRequest:
      * @return
      */
-
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest, String salt, String userAgent) {
         logger.debug("Looking for cookie with name {}", cookieName);
 
