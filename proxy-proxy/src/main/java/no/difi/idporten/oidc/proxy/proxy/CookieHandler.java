@@ -65,7 +65,9 @@ public class CookieHandler {
                 String uuid = cookieOptional.get().get(i).substring(64);
                 logger.debug("Looking for cookie (UUID: {})"+uuid);
                 pc = cookieStorage.findCookie(uuid, host, path);
+                //if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
                 if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
+
                     logger.info("Valid cookie was found ({})", pc);
                     return pc;
                 } else {
@@ -90,6 +92,8 @@ public class CookieHandler {
     }
 
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
+        System.out.println("\nCookieHandler.insertCookieToResponse()\ncookieName: "+cookieName+"\nvalue: "+ value);
+        System.out.println("salt:"+salt+"\nuserAgent: "+userAgent);
         String cookieValue = encodeValue(value, salt, userAgent) + value;
         logger.info("Inserting cookie in response with value: {}", cookieName);
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
@@ -151,6 +155,7 @@ public class CookieHandler {
     public static String encodeValue(String value, String salt, String userAgent) {
         logger.debug("CookieHandler.encodeValue()");
         String stringToBeHashed = value + userAgent;
+        System.out.println("stringToBeHashed: "+stringToBeHashed);
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(salt.getBytes());
@@ -181,8 +186,12 @@ public class CookieHandler {
      */
 
     public static boolean isCorrectHash(String browserValue, String salt, String userAgent) {
+
+        System.err.println("CookieHandler.isCorrectHash()\nbrowserValue: "+browserValue+"\nsalt: "+salt+"\nuserAgent: "+userAgent);
         String hash = browserValue.substring(0, 64);
+        System.err.println("hash [browserValue.substring(0, 64)]: "+hash);
         String value = browserValue.substring(64);
+        System.err.println("value [browserValue.substring(64)]: "+value);
         //System.out.println(hash + " " + encodeValue(value, salt, userAgent));
         return (hash.equals(encodeValue(value, salt, userAgent)));
     }

@@ -393,7 +393,7 @@ public class IntegrationTestWithMockServer {
     private static HttpGet getRequestWithValidGoogleCookie(String path) throws Exception {
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
-        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         HttpResponse response = httpClient.execute(getRequest);
 
         Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
