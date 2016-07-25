@@ -59,21 +59,26 @@ public class CookieHandler {
         logger.debug("Looking for cookie with name {}", cookieName);
 
         Optional<List<String>> cookieOptional = getCookiesFromRequest(httpRequest, cookieName);
-        if (cookieOptional.isPresent()) {
-            Optional<ProxyCookie> pc;
-            for (int i = 0; i < cookieOptional.get().size(); i++){
-                String uuid = cookieOptional.get().get(i).substring(64);
-                logger.debug("Looking for cookie (UUID: {})"+uuid);
-                pc = cookieStorage.findCookie(uuid, host, path);
-                //if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
-                if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
+        try {
+            if (cookieOptional.isPresent()) {
+                Optional<ProxyCookie> pc;
+                for (int i = 0; i < cookieOptional.get().size(); i++){
 
-                    logger.info("Valid cookie was found ({})", pc);
-                    return pc;
-                } else {
-                    logger.debug("This cookie was not found valid (UUID: {})", uuid);
+                    String uuid = cookieOptional.get().get(i).substring(64);
+                    logger.debug("Looking for cookie (UUID: {})",uuid);
+                    pc = cookieStorage.findCookie(uuid, host, path);
+                    if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
+                        logger.info("Valid cookie was found ({})", pc);
+                        return pc;
+                    } else {
+                        logger.debug("This cookie was found not valid (UUID: {})", uuid);
+                    }
                 }
             }
+        } catch (StringIndexOutOfBoundsException e){
+            logger.error("Cookie was found but is not on valid format - an error occurred while trying to get substring(64) of cookie hash");
+            logger.error("Cookies found: "+ cookieOptional);
+            logger.error("Length of cookies: "+ Arrays.toString(cookieOptional.get().stream().mapToInt(String::length).toArray()));
         }
         logger.info("Http request does not contain valid cookie {}", cookieName);
         return Optional.empty();
@@ -153,9 +158,7 @@ public class CookieHandler {
     }
 
     public static String encodeValue(String value, String salt, String userAgent) {
-        logger.debug("CookieHandler.encodeValue()");
         String stringToBeHashed = value + userAgent;
-        System.out.println("stringToBeHashed: "+stringToBeHashed);
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(salt.getBytes());
@@ -168,6 +171,7 @@ public class CookieHandler {
                 stringBuilder.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
 
             }
+            logger.debug("Encoded value ({}) to hash ({})", stringToBeHashed, stringBuilder.toString());
             return stringBuilder.toString();
 
         } catch (NoSuchAlgorithmException e) {
@@ -186,13 +190,8 @@ public class CookieHandler {
      */
 
     public static boolean isCorrectHash(String browserValue, String salt, String userAgent) {
-
-        System.err.println("CookieHandler.isCorrectHash()\nbrowserValue: "+browserValue+"\nsalt: "+salt+"\nuserAgent: "+userAgent);
         String hash = browserValue.substring(0, 64);
-        System.err.println("hash [browserValue.substring(0, 64)]: "+hash);
         String value = browserValue.substring(64);
-        System.err.println("value [browserValue.substring(64)]: "+value);
-        //System.out.println(hash + " " + encodeValue(value, salt, userAgent));
         return (hash.equals(encodeValue(value, salt, userAgent)));
     }
 
