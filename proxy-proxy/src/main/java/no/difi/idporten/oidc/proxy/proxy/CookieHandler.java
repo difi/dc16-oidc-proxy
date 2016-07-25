@@ -62,10 +62,10 @@ public class CookieHandler {
         try {
             if (cookieOptional.isPresent()) {
                 Optional<ProxyCookie> pc;
-                for (int i = 0; i < cookieOptional.get().size(); i++){
+                for (int i = 0; i < cookieOptional.get().size(); i++) {
 
                     String uuid = cookieOptional.get().get(i).substring(64);
-                    logger.debug("Looking for cookie (UUID: {})",uuid);
+                    logger.debug("Looking for cookie (UUID: {})", uuid);
                     pc = cookieStorage.findCookie(uuid, host, path);
                     if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
                         logger.info("Valid cookie was found ({})", pc);
@@ -75,10 +75,10 @@ public class CookieHandler {
                     }
                 }
             }
-        } catch (StringIndexOutOfBoundsException e){
+        } catch (StringIndexOutOfBoundsException e) {
             logger.error("Cookie was found but is not on valid format - an error occurred while trying to get substring(64) of cookie hash");
-            logger.error("Cookies found: "+ cookieOptional);
-            logger.error("Length of cookies: "+ Arrays.toString(cookieOptional.get().stream().mapToInt(String::length).toArray()));
+            logger.error("Cookies found: " + cookieOptional);
+            logger.error("Length of cookies: " + Arrays.toString(cookieOptional.get().stream().mapToInt(String::length).toArray()));
         }
         logger.info("Http request does not contain valid cookie {}", cookieName);
         return Optional.empty();
@@ -97,8 +97,6 @@ public class CookieHandler {
     }
 
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
-        System.out.println("\nCookieHandler.insertCookieToResponse()\ncookieName: "+cookieName+"\nvalue: "+ value);
-        System.out.println("salt:"+salt+"\nuserAgent: "+userAgent);
         String cookieValue = encodeValue(value, salt, userAgent) + value;
         logger.info("Inserting cookie in response with value: {}", cookieName);
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
@@ -207,7 +205,7 @@ public class CookieHandler {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
-    public void removeCookie(String uuid){
+    public void removeCookie(String uuid) {
         cookieStorage.removeCookie(uuid);
     }
 

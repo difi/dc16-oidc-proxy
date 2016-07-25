@@ -85,7 +85,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
 
                         // User has requested logout
-                        if (requestsLogout){
+                        if (requestsLogout) {
                             proxyCookie = validProxyCookieOptional.get();
                             logger.info("User has valid cookie and has requested logout ({})", proxyCookie);
                             cookieHandler.removeCookie(proxyCookie.getUuid());
@@ -155,6 +155,8 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            System.err.println(e.getStackTrace());
+            e.printStackTrace();
             responseGenerator.generateServerErrorResponse(
                     ctx,
                     String.format("Some exception happened: %s\nPlease check if your configuration is valid", e));
@@ -163,7 +165,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
     }
 
 
-    /**
     /**
      * Reading incoming messages from the local client. The first message for a new incoming connection will bootstrap
      * the outbound channel. The next messages will just be written to the outbound channel.
