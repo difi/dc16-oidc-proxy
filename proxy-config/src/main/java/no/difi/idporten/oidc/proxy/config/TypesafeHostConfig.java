@@ -20,6 +20,10 @@ public class TypesafeHostConfig implements HostConfig {
 
     private String hostname;
 
+    private String logoutPostUri;
+
+    private String logoutRedirectUri;
+
     private List<InetSocketAddress> backends;
 
     private List<PathConfig> paths;
@@ -52,6 +56,10 @@ public class TypesafeHostConfig implements HostConfig {
         this.unsecuredPaths = hostConfig.getStringList("unsecured_paths")
                 .stream()
                 .collect(Collectors.toList());
+
+        this.logoutPostUri = hostConfig.getString("logout_post_uri");
+
+        this.logoutRedirectUri = hostConfig.getString("logout_redirect_uri");
     }
 
     @Override
@@ -93,5 +101,15 @@ public class TypesafeHostConfig implements HostConfig {
     @Override
     public boolean isTotallyUnsecured(String path) {
         return unsecuredPaths.stream().filter(path::startsWith).findFirst().isPresent();
+    }
+
+    @Override
+    public String getLogoutRedirectUri() {
+        return this.logoutRedirectUri;
+    }
+
+    @Override
+    public String getLogoutPostUri() {
+        return this.logoutPostUri;
     }
 }

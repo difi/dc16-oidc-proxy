@@ -15,9 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 
 public class CookieHandler {
@@ -47,6 +45,7 @@ public class CookieHandler {
     }
 
     public ProxyCookie generateCookie(Map<String, String> userData, int touchPeriod, int maxExpiry) {
+        logger.debug("CookieHandler.generateCookie()");
         return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
     }
 
@@ -59,19 +58,29 @@ public class CookieHandler {
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest, String salt, String userAgent) {
         logger.debug("Looking for cookie with name {}", cookieName);
 
-        Optional<Cookie> nettyCookieOptional = getCookieFromRequest(httpRequest);
-        if (nettyCookieOptional.isPresent()) {
-            String uuid = nettyCookieOptional.get().value().substring(64);
-            logger.debug("HTTP request has the cookie we are looking for", nettyCookieOptional.get());
-            Optional<ProxyCookie> proxyCookieOptional = cookieStorage.findCookie(uuid, host, path);
-            if (proxyCookieOptional.isPresent() && isCorrectHash(nettyCookieOptional.get(), salt, userAgent)) {
-                return proxyCookieOptional;
-            } else {
-                logger.warn("Could not find valid cookie {}@{}{}", uuid, host, path);
+        Optional<List<String>> cookieOptional = getCookiesFromRequest(httpRequest, cookieName);
+        try {
+            if (cookieOptional.isPresent()) {
+                Optional<ProxyCookie> pc;
+                for (int i = 0; i < cookieOptional.get().size(); i++) {
+
+                    String uuid = cookieOptional.get().get(i).substring(64);
+                    logger.debug("Looking for cookie in database (UUID: {})", uuid);
+                    pc = cookieStorage.findCookie(uuid, host, path);
+                    if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
+                        logger.info("Valid cookie was found ({})", pc.get());
+                        return pc;
+                    } else {
+                        logger.debug("This cookie was found not valid (UUID: {})", uuid);
+                    }
+                }
             }
-        } else {
-            logger.debug("Http request does not contain cookie {}", cookieName);
+        } catch (StringIndexOutOfBoundsException e) {
+            logger.error("Cookie was found but is not on valid format - an error occurred while trying to get substring(64) of cookie hash");
+            logger.error("Cookies found: " + cookieOptional);
+            logger.error("Length of cookies: " + Arrays.toString(cookieOptional.get().stream().mapToInt(String::length).toArray()));
         }
+        logger.info("Http request does not contain valid cookie {}", cookieName);
         return Optional.empty();
     }
 
@@ -82,10 +91,14 @@ public class CookieHandler {
      *
      * @param httpResponse:
      * @param cookieName:
-     * @param value:
      */
+    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String uuid) {
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
+    }
+
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
         String cookieValue = encodeValue(value, salt, userAgent) + value;
+        logger.info("Inserting cookie in response with value: {}", cookieName);
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
@@ -108,6 +121,7 @@ public class CookieHandler {
      * @return
      */
     public static Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest, String cookieName) {
+        logger.debug("CookieHandler.getCookieFromRequest() - redirect cookie");
         if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
 
             String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
@@ -118,6 +132,32 @@ public class CookieHandler {
         } else {
             return Optional.empty();
         }
+    }
+
+    public static Optional<List<String>> getCookiesFromRequest(HttpRequest httpRequest, String cookieName) {
+        logger.debug("CookieHandler.getCookiesFromRequest() - host cookie");
+
+        String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
+        if (httpRequest.headers().contains(HttpHeaderNames.COOKIE) && cookieString.contains(cookieName)) {
+
+            List<String> cookieValues = new ArrayList<>();
+
+            for (String keyValue : cookieString.split("; ")) {
+                if (keyValue.contains(cookieName)) {
+                    String cookie = keyValue.split("=")[1];
+                    if (!cookieValues.contains(cookie)) {
+                        cookieValues.add(cookie);
+                    } else {
+                        logger.error("Request contains two or more equal cookies");
+                    }
+                }
+            }
+            logger.info("Found cookie(s) in browser: {}", cookieValues.toString());
+
+            return Optional.of(cookieValues);
+        }
+        logger.debug("Found no cookie with name {} in request", cookieName);
+        return Optional.empty();
     }
 
     public static String encodeValue(String value, String salt, String userAgent) {
@@ -134,6 +174,7 @@ public class CookieHandler {
                 stringBuilder.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
 
             }
+            logger.debug("Encoded value ({}) to hash ({})", stringToBeHashed, stringBuilder.toString());
             return stringBuilder.toString();
 
         } catch (NoSuchAlgorithmException e) {
@@ -146,14 +187,14 @@ public class CookieHandler {
     /**
      * Checks if the hash in the cookie matches the uuid made with the parameters given in the cookie.
      *
-     * @param nettyCookieOptional:
+     * @param browserValue:
      * @param salt:
      * @return a boolean that tells whether the hash is correct or not.
      */
 
-    public static boolean isCorrectHash(Cookie nettyCookieOptional, String salt, String userAgent) {
-        String hash = nettyCookieOptional.value().substring(0, 64);
-        String value = nettyCookieOptional.value().substring(64);
+    public static boolean isCorrectHash(String browserValue, String salt, String userAgent) {
+        String hash = browserValue.substring(0, 64);
+        String value = browserValue.substring(64);
         return (hash.equals(encodeValue(value, salt, userAgent)));
     }
 
@@ -168,4 +209,9 @@ public class CookieHandler {
     public static void insertCookieToRequest(HttpRequest httpRequest, String cookieName, String cookieValue) {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
+
+    public void removeCookie(String uuid) {
+        cookieStorage.removeCookie(uuid);
+    }
+
 }

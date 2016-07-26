@@ -9,13 +9,13 @@ public class TypesafeCookieConfig implements CookieConfig {
 
     private String name;
 
-    private int touch;
+    private int touchPeriod;
 
     private int maxExpiry;
 
     public TypesafeCookieConfig(Config config) {
         this.name = config.getString("name");
-        this.touch = config.getInt("touch");
+        this.touchPeriod = config.getInt("touchPeriod");
         this.maxExpiry = config.getInt("maxExpiry");
     }
 
@@ -30,8 +30,8 @@ public class TypesafeCookieConfig implements CookieConfig {
     }
 
     @Override
-    public int getTouch() {
-        return touch;
+    public int getTouchPeriod() {
+        return touchPeriod;
     }
 
     @Override

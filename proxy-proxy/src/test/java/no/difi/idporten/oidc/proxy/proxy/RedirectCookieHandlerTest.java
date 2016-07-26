@@ -29,7 +29,7 @@ public class RedirectCookieHandlerTest {
 
     @Test
     public void testCanInsertCookieToResponseAndItCanBeRetrievedAfter() {
-        RedirectCookieHandler redirectCookieHandler = new RedirectCookieHandler(cookieConfigMock, host, path);
+        RedirectCookieHandler redirectCookieHandler = new RedirectCookieHandler(path);
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
 
