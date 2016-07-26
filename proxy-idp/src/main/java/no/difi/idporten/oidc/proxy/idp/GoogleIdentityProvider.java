@@ -127,8 +127,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
             jsonResponse = gson.fromJson(responseContent, JsonObject.class);
             return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
         } catch (Exception exc) {
-            logger.warn("Could not read response from external server.");
-            logger.warn("Likely the server tried to us an old (unvalid) code to retrieve user's data from provider");
+            logger.error("Could not read response from external server.");
+            logger.error("Likely the server tried to us an old (unvalid) code to retrieve user's data from provider");
             throw new IdentityProviderException(exc.getMessage(), exc);
         }
     }

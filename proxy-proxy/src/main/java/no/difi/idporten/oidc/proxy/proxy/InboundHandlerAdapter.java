@@ -110,7 +110,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // Checks if user tries to log out without valid cookie. Some browsers (i.e. Safari) send a GET request to
                         // the autocomplete'd URL in the browser, causing the server to delete the cookie before user accesses path
                         if (requestsLogout) {
-                            logger.error("User requested logout, has no valid cookie (probably already deleted). Redirecting to logout-uri");
+                            logger.warn("User requested logout, has no valid cookie (probably already deleted). Redirecting to logout-uri");
                             responseGenerator.generateLogoutResponse(ctx, securityConfig);
                             return;
                         }
