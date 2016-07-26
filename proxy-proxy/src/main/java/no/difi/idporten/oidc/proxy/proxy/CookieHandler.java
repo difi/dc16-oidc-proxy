@@ -68,7 +68,7 @@ public class CookieHandler {
                     logger.debug("Looking for cookie in database (UUID: {})", uuid);
                     pc = cookieStorage.findCookie(uuid, host, path);
                     if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
-                        logger.info("Valid cookie was found ({})", pc);
+                        logger.info("Valid cookie was found ({})", pc.get());
                         return pc;
                     } else {
                         logger.debug("This cookie was found not valid (UUID: {})", uuid);
@@ -144,7 +144,12 @@ public class CookieHandler {
 
             for (String keyValue : cookieString.split("; ")) {
                 if (keyValue.contains(cookieName)) {
-                    cookieValues.add(keyValue.split("=")[1]);
+                    String cookie = keyValue.split("=")[1];
+                    if (! cookieValues.contains(cookie)) {
+                        cookieValues.add(cookie);
+                    } else {
+                        logger.error("Request contains two or more equal cookies");
+                    }
                 }
             }
             logger.info("Found cookie(s) in browser: {}", cookieValues.toString());
