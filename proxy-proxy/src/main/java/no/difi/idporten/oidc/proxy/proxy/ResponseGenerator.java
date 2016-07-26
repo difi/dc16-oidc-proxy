@@ -51,10 +51,8 @@ public class ResponseGenerator {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
 
-            new RedirectCookieHandler(
-                    securityConfig.getCookieConfig(),
-                    securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(
+            new RedirectCookieHandler(requestPath)
+                    .insertCookieToResponse(
                     response,
                     securityConfig.getSalt(),
                     httpRequest.headers().get("User-Agent"));
