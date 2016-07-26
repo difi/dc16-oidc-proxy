@@ -44,7 +44,7 @@ Create and set up your reference.conf-file:
 
 Host:
 
-```HOCON
+```xml
 host."hostname" = {
     hostname: "hostname"
     backends: ["IP-address1", "IP-address2"]
@@ -66,7 +66,7 @@ host."hostname" = {
 
 Identity provider:
 
-```HOCON
+```xml
 idp."identityprovidername" = {
     class: "package.identityprovider.is.in.classname.of.identityprovider"
     client_id: "client_id"
@@ -83,7 +83,7 @@ idp."identityprovidername" = {
 
 Global:
 
-```HOCON
+```xml
 cookie.name = Global_proxy_name
 cookie.touch = 45
 cookie.maxExpiry = 90
