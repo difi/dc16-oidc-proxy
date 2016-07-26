@@ -29,14 +29,13 @@ public class RedirectCookieHandlerTest {
 
     @Test
     public void testCanInsertCookieToResponseAndItCanBeRetrievedAfter() {
-        RedirectCookieHandler redirectCookieHandler = new RedirectCookieHandler(cookieConfigMock, host, path);
+        RedirectCookieHandler redirectCookieHandler = new RedirectCookieHandler(path);
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
 
         Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED").isPresent());
 
-        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse, "salt", "MUSTBEFIXED");
-        CookieHandler.insertCookieToRequest(httpRequest, insertedCookie.name(), insertedCookie.value());
+        redirectCookieHandler.insertCookieToResponse(httpResponse, "salt", "MUSTBEFIXED");
 
         Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED");
 
