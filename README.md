@@ -46,7 +46,7 @@ Host:
 host."hostname" = {
     hostname: "hostname"
     backends: ["IP-address1", "IP-address2"]
-    cookie: {
+    cookie: { <!-- All cookie attributes are optional in the host, but required globally in the file -->
     name: "cookiename",
     touch: 20,
     maxExpiry: 60
@@ -56,11 +56,15 @@ host."hostname" = {
     path: "/login_to_idporten"
     security: 2
     idp: "idporten"
+    redirect_uri: "redirect_uri" <!-- Optional in path -->
+    scope: "scope" <!-- Optional in path -->
     }
     ]
     unsecured_paths: ["/unsecured_path1", "/unsecured_path2"]
 }
 ```
+
+
 
 Identity provider:
 
@@ -72,7 +76,7 @@ idp."identityprovidername" = {
     password: "password"
     scope: "scope"
     user_data_name: ["user_data_service_needs1", "user_data_service_needs2"]
-    parameters: {
+    parameters: { <!-- Parameters have to be in the idp, but does not have to contain any parameters -->
         other_parameters: "like:",
         security: 3
     }
@@ -86,7 +90,7 @@ cookie.name = Global_proxy_name
 cookie.touch = 45
 cookie.maxExpiry = 90
 
-salt = random_salt
+salt = random_salt <!-- The salt is required globally in the conf-file -->
 ```
 
 
