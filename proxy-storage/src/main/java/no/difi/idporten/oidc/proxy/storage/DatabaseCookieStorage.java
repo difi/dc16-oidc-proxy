@@ -75,7 +75,6 @@ public class DatabaseCookieStorage implements CookieStorage {
     public Optional<ProxyCookie> findCookie(String uuid, String host, String path) {
         Optional<ProxyCookie> result = db.findCookie(uuid);
 
-        // These if's are extensive as to provide debug and testing services
         // Check if cookie is found
         if (result.isPresent()) {
             // Check expiry and maxExpiry
@@ -129,6 +128,11 @@ public class DatabaseCookieStorage implements CookieStorage {
     public void removeExpiredCookies() {
         db.removeExpiredCookies();
         logger.info("Removed expired cookies");
+    }
+
+    public void removeCookie(String uuid) {
+        db.removeCookie(uuid);
+        logger.info("Removed cookie if it existed (UUID: " + uuid + ")");
     }
 
     // Debug

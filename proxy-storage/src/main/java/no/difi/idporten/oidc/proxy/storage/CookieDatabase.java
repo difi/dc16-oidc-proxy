@@ -82,7 +82,6 @@ public class CookieDatabase {
      * @param cookie ProxyCookie
      */
     public void insertCookie(ProxyCookie cookie) {
-        //long now = new Date().getTime(); // lastUpdated
         String userData;
         if (cookie.getUserData() == null) userData = null;
         else userData = cookie.getUserData().toString();
@@ -135,19 +134,25 @@ public class CookieDatabase {
                 String path = resultSet.getString("path");
                 int touchPeriod = resultSet.getInt("touchPeriod");
                 int maxExpiry = resultSet.getInt("maxExpiry");
-                // Handles empty userData HashMap "{}" in help-method, setting it to null
                 Map<String, String> userData = stringToMap(resultSet.getString("userData"));
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
                 cookie = new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated);
-
-                //System.out.println("\nDB: Found cookie in database (" + cookie + ")");
             }
         } catch (SQLException e) {
             logger.warn("SQLException caught in CookieDatabase.findCookie(): {}", e.getMessage(), e);
         }
         return Optional.ofNullable(cookie);
+    }
+
+    public void removeCookie(String uuid) {
+        try {
+            statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid = '" + uuid + "';");
+        } catch (SQLException e) {
+            logger.warn("SQLException caught in CookieDatabase.removeCookie()");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -159,7 +164,6 @@ public class CookieDatabase {
      */
     public Map<String, ProxyCookie> getAllCookies() {
         HashMap<String, ProxyCookie> cookies = new HashMap<>();
-        System.out.println("\ngetAllCookies()");
         try {
             resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie;");
             while (resultSet.next()) {
@@ -174,8 +178,6 @@ public class CookieDatabase {
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
-                System.out.printf("\n%.65s %15s %20s %20s %5s %5s %20s %20s %40s", uuid, name, host,
-                        path, touchPeriod, maxExpiry, created.toString(), lastUpdated.toString(), userData);
                 cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
         } catch (SQLException e) {
@@ -195,7 +197,6 @@ public class CookieDatabase {
         try {
             long now = new Date().getTime(); // present time in milliseconds
             String expiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (lastUpdated + touchPeriod * " + MINUTE + ") < " + now;
-            //String maxExpiredEntries = "SELECT uuid FROM PUBLIC.cookie WHERE (created + maxExpiry * "+MINUTE+") < " + now;
             statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN (" + expiredEntries + ");");
             logger.info("DB: Expired cookies removed from database");
         } catch (SQLException e) {

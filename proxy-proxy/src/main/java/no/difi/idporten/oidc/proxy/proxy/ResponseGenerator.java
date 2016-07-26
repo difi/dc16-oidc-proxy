@@ -51,13 +51,11 @@ public class ResponseGenerator {
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
 
-            new RedirectCookieHandler(
-                    securityConfig.getCookieConfig(),
-                    securityConfig.getHostname(),
-                    requestPath).insertCookieToResponse(
-                    response,
-                    securityConfig.getSalt(),
-                    httpRequest.headers().get("User-Agent"));
+            new RedirectCookieHandler(requestPath)
+                    .insertCookieToResponse(
+                            response,
+                            securityConfig.getSalt(),
+                            httpRequest.headers().get("User-Agent"));
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -65,6 +63,30 @@ public class ResponseGenerator {
         } catch (IdentityProviderException exc) {
             exc.printStackTrace();
             generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()));
+        }
+    }
+
+    protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig) {
+        logger.debug("ResponseGenerator.generateLogoutResponse()");
+        try {
+            String redirectUrl = securityConfig.getLogoutRedirectUri();
+            logger.debug("logoutRedirectUri: {}", redirectUrl);
+
+            StringBuilder content = new StringBuilder(redirectUrl);
+
+            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+
+            response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
+                    "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
+            logger.debug(String.format("Created logout response:\n%s", response));
+            ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+
+        } catch (Exception exc) {
+            exc.printStackTrace();
         }
     }
 

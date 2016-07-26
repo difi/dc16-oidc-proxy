@@ -347,7 +347,7 @@ public class IntegrationTestWithMockServer {
         String totallyUnsecuredPathToUse = "/something/totally/unsecured/like/a/logo/or/something.svg";
         HttpGet getRequest = getRequestWithValidGoogleCookie(totallyUnsecuredPathToUse);
 
-        notFollowHttpClient.execute(getRequest);
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
 
         verify(1, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse)));
         verify(0, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse))

@@ -59,13 +59,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         String path = httpRequest.uri();
         String trimmedPath = path.contains("?") ? path.split("\\?")[0] : path;
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
-
         ResponseGenerator responseGenerator = new ResponseGenerator();
-
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
-
         try {
+            logger.info("Request on: {}{}", httpRequest.headers().getAsString(HttpHeaderNames.HOST), path);
+
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
@@ -76,26 +75,44 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 if (securityConfig.isSecured() && !securityConfig.isTotallyUnsecured(path)) {
                     Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
 
+                    boolean requestsLogout = path.endsWith(securityConfig.getLogoutPostUri());
                     logger.debug("{}{} is secured", host, path);
 
                     if (validProxyCookieOptional.isPresent()) {
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
                         proxyCookie = validProxyCookieOptional.get();
 
+                        // User has requested logout
+                        if (requestsLogout) {
+                            logger.info("User has valid cookie and has requested logout from a secured path ({})", proxyCookie);
+                            cookieHandler.removeCookie(proxyCookie.getUuid());
+                            logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            return;
+                        }
+
                         // checks if the information in this cookie is enough for what the request needs
                         boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
                                 .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
                         if (cookieHasEnoughInformation) {
-                            logger.debug("Cookie did have the information required for this path");
+                            logger.debug("Cookie has the correct information required for this path");
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                             return;
                         }
-                        logger.debug("Cookie did not have the information required for this path");
+                        logger.debug("Cookie was found but does not have the information required for this path");
                     }
                     if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
 
                         logger.debug("Has identity provider: {}", idp);
+
+                        // Checks if user tries to log out without valid cookie. Some browsers (i.e. Safari) send a GET request to
+                        // the autocomplete'd URL in the browser, causing the server to delete the cookie before user accesses path
+                        if (requestsLogout) {
+                            logger.warn("User requested logout, but has no valid cookie (probably already deleted). Redirecting to logout-uri");
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            return;
+                        }
 
 
                         if (redirectedFromIdp(path)) {
@@ -103,8 +120,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             Map<String, String> userData = idp.getToken(path).getUserData();
 
-                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
-                            int touchPeriod = securityConfig.getCookieConfig().getTouch();
+                            // Host's config (falls back to default config if not present)
+                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
+                            int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();  // in minutes
+
+                            logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
 
@@ -126,8 +146,19 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     }
                 } else {
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
+                    boolean requestsLogout = path.endsWith(securityConfig.getLogoutPostUri());
+
                     if (validProxyCookieOptional.isPresent()) {
                         proxyCookie = validProxyCookieOptional.get();
+                        logger.debug("Has valid ProxyCookie {}", proxyCookie);
+
+                        if (requestsLogout) {
+                            logger.info("User has valid cookie and has requested logout from an unsecured path ({})", proxyCookie);
+                            cookieHandler.removeCookie(proxyCookie.getUuid());
+                            logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            return;
+                        }
                     }
                     outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                 }
@@ -138,13 +169,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            e.printStackTrace();
             responseGenerator.generateServerErrorResponse(
                     ctx,
-                    String.format("Some exception happened: %s\nPlease check if your configuration is valid", e));
+                    String.format("An exception was caught: %s\nPlease check if your configuration is valid", e));
         }
 
     }
-
 
     /**
      * Reading incoming messages from the local client. The first message for a new incoming connection will bootstrap
