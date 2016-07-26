@@ -145,7 +145,7 @@ public class CookieHandler {
             for (String keyValue : cookieString.split("; ")) {
                 if (keyValue.contains(cookieName)) {
                     String cookie = keyValue.split("=")[1];
-                    if (! cookieValues.contains(cookie)) {
+                    if (!cookieValues.contains(cookie)) {
                         cookieValues.add(cookie);
                     } else {
                         logger.error("Request contains two or more equal cookies");

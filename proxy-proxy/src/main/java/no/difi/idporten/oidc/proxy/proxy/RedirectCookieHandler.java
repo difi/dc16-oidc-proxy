@@ -28,7 +28,6 @@ public class RedirectCookieHandler {
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
      *
-
      * @param path:
      */
     public RedirectCookieHandler(String path) {

@@ -244,7 +244,6 @@ public class IntegrationTestWithMockServer {
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = httpClient.execute(getRequest);
-        System.err.println("\ntestGoogleFollow.. etc response headers: " + getHeadersAsMap(response.getAllHeaders()));
 
         verify(getRequestedFor(urlEqualTo("/google"))
                 .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInRequest))
@@ -349,7 +348,6 @@ public class IntegrationTestWithMockServer {
         HttpGet getRequest = getRequestWithValidGoogleCookie(totallyUnsecuredPathToUse);
 
         HttpResponse response = notFollowHttpClient.execute(getRequest);
-        System.err.println("\ntestDifi.. etc response headers: " + getHeadersAsMap(response.getAllHeaders()));
 
         verify(1, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse)));
         verify(0, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse))
@@ -399,9 +397,6 @@ public class IntegrationTestWithMockServer {
         HttpResponse response = httpClient.execute(getRequest);
 
         Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
-        System.err.println("getRequestWithValidGoogleCookie: getHeadersAsMap: " + headerMap.toString());
-        System.err.println("Header contains cookie: " +
-                headerMap.keySet().contains(HttpHeaderNames.SET_COOKIE.toString()));
 
         MatcherAssert.assertThat("Should have a valid cookie at this point",
                 headerMap.keySet().contains(HttpHeaderNames.SET_COOKIE.toString()));
@@ -410,7 +405,6 @@ public class IntegrationTestWithMockServer {
 
         getRequest = new HttpGet(BASEURL + path);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        System.err.println("BASEURL + path getRequest.allHeaders: " + getHeadersAsMap(getRequest.getAllHeaders()));
         getRequest.setHeader("Cookie", acquiredCookie);
 
         return getRequest;

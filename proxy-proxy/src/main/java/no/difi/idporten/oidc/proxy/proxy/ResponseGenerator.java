@@ -53,9 +53,9 @@ public class ResponseGenerator {
 
             new RedirectCookieHandler(requestPath)
                     .insertCookieToResponse(
-                    response,
-                    securityConfig.getSalt(),
-                    httpRequest.headers().get("User-Agent"));
+                            response,
+                            securityConfig.getSalt(),
+                            httpRequest.headers().get("User-Agent"));
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -186,7 +186,6 @@ public class ResponseGenerator {
             httpRequest.setUri(originalPath);
             logger.debug(httpRequest.toString());
         });
-
 
 
         Bootstrap b = new Bootstrap();

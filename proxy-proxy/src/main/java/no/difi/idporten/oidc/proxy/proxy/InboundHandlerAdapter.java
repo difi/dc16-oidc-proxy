@@ -169,11 +169,10 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            System.err.println(e.getStackTrace());
             e.printStackTrace();
             responseGenerator.generateServerErrorResponse(
                     ctx,
-                    String.format("Some exception happened: %s\nPlease check if your configuration is valid", e));
+                    String.format("An exception was caught: %s\nPlease check if your configuration is valid", e));
         }
 
     }
