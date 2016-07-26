@@ -75,8 +75,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 if (securityConfig.isSecured() && !securityConfig.isTotallyUnsecured(path)) {
                     Optional<IdentityProvider> idpOptional = securityConfig.createIdentityProvider();
 
-                    boolean requestsLogout = path.contains(securityConfig.getLogoutPostUri());
-
+                    boolean requestsLogout = path.endsWith(securityConfig.getLogoutPostUri());
                     logger.debug("{}{} is secured", host, path);
 
                     if (validProxyCookieOptional.isPresent()) {
@@ -110,7 +109,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // Checks if user tries to log out without valid cookie. Some browsers (i.e. Safari) send a GET request to
                         // the autocomplete'd URL in the browser, causing the server to delete the cookie before user accesses path
                         if (requestsLogout) {
-                            logger.warn("User requested logout, has no valid cookie (probably already deleted). Redirecting to logout-uri");
+                            logger.warn("User requested logout, but has no valid cookie (probably already deleted). Redirecting to logout-uri");
                             responseGenerator.generateLogoutResponse(ctx, securityConfig);
                             return;
                         }
@@ -147,11 +146,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     }
                 } else {
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
-                    System.err.println("Unsecured path");
-                    boolean requestsLogout = path.contains(securityConfig.getLogoutPostUri());
+                    boolean requestsLogout = path.endsWith(securityConfig.getLogoutPostUri());
 
                     if (validProxyCookieOptional.isPresent()) {
-                        System.err.println("Has valid cookie");
                         proxyCookie = validProxyCookieOptional.get();
                         logger.debug("Has valid ProxyCookie {}", proxyCookie);
 
