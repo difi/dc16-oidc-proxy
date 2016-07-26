@@ -37,7 +37,7 @@ Google Guice
 </dependency>
 ```
 
-Create and set up your reference.conf-file:
+###Create and set up your reference.conf-file:
 
 
 Host:
@@ -90,7 +90,7 @@ salt = random_salt
 ```
 
 
-Set up the server with Guice:
+###Set up the server with Guice:
 
 ```java
         Injector injector = Guice.createInjector(new ArrayList<Module>() {{
