@@ -65,7 +65,7 @@ public class CookieHandler {
                 for (int i = 0; i < cookieOptional.get().size(); i++) {
 
                     String uuid = cookieOptional.get().get(i).substring(64);
-                    logger.debug("Looking for cookie (UUID: {})", uuid);
+                    logger.debug("Looking for cookie in database (UUID: {})", uuid);
                     pc = cookieStorage.findCookie(uuid, host, path);
                     if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
                         logger.info("Valid cookie was found ({})", pc);
@@ -135,23 +135,23 @@ public class CookieHandler {
     }
 
     public static Optional<List<String>> getCookiesFromRequest(HttpRequest httpRequest, String cookieName) {
-        logger.debug("CookieHandler.getCookieFromRequest() - host cookie");
-        if (httpRequest.headers().contains(HttpHeaderNames.COOKIE)) {
+        logger.debug("CookieHandler.getCookiesFromRequest() - host cookie");
+
+        String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
+        if (httpRequest.headers().contains(HttpHeaderNames.COOKIE) && cookieString.contains(cookieName)) {
 
             List<String> cookieValues = new ArrayList<>();
 
-            String cookieString = httpRequest.headers().getAsString(HttpHeaderNames.COOKIE);
-
             for (String keyValue : cookieString.split("; ")) {
-                if (keyValue.contains(HttpHeaderNames.COOKIE)) {
+                if (keyValue.contains(cookieName)) {
                     cookieValues.add(keyValue.split("=")[1]);
                 }
             }
-            logger.info("Found cookies in browser: {}", cookieValues.toString());
+            logger.info("Found cookie(s) in browser: {}", cookieValues.toString());
 
             return Optional.of(cookieValues);
         }
-        logger.debug("Found no cookies for in request");
+        logger.debug("Found no cookie with name {} in request", cookieName);
         return Optional.empty();
     }
 

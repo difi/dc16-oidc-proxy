@@ -142,6 +142,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                                 String.format("Identity provider is not found for secured area %s%s", host, trimmedPath));
                     }
                 } else {
+
+                    System.err.println("logout on unsecured path here");
+
                     logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
                     if (validProxyCookieOptional.isPresent()) {
                         proxyCookie = validProxyCookieOptional.get();
