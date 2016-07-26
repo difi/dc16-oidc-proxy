@@ -214,7 +214,7 @@ public class IntegrationTestWithMockServer {
                 "the response should have a 'Set-Cookie header'");
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
-        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = httpClient.execute(getRequest);
 
@@ -241,7 +241,7 @@ public class IntegrationTestWithMockServer {
         String expectedSubInRequest = "108182803704140665355";
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
-        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = httpClient.execute(getRequest);
         System.err.println("\ntestGoogleFollow.. etc response headers: " + getHeadersAsMap(response.getAllHeaders()));
@@ -261,7 +261,7 @@ public class IntegrationTestWithMockServer {
         String expectedPidInRequest = "08023549930";
         String url = BASEURL + "/idporten";
         HttpGet getRequest = new HttpGet(url);
-        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = httpClient.execute(getRequest);
 
@@ -284,7 +284,7 @@ public class IntegrationTestWithMockServer {
     public void testFollowRedirectHasOriginalPath() throws Exception {
         String url = BASEURL + specificPathWithGoogle;
         HttpGet getRequest = new HttpGet(url);
-        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = notFollowHttpClient.execute(getRequest);
 
@@ -293,7 +293,7 @@ public class IntegrationTestWithMockServer {
         String cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
 
         getRequest = new HttpGet(BASEURL + "/google?code=aValidCode");
-        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
 
         response = notFollowHttpClient.execute(getRequest);
@@ -301,7 +301,7 @@ public class IntegrationTestWithMockServer {
         headerMap = getHeadersAsMap(response.getAllHeaders());
         cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
         getRequest = new HttpGet(BASEURL + headerMap.get(HttpHeaderNames.LOCATION.toString()));
-//        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
 
         httpClient = HttpClientBuilder.create().build();
@@ -351,8 +351,8 @@ public class IntegrationTestWithMockServer {
         HttpResponse response = notFollowHttpClient.execute(getRequest);
         System.err.println("\ntestDifi.. etc response headers: " + getHeadersAsMap(response.getAllHeaders()));
 
-        verify(1, getRequestedFor(urlPathEqualTo("/google" + totallyUnsecuredPathToUse)));
-        verify(0, getRequestedFor(urlPathEqualTo("/google" + totallyUnsecuredPathToUse))
+        verify(1, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse)));
+        verify(0, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse))
                 .withHeader(RequestInterceptor.HEADERNAME + "email", matching(".*"))
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
                 .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
@@ -395,7 +395,7 @@ public class IntegrationTestWithMockServer {
     private static HttpGet getRequestWithValidGoogleCookie(String path) throws Exception {
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
-//        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         HttpResponse response = httpClient.execute(getRequest);
 
         Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
@@ -409,7 +409,7 @@ public class IntegrationTestWithMockServer {
         String acquiredCookie = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
 
         getRequest = new HttpGet(BASEURL + path);
-        //getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         System.err.println("BASEURL + path getRequest.allHeaders: " + getHeadersAsMap(getRequest.getAllHeaders()));
         getRequest.setHeader("Cookie", acquiredCookie);
 
