@@ -92,3 +92,15 @@ salt = random_salt
 ```
 
 
+Set up the server with Guice:
+
+```java
+        Injector injector = Guice.createInjector(new ArrayList<Module>() {{
+            add(new ConfigModule());
+            add(new StorageModule());
+            add(new ProxyModule());
+        }});
+
+        injector.getInstance(NettyHttpListener.class).run();
+```
+
