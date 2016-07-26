@@ -35,7 +35,8 @@ public class RedirectCookieHandlerTest {
 
         Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED").isPresent());
 
-        redirectCookieHandler.insertCookieToResponse(httpResponse, "salt", "MUSTBEFIXED");
+        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse, "salt", "MUSTBEFIXED");
+        CookieHandler.insertCookieToRequest(httpRequest, insertedCookie.name(), insertedCookie.value());
 
         Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED");
 

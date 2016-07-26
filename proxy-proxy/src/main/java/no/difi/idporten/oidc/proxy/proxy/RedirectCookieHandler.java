@@ -35,13 +35,14 @@ public class RedirectCookieHandler {
         this.path = path;
     }
 
-    public void insertCookieToResponse(HttpResponse response, String salt, String userAgent) {
+    public Cookie insertCookieToResponse(HttpResponse response, String salt, String userAgent) {
         String value = CookieHandler.encodeValue(path, salt, userAgent) + path;
         logger.debug("Inserting redirect cookie to response ({})", value);
         Cookie cookieToInsert = new DefaultCookie(redirectCookieName, value);
         cookieToInsert.setPath("/");
         response.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieToInsert));
         hashToPathMap.put(value, path);
+        return cookieToInsert;
     }
 
 
