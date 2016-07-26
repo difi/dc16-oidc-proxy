@@ -17,8 +17,6 @@ Dersom det er tid/kapasitet bør en utforske mulighetsrommet rundt å benytte de
 
 ## Getting started
 
-Go to jitpack.io and search for "difi/dc16-oidc-proxy". Select maven, get the latest build and follow the instructions at jitpack.io.
-
 Include these dependencies in your pom.xml:`
 
 OIDC-PROXY
