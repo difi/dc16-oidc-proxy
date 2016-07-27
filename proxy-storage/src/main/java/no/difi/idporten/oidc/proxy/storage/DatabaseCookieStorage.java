@@ -23,7 +23,6 @@ public class DatabaseCookieStorage implements CookieStorage {
     private DatabaseCookieStorage() {
         logger.debug("DatabaseCookieStorage instantiated");
         db = new CookieDatabase();
-        db.createTable();
     }
 
     /**
@@ -149,4 +148,22 @@ public class DatabaseCookieStorage implements CookieStorage {
         return new Date(date.getTime() + minutes * 60 * 1000);
     }
 
+    /* Debug and testing
+    public static void main(String[] args) {
+        ProxyCookie pc = new DefaultProxyCookie("UUID HERE OR SUMTHING", "pcCookie", "managementing.management", "/", 4, 30, 120, new HashMap<>(1));
+        ProxyCookie pc2 = new DefaultProxyCookie("UUID HERE HEH", "pc2Cookie", "toysrus.no", "/", 2, 10, 60, new HashMap<>(1), new Date(), new Date());
+        ourInstance.generateCookieInDb("someCookie", "host.com", "/", 3, 20, 100, new HashMap<>(1));
+        ourInstance.generateCookieInDb(pc);
+        ourInstance.generateCookieInDb(pc2);
+        System.err.println("\nCookies inserted to db. Printing\n");
+        ourInstance.printAllCookies();
+        Optional<ProxyCookie> pcc = ourInstance.findCookie("UUID HERE OR SUMTHING", "managementing.management", "/");
+        Optional<ProxyCookie> pcc2 = ourInstance.findCookie("UUID HERE HEH", "toysrus.no", "/lol");
+        System.err.println("\nFirst 2 cookie. Printing found objects");
+        if (pcc.isPresent()) System.out.println(pcc.get());
+        else System.err.println("Didn't find cookie");
+        if (pcc2.isPresent()) System.out.println(pcc2.get());
+        else System.err.println("Didn't find cookie");
+    }
+    */
 }

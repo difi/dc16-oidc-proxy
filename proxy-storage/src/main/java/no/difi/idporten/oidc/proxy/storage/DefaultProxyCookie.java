@@ -80,8 +80,6 @@ public class DefaultProxyCookie implements ProxyCookie {
         this.lastUpdated = lastUpdated;
     }
 
-
-
     /**
      * Checks if the cookie's expiry and maxExpiry is valid (not yet reached).
      *
