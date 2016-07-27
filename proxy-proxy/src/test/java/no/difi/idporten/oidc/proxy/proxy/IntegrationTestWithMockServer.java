@@ -303,7 +303,6 @@ public class IntegrationTestWithMockServer {
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
         getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
 
-        httpClient = HttpClientBuilder.create().build();
         response = httpClient.execute(getRequest);
 
         verify(getRequestedFor(urlPathEqualTo(specificPathWithGoogle)));
@@ -313,6 +312,32 @@ public class IntegrationTestWithMockServer {
         String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         MatcherAssert.assertThat("The content of the response should be what the mock server serves for the specific path",
                 responseContent, Matchers.is(contentOfASpecificPath));
+    }
+
+    /**
+     * Tests that the 'Set-Cookie' header for a redirect cookie has '/' as its path, because that is what it needs
+     * to be to actually be set by the browser after being redirected.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testRedirectCookieHasRootAsPath() throws Exception {
+        String expectedRedirectCookieName = "redirectCookie";
+        String url = BASEURL + specificPathWithGoogle;
+        HttpGet getRequest = new HttpGet(url);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
+        MatcherAssert.assertThat("Response should contain a 'Set-Cookie header'",
+                headerMap.keySet(), Matchers.hasItem(HttpHeaderNames.SET_COOKIE.toString()));
+        String setCookieHeader = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
+        MatcherAssert.assertThat("The 'Set-Cookie' header should be for a redirect cookie",
+                setCookieHeader, Matchers.containsString(expectedRedirectCookieName));
+        System.out.println(setCookieHeader);
+        MatcherAssert.assertThat("The path for the cookie should be equal to '/'",
+                setCookieHeader, RegexMatcher.matchesRegex(".*[Pp]ath=/.*"));
     }
 
     /**
@@ -364,7 +389,7 @@ public class IntegrationTestWithMockServer {
         HttpResponse redirectResponse = notFollowHttpClient.execute(getRequest);
 
         Assert.assertEquals(redirectResponse.getStatusLine().getStatusCode(), HttpResponseStatus.FOUND.code());
-        /*
+        /* Get strange "Multiple entries with same key:" exception when trying to test this.
         HttpResponse finalResponse = httpClient.execute(getRequest);
 
         verify(1, getRequestedFor(urlPathEqualTo(idportenLoginPath)));
