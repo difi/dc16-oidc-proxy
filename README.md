@@ -104,6 +104,16 @@ cookie.maxExpiry = 60               <!-- How long the max expiry should be expan
 salt = random_salt                  <!-- The salt is required globally in the conf-file -->
 ```
 
+Other:
+
+Lastly it is possible to configure what port the proxy should use.
+
+```xml
+listen = {
+    port: 8080
+}
+```
+
 
 ###Set up the server with Guice:
 
