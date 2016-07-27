@@ -30,4 +30,6 @@ public interface ProxyCookie {
     Date getCreated();
 
     Date getLastUpdated();
+
+    int getSecurity();
 }

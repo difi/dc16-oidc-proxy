@@ -18,6 +18,8 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     private final int maxExpiry;  // in minutes
 
+    private int security;
+
     private final Date created;
 
     private Date lastUpdated;
@@ -34,12 +36,13 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param maxExpiry int (amount of minutes)
      * @param userData HashMap<String, String> (JWT from authorization server)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path,
+    public DefaultProxyCookie(String uuid, String name, String host, String path, int security,
                               int touchPeriod, int maxExpiry, Map<String, String> userData) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;
         this.path = path;
+        this.security = security;
         this.touchPeriod = touchPeriod;
         this.maxExpiry = maxExpiry;
         this.userData = userData;
@@ -63,12 +66,13 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param lastUpdated Date (last time the cookie was "touched" (extended expiry))
      * @param created Date (time of creation)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path, int touchPeriod,
+    public DefaultProxyCookie(String uuid, String name, String host, String path, int security, int touchPeriod,
                               int maxExpiry, Map<String, String> userData, Date created, Date lastUpdated) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;
         this.path = path;
+        this.security = security;
         this.touchPeriod = touchPeriod;
         this.maxExpiry = maxExpiry;
         this.userData = userData;
@@ -131,8 +135,15 @@ public class DefaultProxyCookie implements ProxyCookie {
         return created;
     }
 
+
+
     public Date getLastUpdated() {
         return lastUpdated;
+    }
+
+    @Override
+    public int getSecurity() {
+        return security;
     }
 
     public void setLastUpdated(Date lastUpdated) {
