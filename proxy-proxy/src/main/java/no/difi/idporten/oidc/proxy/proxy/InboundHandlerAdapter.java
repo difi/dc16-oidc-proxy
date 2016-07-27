@@ -87,7 +87,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             logger.info("User has valid cookie and has requested logout from a secured path ({})", proxyCookie);
                             cookieHandler.removeCookie(proxyCookie.getUuid());
                             logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
-                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie, httpRequest);
                             return;
                         }
 
@@ -110,7 +110,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         // the autocomplete'd URL in the browser, causing the server to delete the cookie before user accesses path
                         if (requestsLogout) {
                             logger.warn("User requested logout, but has no valid cookie (probably already deleted). Redirecting to logout-uri");
-                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie, httpRequest);
                             return;
                         }
 
@@ -156,7 +156,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             logger.info("User has valid cookie and has requested logout from an unsecured path ({})", proxyCookie);
                             cookieHandler.removeCookie(proxyCookie.getUuid());
                             logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
-                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie, httpRequest);
                             return;
                         }
                     }

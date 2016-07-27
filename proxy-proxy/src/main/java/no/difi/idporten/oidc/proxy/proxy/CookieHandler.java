@@ -3,13 +3,11 @@ package no.difi.idporten.oidc.proxy.proxy;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.cookie.ClientCookieEncoder;
-import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import io.netty.handler.codec.http.cookie.*;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,6 +210,18 @@ public class CookieHandler {
 
     public void removeCookie(String uuid) {
         cookieStorage.removeCookie(uuid);
+    }
+
+    public static void deleteProxyCookieFromBrowser(SecurityConfig securityConfig, ProxyCookie proxyCookie, HttpRequest httpRequest, HttpResponse httpResponse){
+        String cookieName = proxyCookie.getName();
+        String value = proxyCookie.getUuid();
+        String cookieValue = encodeValue(value, securityConfig.getSalt(), httpRequest.headers().get("User-Agent")) + value;
+
+        Cookie cookie = new DefaultCookie(cookieName, cookieValue);
+        cookie.setMaxAge(0);
+
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+
     }
 
 }

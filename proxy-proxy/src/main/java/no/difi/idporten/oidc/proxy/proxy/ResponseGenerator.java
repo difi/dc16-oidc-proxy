@@ -66,7 +66,8 @@ public class ResponseGenerator {
         }
     }
 
-    protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig) {
+    protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig,
+                                          ProxyCookie proxyCookie, HttpRequest httpRequest) {
         logger.debug("ResponseGenerator.generateLogoutResponse()");
         try {
             String redirectUrl = securityConfig.getLogoutRedirectUri();
@@ -76,6 +77,8 @@ public class ResponseGenerator {
 
             FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                     HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
+
+            CookieHandler.deleteProxyCookieFromBrowser(securityConfig, proxyCookie, httpRequest, response);
 
             response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -114,6 +117,8 @@ public class ResponseGenerator {
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
 
+        RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
+
         response.headers().set(HttpHeaderNames.LOCATION, httpRequest.setUri(redirectUrlPath).uri());
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
@@ -121,12 +126,16 @@ public class ResponseGenerator {
         response.headers().set(HttpHeaderNames.SET_COOKIE,
                 ServerCookieEncoder.STRICT.encode(proxyCookie.getName(), proxyCookie.getUuid()));
 
+        System.out.println("HEST " +response.headers().entries());
+
         CookieHandler.insertCookieToResponse(
                 response,
                 proxyCookie.getName(),
                 proxyCookie.getUuid(),
                 securityConfig.getSalt(),
                 httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+
+        System.out.println("HEST2 " +response.headers().entries());
 
 
         logger.debug(String.format("Created redirect response:\n%s", response));
@@ -178,15 +187,6 @@ public class ResponseGenerator {
         final Channel inboundChannel = ctx.channel();
 
         boolean setCookie = proxyCookie != null;
-
-        RedirectCookieHandler.findRedirectCookiePath(httpRequest,
-                securityConfig.getSalt(),
-                httpRequest.headers().get("User-Agent")).ifPresent(originalPath -> {
-            logger.debug("Changing path of request because we found the original path: {}", originalPath);
-            httpRequest.setUri(originalPath);
-            logger.debug(httpRequest.toString());
-        });
-
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
