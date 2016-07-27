@@ -18,7 +18,7 @@ public interface CookieStorage {
      * @param userData    HashMap<String, String> (JWT from authorization server)
      * @return ProxyCookie implemented object
      */
-    ProxyCookie generateCookieInDb(String name, String host, String path,
+    ProxyCookie generateCookieInDb(String name, String host, String path, int security,
                                    int touchPeriod, int maxExpiry, Map<String, String> userData);
 
     /**

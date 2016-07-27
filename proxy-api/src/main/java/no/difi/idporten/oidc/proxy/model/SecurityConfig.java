@@ -18,7 +18,7 @@ public interface SecurityConfig {
 
     String getPath();
 
-    String getSecurity();
+    int getSecurity();
 
     String getRedirectUri();
 

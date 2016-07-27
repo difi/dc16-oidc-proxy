@@ -114,12 +114,19 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
 
     @Override
-    public String getSecurity() {
+    public int getSecurity() {
         if (PATH.getSecurity() == null) {
-            return getParameter("security");
-        } else {
-            return PATH.getSecurity();
+            return parseInt(getParameter("security"));
         }
+        return parseInt(PATH.getSecurity());
+    }
+
+    public static int parseInt(String value){
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            System.err.println("NumberFormatException caught in DefaultSecurityConfig.parseInt() while parsing security string to int");
+        } return -1;
     }
 
     @Override
@@ -150,7 +157,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public boolean isSecured() {
-        return !getSecurity().equals("0");
+        return getSecurity() != 0;
     }
 
     @Override

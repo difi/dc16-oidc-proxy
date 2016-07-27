@@ -44,9 +44,9 @@ public class CookieHandler {
         this.path = path;
     }
 
-    public ProxyCookie generateCookie(Map<String, String> userData, int touchPeriod, int maxExpiry) {
+    public ProxyCookie generateCookie(Map<String, String> userData, int security, int touchPeriod, int maxExpiry) {
         logger.debug("CookieHandler.generateCookie()");
-        return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
+        return cookieStorage.generateCookieInDb(cookieName, host, path, security, touchPeriod, maxExpiry, userData);
     }
 
     /**

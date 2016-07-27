@@ -39,14 +39,19 @@ public class DatabaseCookieStorage implements CookieStorage {
      * @param userData    HashMap<String, String> (JWT from authorization server)
      * @return ProxyCookie (DefaultProxyCookie) object
      */
-    @Override
-    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int touchPeriod, int maxExpiry, Map<String, String> userData) {
+    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int security, int touchPeriod, int maxExpiry, Map<String, String> userData) {
         String uuid = UUID.randomUUID().toString();
-        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, touchPeriod, maxExpiry, userData);
+        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, security, touchPeriod, maxExpiry, userData);
         db.insertCookie(proxyCookie);
         logger.info("Cookie generated and inserted into the database ({})", proxyCookie);
         return proxyCookie;
     }
+
+    /* old
+    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int touchPeriod, int maxExpiry, Map<String, String> userData) {
+        System.err.println("");
+        return null;
+    }*/
 
     /**
      * Used for debug and testing. Enables using other values self-assigned values to created and
