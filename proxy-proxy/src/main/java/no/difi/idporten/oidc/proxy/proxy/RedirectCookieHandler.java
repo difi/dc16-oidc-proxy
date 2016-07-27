@@ -57,7 +57,7 @@ public class RedirectCookieHandler {
                 logger.debug("Found original path for request after redirect: {}", result);
                 return Optional.of(result);
             } else {
-                logger.error("Cookie is not valid and as such didn't find original path after redirect ({})", redirectCookieValue);
+                logger.warn("Cookie is not valid and as such didn't find original path after redirect ({})", redirectCookieValue);
             }
         }
         return Optional.empty();

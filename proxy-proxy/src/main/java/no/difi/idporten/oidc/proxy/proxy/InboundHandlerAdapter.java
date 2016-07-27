@@ -123,10 +123,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             // Host's config (falls back to default config if not present)
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
                             int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();  // in minutes
+                            int security = securityConfig.getSecurity();
+                            System.err.println("Security: "+security);
 
                             logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
-                            proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
+                            proxyCookie = cookieHandler.generateCookie(userData, security, touchPeriod, maxExpiry);
 
                             Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
 
