@@ -31,6 +31,8 @@ public class CookieHandlerTest {
 
     private String salt;
 
+    private int security;
+
     private CookieHandler cookieHandler;
 
     @BeforeTest
@@ -39,6 +41,7 @@ public class CookieHandlerTest {
 
         this.host = "www.nav.no";
         this.path = "/trydgesøknad";
+        this.security = 3;
         this.cookieName = cookieConfig.getName();
         this.uuid = "aValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLong";
         this.cookieHandler = new CookieHandler(cookieConfig, host, path);
@@ -74,7 +77,7 @@ public class CookieHandlerTest {
         Assert.assertNotNull(cookieHandler);
 
         // Causing error at parameters here
-        ProxyCookie actualProxyCookie = cookieHandler.generateCookie(userData, 20, 120);
+        ProxyCookie actualProxyCookie = cookieHandler.generateCookie(userData, security, 20, 120);
 
         Assert.assertNotNull(actualProxyCookie);
         Assert.assertEquals(actualProxyCookie.getHost(), host);

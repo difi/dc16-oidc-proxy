@@ -50,6 +50,8 @@ public class SimpleIntegrationTest {
 
     private String aud = "dificamp";
 
+    private int security;
+
     private Map<String, String> idPortenUserData;
 
     private ProxyCookie storedIdportenCookie;
@@ -232,7 +234,7 @@ public class SimpleIntegrationTest {
         idPortenUserData.put("tokenType", tokenType);
         idPortenUserData.put("aud", aud);
         // Using hardcoded touchPeriod and maxExpiry value, as this isn't tested here
-        storedIdportenCookie = cookieStorage.generateCookieInDb(cookieName, remoteHostName, "/google", 20, 120, idPortenUserData);
+        storedIdportenCookie = cookieStorage.generateCookieInDb(cookieName, remoteHostName, "/google", security, 20, 120, idPortenUserData);
         return storedIdportenCookie;
     }
 
