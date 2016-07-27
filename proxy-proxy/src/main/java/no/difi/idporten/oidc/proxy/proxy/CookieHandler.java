@@ -56,7 +56,7 @@ public class CookieHandler {
      * @return
      */
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest, String salt, String userAgent) {
-        logger.debug("Looking for cookie with name {}", cookieName);
+        logger.debug("Looking for valid cookie with name {}", cookieName);
 
         Optional<List<String>> cookieOptional = getCookiesFromRequest(httpRequest, cookieName);
         try {
@@ -65,13 +65,13 @@ public class CookieHandler {
                 for (int i = 0; i < cookieOptional.get().size(); i++) {
 
                     String uuid = cookieOptional.get().get(i).substring(64);
-                    logger.debug("Looking for cookie in database (UUID: {})", uuid);
+                    logger.debug("Searching database for cookie (UUID: {})", uuid);
                     pc = cookieStorage.findCookie(uuid, host, path);
                     if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
                         logger.info("Valid cookie was found ({})", pc.get());
                         return pc;
                     } else {
-                        logger.debug("This cookie was found not valid (UUID: {})", uuid);
+                        logger.debug("Cookie was not found or not valid (UUID: {})", uuid);
                     }
                 }
             }
