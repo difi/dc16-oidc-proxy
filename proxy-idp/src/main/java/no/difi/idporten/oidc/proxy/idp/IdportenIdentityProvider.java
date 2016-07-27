@@ -7,10 +7,12 @@ import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +34,9 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
     private static Logger logger = LoggerFactory.getLogger(IdportenIdentityProvider.class);
 
+    private HttpClient httpClient;
+
+
     private SecurityConfig securityConfig;
 
     private static String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
@@ -39,6 +44,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     private static String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
 
     public IdportenIdentityProvider(SecurityConfig securityConfig) {
+        this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
     }
 
