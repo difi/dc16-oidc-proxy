@@ -130,7 +130,6 @@ public class ResponseGenerator {
         RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
 
 
-
         logger.debug(String.format("Created redirect response:\n%s", response));
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
@@ -179,11 +178,9 @@ public class ResponseGenerator {
         logger.debug(String.format("Bootstrapping channel %s", ctx.channel()));
         final Channel inboundChannel = ctx.channel();
 
-        boolean setCookie = proxyCookie != null;
-
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel, proxyCookie, setCookie, securityConfig, httpRequest))
+        b.handler(new OutboundInitializer(inboundChannel))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
