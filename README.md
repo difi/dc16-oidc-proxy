@@ -14,7 +14,7 @@ En vil forhåpentlig illustrere hvordan man kan lage og bruke en slik proxy vha 
 
 Dersom det er tid/kapasitet bør en utforske mulighetsrommet rundt å benytte denne til å fase ut dagens OpenAM installasjoner ved å utvikle en bro mellom denne proxy’en og integrasjon mot dagens SAML-protokoll. Formålet med dette er å sjekke om dette er en farbar vei for å sanere teknisk gjeld ved å kunne migrere dagens applikasjoner vekk fra OpenAM.
 
-## Feutures
+## Features
 
 * Easy to create services that use Open ID connect authentication
 
