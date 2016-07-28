@@ -23,6 +23,8 @@ public class CookieHandlerTest {
 
     private String host;
 
+    private String idp;
+
     private String path;
 
     private String cookieName;
@@ -40,11 +42,12 @@ public class CookieHandlerTest {
         this.cookieConfig = new TypesafeCookieConfig(ConfigFactory.load());
 
         this.host = "www.nav.no";
-        this.path = "/trydgesøknad";
+        this.path = "/trydgesoknad";
+        this.idp = "google";
         this.security = 3;
         this.cookieName = cookieConfig.getName();
         this.uuid = "aValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLong";
-        this.cookieHandler = new CookieHandler(cookieConfig, host, path);
+        this.cookieHandler = new CookieHandler(cookieConfig, host, idp);
         this.salt = "salt";
     }
 
@@ -81,7 +84,7 @@ public class CookieHandlerTest {
 
         Assert.assertNotNull(actualProxyCookie);
         Assert.assertEquals(actualProxyCookie.getHost(), host);
-        Assert.assertEquals(actualProxyCookie.getPath(), path);
+        Assert.assertEquals(actualProxyCookie.getIdp(), idp);
         Assert.assertEquals(actualProxyCookie.getUserData().get("pid"), pid);
     }
 

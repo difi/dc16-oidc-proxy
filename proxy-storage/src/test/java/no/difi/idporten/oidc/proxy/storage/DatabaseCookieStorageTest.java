@@ -15,9 +15,17 @@ import java.util.UUID;
 public class DatabaseCookieStorageTest {
 
     private static final int MINUTE = 1000 * 60;
+
     private int touchPeriod = 20;
+
     private int maxExpiry = 120;
+
     private int security = 3;
+
+    private String idp = "google";
+
+    private String idp2 = "idporten";
+
     private HashMap<String, String> userData = new HashMap<>();
 
     private Injector injector;
@@ -35,12 +43,13 @@ public class DatabaseCookieStorageTest {
     public void createSimpleCookieInStorage() {
         CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
-        ProxyCookie proxyCookie = cookieStorage.generateCookieInDb("PROXYCOOKIE", "example.com", "/app1", security, touchPeriod, maxExpiry, null);
+        ProxyCookie proxyCookie = cookieStorage.generateCookieInDb("PROXYCOOKIE", "example.com", idp, security, touchPeriod, maxExpiry, null);
         Assert.assertNotNull(proxyCookie);
 
-        Assert.assertTrue(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", "/app1").isPresent());
-        Assert.assertTrue(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", "/app2").isPresent());
-        Assert.assertFalse(cookieStorage.findCookie(proxyCookie.getUuid(), "domain.com", "/app1").isPresent());
+        Assert.assertTrue(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", idp).isPresent());
+        Assert.assertTrue(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", idp).isPresent());
+        Assert.assertFalse(cookieStorage.findCookie(proxyCookie.getUuid(), "example.com", idp2).isPresent());
+        Assert.assertFalse(cookieStorage.findCookie(proxyCookie.getUuid(), "domain.com", idp).isPresent());
     }
 
     @Test
@@ -49,18 +58,18 @@ public class DatabaseCookieStorageTest {
 
         Date dateNow = new Date();
 
-        ProxyCookie proxyCookie = cookieStorage.generateCookieInDb("PROXYCOOKIE", "example.com", "/app1", security, touchPeriod, maxExpiry, null);
+        ProxyCookie proxyCookie = cookieStorage.generateCookieInDb("PROXYCOOKIE", "example.com", idp, security, touchPeriod, maxExpiry, null);
         Date initialExpiry = calculateDate(proxyCookie.getLastUpdated(), proxyCookie.getTouchPeriod());
         ProxyCookie maxExpiredCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "maxExpired", "example.com", "/app1", security, touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry - 5)), calculateDate(dateNow, -5)));
+                "maxExpired", "example.com", idp, security, touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry - 5)), calculateDate(dateNow, -5)));
 
         Thread.sleep(100); // ms
 
         Date initialMaxExpiry = calculateDate(maxExpiredCookie.getCreated(), maxExpiredCookie.getMaxExpiry());
         Date expiryUponInstantiation = calculateDate(maxExpiredCookie.getLastUpdated(), maxExpiredCookie.getTouchPeriod());
 
-        Optional<ProxyCookie> foundCookieOptional = cookieStorage.findCookie(proxyCookie.getUuid(), proxyCookie.getHost(), proxyCookie.getPath());
-        Optional<ProxyCookie> foundMaxExpiredOptional = cookieStorage.findCookie(maxExpiredCookie.getUuid(), maxExpiredCookie.getHost(), maxExpiredCookie.getPath());
+        Optional<ProxyCookie> foundCookieOptional = cookieStorage.findCookie(proxyCookie.getUuid(), proxyCookie.getHost(), proxyCookie.getIdp());
+        Optional<ProxyCookie> foundMaxExpiredOptional = cookieStorage.findCookie(maxExpiredCookie.getUuid(), maxExpiredCookie.getHost(), maxExpiredCookie.getIdp());
 
         Date extendedExpiry = calculateDate(foundMaxExpiredOptional.get().getLastUpdated(), foundMaxExpiredOptional.get().getTouchPeriod());
         Date newMaxExpiry = calculateDate(foundMaxExpiredOptional.get().getCreated(), foundMaxExpiredOptional.get().getMaxExpiry());
@@ -90,19 +99,19 @@ public class DatabaseCookieStorageTest {
 
         // Either needs to cast CookieStorage to DatabaseCookieStorage, or implement generateCookieInDb(ProxyCookie) in CookieStorage interface
         ProxyCookie validCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "valid", "example.com", "/app1", security, touchPeriod, maxExpiry, null, dateNow, dateNow));
+                "valid", "example.com", idp, security, touchPeriod, maxExpiry, null, dateNow, dateNow));
         ProxyCookie expiredCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "expired", "example.com", "/app1", security, touchPeriod, maxExpiry, null, calculateDate(dateNow, -(touchPeriod + 1)), calculateDate(dateNow, -(touchPeriod + 1))));
+                "expired", "example.com", idp, security, touchPeriod, maxExpiry, null, calculateDate(dateNow, -(touchPeriod + 1)), calculateDate(dateNow, -(touchPeriod + 1))));
         ProxyCookie maxExpiredCookie = ((DatabaseCookieStorage) cookieStorage).generateCookieInDb(new DefaultProxyCookie(UUID.randomUUID().toString(),
-                "maxExpired", "example.com", "/app1", security, touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry + 1)), dateNow));
+                "maxExpired", "example.com", idp, security, touchPeriod, maxExpiry, null, calculateDate(dateNow, -(maxExpiry + 1)), dateNow));
 
         Assert.assertTrue(validCookie.isValid());
         Assert.assertFalse(expiredCookie.isValid());
         Assert.assertFalse(maxExpiredCookie.isValid());
 
-        Optional<ProxyCookie> foundValidCookie = cookieStorage.findCookie(validCookie.getUuid(), validCookie.getHost(), validCookie.getPath());
-        Optional<ProxyCookie> foundExpiredCookie = cookieStorage.findCookie(expiredCookie.getUuid(), expiredCookie.getHost(), expiredCookie.getPath());
-        Optional<ProxyCookie> foundMaxExpiredCookie = cookieStorage.findCookie(maxExpiredCookie.getUuid(), maxExpiredCookie.getHost(), maxExpiredCookie.getPath());
+        Optional<ProxyCookie> foundValidCookie = cookieStorage.findCookie(validCookie.getUuid(), validCookie.getHost(), validCookie.getIdp());
+        Optional<ProxyCookie> foundExpiredCookie = cookieStorage.findCookie(expiredCookie.getUuid(), expiredCookie.getHost(), expiredCookie.getIdp());
+        Optional<ProxyCookie> foundMaxExpiredCookie = cookieStorage.findCookie(maxExpiredCookie.getUuid(), maxExpiredCookie.getHost(), maxExpiredCookie.getIdp());
 
         Assert.assertTrue(foundValidCookie.isPresent());
         Assert.assertFalse(foundExpiredCookie.isPresent());
@@ -110,14 +119,14 @@ public class DatabaseCookieStorageTest {
     }
 
     @Test
-    public void removeCookie(){
+    public void removeCookie() {
         CookieStorage cookieStorage = injector.getInstance(CookieStorage.class);
 
-        ProxyCookie cookie = cookieStorage.generateCookieInDb("test-cookie", "host.com", "/auth", security, touchPeriod, maxExpiry, userData);
-        ProxyCookie cookie2 = cookieStorage.generateCookieInDb("test-cookie2", "google.com", "/maps", security, touchPeriod, maxExpiry, userData);
+        ProxyCookie cookie = cookieStorage.generateCookieInDb("test-cookie", "host.com", idp, security, touchPeriod, maxExpiry, userData);
+        ProxyCookie cookie2 = cookieStorage.generateCookieInDb("test-cookie2", "google.com", idp2, security, touchPeriod, maxExpiry, userData);
 
-        Optional<ProxyCookie> foundCookie = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getPath());
-        Optional<ProxyCookie> foundCookie2 = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie2.getPath());
+        Optional<ProxyCookie> foundCookie = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getIdp());
+        Optional<ProxyCookie> foundCookie2 = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie2.getIdp());
 
         Assert.assertTrue(foundCookie.isPresent());
         Assert.assertTrue(foundCookie2.isPresent());
@@ -129,8 +138,8 @@ public class DatabaseCookieStorageTest {
 
         cookieStorage.removeCookie(cookie.getUuid());
 
-        Optional<ProxyCookie> foundCookieAfterRemoval = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getPath());
-        Optional<ProxyCookie> foundCookie2BeforeRemoval = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie.getPath());
+        Optional<ProxyCookie> foundCookieAfterRemoval = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getIdp());
+        Optional<ProxyCookie> foundCookie2BeforeRemoval = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie2.getIdp());
 
         Assert.assertFalse(foundCookieAfterRemoval.isPresent());
         Assert.assertTrue(foundCookie2BeforeRemoval.isPresent());
@@ -138,8 +147,8 @@ public class DatabaseCookieStorageTest {
         cookieStorage.removeCookie(cookie.getUuid()); // Removing non-existent cookie
         cookieStorage.removeCookie(cookie2.getUuid());
 
-        Optional<ProxyCookie> foundCookieAfterTwoRemovals = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie.getPath());
-        Optional<ProxyCookie> foundCookie2AfterRemoval = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie.getPath());
+        Optional<ProxyCookie> foundCookieAfterTwoRemovals = cookieStorage.findCookie(cookie.getUuid(), cookie.getHost(), cookie.getIdp());
+        Optional<ProxyCookie> foundCookie2AfterRemoval = cookieStorage.findCookie(cookie2.getUuid(), cookie2.getHost(), cookie2.getIdp());
 
         Assert.assertFalse(foundCookieAfterTwoRemovals.isPresent());
         Assert.assertFalse(foundCookie2AfterRemoval.isPresent());
