@@ -290,31 +290,20 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testFollowRedirectHasOriginalPath() throws Exception {
+        String expectedEmailInResponse = "vikfand@gmail.com";
+        String expectedSubInResponse = "108182803704140665355";
+
         String url = BASEURL + specificPathWithGoogle;
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
-        HttpResponse response = notFollowHttpClient.execute(getRequest);
+        HttpResponse response = httpClient.execute(getRequest);
 
-        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_MOVED_TEMPORARILY);
-        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
-        String cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
-
-        getRequest = new HttpGet(BASEURL + "/google?code=aValidCode");
-        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
-
-        response = notFollowHttpClient.execute(getRequest);
-
-        headerMap = getHeadersAsMap(response.getAllHeaders());
-        cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
-        getRequest = new HttpGet(BASEURL + headerMap.get(HttpHeaderNames.LOCATION.toString()));
-        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
-
-        response = httpClient.execute(getRequest);
-
-        verify(getRequestedFor(urlPathEqualTo(specificPathWithGoogle)));
+        verify(1, getRequestedFor(urlPathEqualTo(specificPathWithGoogle))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
+                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
+        );
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
 
