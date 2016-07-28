@@ -19,30 +19,30 @@ public class DefaultSecurityConfigProviderTest {
 
     private SecurityConfig securityConfigWithPathPathChecker;
 
-    private final String HOST = "www.difi.no";
-
-    private final String PathChecksIdpForScopeRedirectAndSecurity = "/";
-
-    private final String PathChecksPathForScopeRedirectAndSecurity = "/app5/";
 
     @BeforeTest
     public void injectSecurityConfigProvider() {
         Injector injector = Guice.createInjector(new ConfigModule());
-        provider = injector.getInstance(SecurityConfigProvider.class);
-        securityConfigWithIdpPathChecker = provider.getConfig(HOST, PathChecksIdpForScopeRedirectAndSecurity).get();
-        securityConfigWithPathPathChecker = provider.getConfig(HOST, PathChecksPathForScopeRedirectAndSecurity).get();
+        provider = injector.getInstance
+                (SecurityConfigProvider.class);
+        String HOST = "www.difi.no";
+        String pathChecksIdpForScopeRedirectAndSecurity = "/";
+        securityConfigWithIdpPathChecker = provider.getConfig(HOST, pathChecksIdpForScopeRedirectAndSecurity).get();
+        String pathChecksPathForScopeRedirectAndSecurity = "/app5/";
+        securityConfigWithPathPathChecker = provider.getConfig(HOST, pathChecksPathForScopeRedirectAndSecurity).get();
+
     }
 
     @Test
     public void testCreateIdentityProvider() throws Exception {
         Optional<IdentityProvider> identityProvider = securityConfigWithIdpPathChecker.createIdentityProvider();
+        Assert.assertTrue(identityProvider.isPresent());
         Assert.assertEquals(identityProvider.get().generateRedirectURI(), "https://eid-exttest.difi.no/idporten-oidc-provider/authorize?scope=openid&client_id=dificamp&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2F");
     }
 
     @Test
     public void testEmptyHostnameInjection() {
         Assert.assertEquals(provider.getConfig("", "/"), Optional.empty());
-
     }
 
     @Test
@@ -166,5 +166,29 @@ public class DefaultSecurityConfigProviderTest {
     @Test
     public void testToString() {
         Assert.assertTrue(securityConfigWithIdpPathChecker.toString().contains("DefaultSecurityConfig"));
+    }
+
+    @Test
+    public void testGetSalt() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getSalt());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getSalt(), "2LMC539EF8nf04O9gndsfERGh3HI4ugjRTHnfAGmlwkSEhfnbi82finsdf");
+    }
+
+    @Test
+    public void testIsTotallyUnsecured() {
+        Assert.assertTrue(securityConfigWithIdpPathChecker.isTotallyUnsecured("/studier"));
+
+    }
+
+    @Test
+    public void getLogoutRedirectUri() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getLogoutRedirectUri());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getLogoutRedirectUri(), "http://localhost:8080/logout-difi");
+    }
+
+    @Test
+    public void getLogoutPostUri() {
+        Assert.assertNotNull(securityConfigWithIdpPathChecker.getLogoutPostUri());
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getLogoutPostUri(), "/logout");
     }
 }

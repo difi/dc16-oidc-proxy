@@ -61,5 +61,29 @@ public class TypesafeHostConfigTest {
         Assert.assertTrue(hostConfig.getUnsecuredPaths().contains("/studier"));
     }
 
+    @Test
+    public void testGetSalt(){
+        Assert.assertNotNull(hostConfig.getSalt());
+        Assert.assertEquals(hostConfig.getSalt(), "2LMC539EF8nf04O9gndsfERGh3HI4ugjRTHnfAGmlwkSEhfnbi82finsdf");
+    }
+
+    @Test
+    public void testIsTotallyUnsecured(){
+        Assert.assertTrue(hostConfig.isTotallyUnsecured("/studier"));
+
+    }
+
+    @Test
+    public void getLogoutRedirectUri(){
+        Assert.assertNotNull(hostConfig.getLogoutRedirectUri());
+        Assert.assertEquals(hostConfig.getLogoutRedirectUri(), "http://localhost:8080/logout-difi");
+    }
+
+    @Test
+    public void getLogoutPostUri(){
+        Assert.assertNotNull(hostConfig.getLogoutPostUri());
+        Assert.assertEquals(hostConfig.getLogoutPostUri(), "/logout");
+    }
+
 
 }
