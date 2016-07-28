@@ -4,16 +4,17 @@ package no.difi.idporten.oidc.proxy.proxy;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,10 @@ import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static no.difi.idporten.oidc.proxy.proxy.util.Utils.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 
 public class SimpleIntegrationTest {
@@ -29,6 +33,8 @@ public class SimpleIntegrationTest {
     private static Logger logger = LoggerFactory.getLogger(SimpleIntegrationTest.class);
 
     private static HttpClient httpClient;
+
+    private static CookieStore cookieStore;
 
     private Thread thread;
 
@@ -38,26 +44,15 @@ public class SimpleIntegrationTest {
 
     private String host = "localhost:8080";
 
+    private String googlePath = "/google";
+
+    private String idportenPath = "/idporten";
+
     private String remoteHostName = "www.ntnu.no";
 
     private String cookieName = "PROXYCOOKIE";
 
     private String redirectCookieName = "redirectCookie";
-
-    private String pid = "08023549930";
-
-    private String tokenType = "JWTToken";
-
-    private String aud = "dificamp";
-
-    private Map<String, String> idPortenUserData;
-
-    private ProxyCookie storedIdportenCookie;
-
-    private static Map<String, String> getHeadersAsMap(Header[] headers) {
-        return Arrays.stream(headers)
-                .collect(Collectors.toMap(Header::getName, Header::getValue));
-    }
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -80,8 +75,10 @@ public class SimpleIntegrationTest {
 
     @BeforeMethod
     public void setUp() {
+        // Cookie store to make it easy to set cookies in the HTTP client
+        cookieStore = new BasicCookieStore();
         // A HttpClient that does not automatically follow redirects as the default one does
-        httpClient = HttpClientBuilder.create().disableRedirectHandling().build();
+        httpClient = HttpClientBuilder.create().disableRedirectHandling().setDefaultCookieStore(cookieStore).build();
     }
 
     @Test
@@ -116,7 +113,7 @@ public class SimpleIntegrationTest {
     public void testSecuredConfiguredGoogle() throws Exception {
         logger.info("With a secured path on a configured host, the server should respond with a response " +
                 "that redirects the client to a remote login server like Idporten or Google login.");
-        String url = BASEURL + "/google";
+        String url = BASEURL + googlePath;
         String expectedRedirectUrlFragment = "accounts.google.com";
         HttpGet getRequest = new HttpGet(url);
 
@@ -164,56 +161,13 @@ public class SimpleIntegrationTest {
         Assert.assertTrue(headerMap.get(HttpHeaderNames.CONTENT_TYPE.toString()).contains(ResponseGenerator.TEXT_HTML));
     }
 
-    @Test(enabled = false) // must have better configuration for this test
-    public void testIdportenWithValidCookie() throws Exception {
-        logger.info("With a valid cookie on a secured path on a configured host, the server should work as a " +
-                "normal proxy while inserting the correct headers into the request before it reaches " +
-                "the intended resource like www.nav.no");
-        String url = BASEURL + "/idporten";
-        String cookieUuid = storedIdportenCookie.getUuid();
-        HttpGet getRequest = new HttpGet(url);
-
-        getRequest.setHeader(HttpHeaderNames.HOST.toString(), remoteHostName);
-        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), String.format("%s=%s", cookieName, cookieUuid));
-
-        HttpResponse response = httpClient.execute(getRequest);
-        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND);
-
-        String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-
-        Assert.assertTrue(responseContent.contains(pid));
-
-        Assert.assertTrue(response.containsHeader(RequestInterceptor.HEADERNAME));
-        Header setCookieHeader = response.getFirstHeader(RequestInterceptor.HEADERNAME);
-        Assert.assertTrue(setCookieHeader.getValue().contains(pid));
-    }
-
-    // Need to mock some of the IdentityProvider / External server / InboundHandler to make this work
-    @Test(enabled = false)
-    public void testValidCookieWithGoogle() throws Exception {
-        logger.info("With a valid cookie on a secured path on a configured host, the server should work as a " +
-                "normal proxy while inserting the correct headers into the request before it reaches " +
-                "the intended resource like www.nav.no");
-        String url = BASEURL + "/google";
-        String cookieUuid = "uuidForValidCookie";
-        HttpGet getRequest = new HttpGet(url);
-
-        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), String.format("%s:%s", cookieName, cookieUuid));
-
-        HttpResponse response = httpClient.execute(getRequest);
-        Assert.assertNotEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_BAD_REQUEST);
-        Assert.assertNotEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        //Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
-    }
-
     @Test
     public void testFirstRedirectResponseHasCookieForSavingPath() throws Exception {
         logger.info("With a secured path on a configured host, the server should respond with a redirect " +
                 "response that has a Set-Cookie header in order to allow the server to remember the " +
                 "original path the client requested after she has been redirected.");
-        String url = BASEURL + "/google";
+        String url = BASEURL + googlePath;
         HttpGet getRequest = new HttpGet(url);
-
 
         HttpResponse response = httpClient.execute(getRequest);
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_MOVED_TEMPORARILY);
@@ -225,15 +179,24 @@ public class SimpleIntegrationTest {
         Assert.assertTrue(headerMap.get(HttpHeaderNames.SET_COOKIE.toString()).contains(redirectCookieName));
     }
 
+    @Test
+    public void testRequestPathWithHigherSecurityThanCurrentGivesRedirect() throws Exception {
+        String url = BASEURL + idportenPath;
+        HttpGet getRequest = new HttpGet(url);
+        ProxyCookie proxyCookie = createValidGoogleCookie();
 
-    private ProxyCookie createValidGoogleCookie() {
-        idPortenUserData = new HashMap<>();
-        idPortenUserData.put("pid", pid);
-        idPortenUserData.put("tokenType", tokenType);
-        idPortenUserData.put("aud", aud);
-        // Using hardcoded touchPeriod and maxExpiry value, as this isn't tested here
-        storedIdportenCookie = cookieStorage.generateCookieInDb(cookieName, remoteHostName, "/google", 20, 120, idPortenUserData);
-        return storedIdportenCookie;
+        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookieName + "=" + proxyCookie.getUuid());
+        HttpResponse response = httpClient.execute(getRequest);
+        assertThat("Should be a redirect",
+                response.getStatusLine().getStatusCode(), equalTo(HttpResponseStatus.FOUND.code()));
+        assertThat("Should have location header",
+                getHeadersAsMap(response.getAllHeaders()).keySet(), hasItem(HttpHeaderNames.LOCATION.toString()));
+        assertThat("Location header should have url to idporten login",
+                getHeadersAsMap(response.getAllHeaders()).get(HttpHeaderNames.LOCATION.toString()), containsString(idportenLoginPath));
     }
 
+    private ProxyCookie createValidGoogleCookie() {
+        Map<String, String> userData = new HashMap<>();
+        return cookieStorage.generateCookieInDb(cookieName, host, googlePath, 10, 10, userData);
+    }
 }
