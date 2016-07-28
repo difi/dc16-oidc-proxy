@@ -7,10 +7,12 @@ import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
+    private HttpClient httpClient;
+
     private final SecurityConfig securityConfig;
 
     private static String APIURL = "https://www.googleapis.com/oauth2/v3/token";
@@ -41,6 +45,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     private List<String> tokenExtraParameters;
 
     public GoogleIdentityProvider(SecurityConfig securityConfig) {
+        this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
 
         redirectExtraParameters = new LinkedList<>();
