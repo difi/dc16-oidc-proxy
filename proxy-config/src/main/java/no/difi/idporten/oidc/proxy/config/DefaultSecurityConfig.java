@@ -136,7 +136,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public String getLogoutPostUri(){
+    public String getLogoutPostUri() {
         return HOST.getLogoutPostUri();
     }
 

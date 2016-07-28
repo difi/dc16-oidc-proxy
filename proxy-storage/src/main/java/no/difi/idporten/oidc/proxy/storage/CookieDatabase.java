@@ -151,7 +151,7 @@ public class CookieDatabase {
             statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid = '" + uuid + "';");
         } catch (SQLException e) {
             logger.warn("SQLException caught in CookieDatabase.removeCookie()");
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
     }
 
