@@ -15,8 +15,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -31,6 +34,7 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -216,22 +220,22 @@ public class IntegrationTestWithMockServer {
     @Test
     public void testFollowRedirectHasSetCookie() throws Exception {
         logger.info("After logging in when requesting a secured resource, " +
-                "the response should have a 'Set-Cookie header'");
+                "the response should have a 'Set-Cookie' header. This is tested by letting the httpClient " +
+                "set the cookie if it's there and verify with WireMock.");
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = httpClient.execute(getRequest);
 
-        verify((getRequestedFor(urlMatching("/google"))));
+        verify((getRequestedFor(urlPathMatching("/google"))));
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
 
-        Assert.assertTrue(response.containsHeader(HttpHeaderNames.SET_COOKIE.toString()));
-        Header setCookieHeader = response.getFirstHeader(HttpHeaderNames.SET_COOKIE.toString());
-        String expectedCookieName = cookieName;
-        MatcherAssert.assertThat("Cookie value should match a hex string with dashes",
-                setCookieHeader.getValue(), RegexMatcher.matchesRegex(expectedCookieName + "=[0-9a-f\\-]+"));
+        httpClient.execute(getRequest);
+
+        verify((getRequestedFor(urlPathEqualTo("/google")).withCookie(cookieName, matching("[0-9a-f\\-]+"))));
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
 
     /**
@@ -389,6 +393,7 @@ public class IntegrationTestWithMockServer {
 
     /**
      * Should be redirected to login again if requesting a resource with higher security than the current one.
+     *
      * @throws Exception
      */
     @Test
@@ -413,6 +418,7 @@ public class IntegrationTestWithMockServer {
 
     /**
      * Should insert Difi headers into request when requesting unsecured resource when logged in.
+     *
      * @throws Exception
      */
     @Test
@@ -432,6 +438,7 @@ public class IntegrationTestWithMockServer {
     /**
      * Logging out should delete the cookie stored in our system and make the client log in again when requesting
      * something new later.
+     *
      * @throws Exception
      */
     @Test
@@ -457,6 +464,7 @@ public class IntegrationTestWithMockServer {
 
     /**
      * Should be able to handle many requests without crashing.
+     *
      * @throws Exception
      */
     @Test
@@ -469,22 +477,31 @@ public class IntegrationTestWithMockServer {
         httpClient.execute(getRequest);
     }
 
+    /**
+     * Makes a request so that the next execution on that client has a valid Google cookie.
+     *
+     * @param path
+     * @return Request on the specified path with host header for the mock server.
+     * @throws Exception
+     */
     private static HttpGet getRequestWithValidGoogleCookie(String path) throws Exception {
+        CookieStore cookieStore = new BasicCookieStore();
+        httpClient = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        HttpResponse response = httpClient.execute(getRequest);
+        httpClient.execute(getRequest);
 
-        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
+        List<Cookie> cookies = cookieStore.getCookies();
 
-        MatcherAssert.assertThat("Should have a valid cookie at this point",
-                headerMap.keySet().contains(HttpHeaderNames.SET_COOKIE.toString()));
-
-        String acquiredCookie = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
+        Cookie apacheCookie = cookies.stream()
+                .filter(cookie -> cookie.getName().equals(cookieName))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("Should find a cookie"));
 
         getRequest = new HttpGet(BASEURL + path);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        getRequest.setHeader("Cookie", acquiredCookie);
+        getRequest.setHeader("Cookie", String.format("%s=%s", apacheCookie.getName(), apacheCookie.getValue()));
 
         return getRequest;
     }
