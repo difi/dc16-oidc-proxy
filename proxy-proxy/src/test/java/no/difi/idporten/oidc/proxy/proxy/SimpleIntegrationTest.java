@@ -81,7 +81,7 @@ public class SimpleIntegrationTest {
         httpClient = HttpClientBuilder.create().disableRedirectHandling().setDefaultCookieStore(cookieStore).build();
     }
 
-    @Test
+    @Test(enabled = false)
     public void testUnsecuredConfigured() throws Exception {
         logger.info("With an unsecured path for a configured host, the server should work as a normal proxy and " +
                 "hopefully return a 200 OK success response if the remote server is up.");
@@ -93,7 +93,7 @@ public class SimpleIntegrationTest {
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
 
-    @Test
+    @Test(enabled = false)
     public void testUnsecuredConfiguredWithPath() throws Exception {
         logger.info("With an unsecured path for a configured host, the server should work as a normal proxy and " +
                 "hopefully return a 200 OK success response if the remote server is up. Must also work if the path " +
