@@ -12,7 +12,6 @@ import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
 import no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.CookieStore;
@@ -33,12 +32,12 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static no.difi.idporten.oidc.proxy.proxy.util.Utils.*;
+
 
 
 public class IntegrationTestWithMockServer {
@@ -50,30 +49,6 @@ public class IntegrationTestWithMockServer {
     private static HttpClient httpClient;
 
     private static HttpClient notFollowHttpClient;
-
-    private static String specificPathWithGoogle = "/google/a/specific/path";
-
-    private static String unsecuredPath = "/unsecured";
-
-    private static String contentOfASpecificPath = "content of a specific path";
-
-    private static String contentOfAnUnsecuredPath = "content of an unsecured path";
-
-    private static String mockServerHostName = "www.mockhost.com";
-
-    private static String mockServerAddress = "http://localhost:8081";
-
-    private static String cookieName = "PROXYCOOKIE";
-
-    private static String googleApiPath = "/oauth2/v3/token";
-
-    private static String googleLoginPath = "/o/oauth2/auth";
-
-    private static String idportenApiPath = "/idporten-oidc-provider/token";
-
-    private static String idportenLoginPath = "/idporten-oidc-provider/authorize";
-
-    private static String logoutPath = "/logout";
 
     private static String originalGoogleApiUrl;
 
@@ -87,11 +62,6 @@ public class IntegrationTestWithMockServer {
     private Thread thread;
 
     private WireMockServer wireMockServer;
-
-    private static Map<String, String> getHeadersAsMap(Header[] headers) {
-        return Arrays.stream(headers)
-                .collect(Collectors.toMap(Header::getName, Header::getValue));
-    }
 
     @BeforeClass
     public void beforeClass() throws Exception {
