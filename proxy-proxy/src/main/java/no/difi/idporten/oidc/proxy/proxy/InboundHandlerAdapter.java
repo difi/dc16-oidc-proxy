@@ -67,8 +67,10 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
-                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
+                String idpName = securityConfig.getIdp();
+                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, idpName);
                 Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+                System.err.println("IDP: "+idpName);
 
                 logger.debug("Has security config: {}", securityConfig);
 
@@ -92,6 +94,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         }
 
                         // checks if the information in this cookie is enough for what the request needs
+                        // handle login with same cookie on multiple IDPs here
                         boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
                                 .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
                         if (cookieHasEnoughInformation) {
@@ -103,7 +106,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     }
                     if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
-
                         logger.debug("Has identity provider: {}", idp);
 
                         // Checks if user tries to log out without valid cookie. Some browsers (i.e. Safari) send a GET request to

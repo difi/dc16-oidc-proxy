@@ -33,14 +33,14 @@ public class DatabaseCookieStorage implements CookieStorage {
      *
      * @param cookieName  String (e.g. "google-cookie")
      * @param host        String (e.g. "www.google.com")
-     * @param path        String (e.g. "/oauth")
+     * @param idp        String (e.g. "google")
      * @param touchPeriod int (in minutes)
      * @param userData    HashMap<String, String> (JWT from authorization server)
      * @return ProxyCookie (DefaultProxyCookie) object
      */
-    public ProxyCookie generateCookieInDb(String cookieName, String host, String path, int security, int touchPeriod, int maxExpiry, Map<String, String> userData) {
+    public ProxyCookie generateCookieInDb(String cookieName, String host, String idp, int security, int touchPeriod, int maxExpiry, Map<String, String> userData) {
         String uuid = UUID.randomUUID().toString();
-        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, path, security, touchPeriod, maxExpiry, userData);
+        ProxyCookie proxyCookie = new DefaultProxyCookie(uuid, cookieName, host, idp, security, touchPeriod, maxExpiry, userData);
         db.insertCookie(proxyCookie);
         logger.info("Cookie generated and inserted into the database ({})", proxyCookie);
         return proxyCookie;
@@ -72,36 +72,37 @@ public class DatabaseCookieStorage implements CookieStorage {
      *
      * @param uuid String
      * @param host String
-     * @param path String
+     * @param idp String
      * @return Optional<ProxyCookie>
      */
     @Override
-    public Optional<ProxyCookie> findCookie(String uuid, String host, String path) {
+    public Optional<ProxyCookie> findCookie(String uuid, String host, String idp) {
         Optional<ProxyCookie> result = db.findCookie(uuid);
 
         // Check if cookie is found
         if (result.isPresent()) {
             // Check expiry and maxExpiry
             if (result.get().isValid()) {
-                // Check host and path
-                if (result.get().getHost().equals(host) && result.get().getPath().equals(path)) {
-                    logger.info("Cookie is valid - host and path matches ({})", result.get());
+                // Check host and IDP
+                if (result.get().getHost().equals(host) && result.get().getIdp().equals(idp)) {
+                    logger.info("Cookie is valid - host and IDP matches ({})", result.get());
                     //CookieDatabase.printCookie(result.get());
                     return Optional.of(extendCookieExpiry(result.get()));
                     // Check only host
                 } else if (result.get().getHost().equals(host)) {
-                    logger.info("Cookie is valid - host matches ({})", result.get());
+                    System.err.println("Cookie was found and host matches, but IDP is wrong");
+                    logger.info("Cookie was found - only host matches ({})", result.get());
                     //CookieDatabase.printCookie(result.get());
-                    return Optional.of(extendCookieExpiry(result.get()));
+                    //return Optional.of(extendCookieExpiry(result.get()));
                 } else {
                     //CookieDatabase.printCookie(result.get());
-                    logger.info("Cookie was found, but host does not match (" + uuid + "@" + host + path + ")");
+                    logger.info("Cookie was found, but host and IDP does not match (" + uuid + "@" + host + "-" + idp + ")");
                 }
             } else {
                 logger.info("Cookie was found, but has expired ({})", result.get());
             }
         } else {
-            logger.info("Cookie was not found (" + uuid + "@" + host + path + ")");
+            logger.info("Cookie was not found (" + uuid + "@" + host + "-" + idp + ")");
         }
         return Optional.empty();
     }
@@ -166,4 +167,19 @@ public class DatabaseCookieStorage implements CookieStorage {
         else System.err.println("Didn't find cookie");
     }
     */
+
+    /*
+    Google:
+    {at_hash=gB6153asgvrA7Casdas22w,
+    aud=106311042427-dsdd3sc09sitf9hqq3jb0øfsfmebe21o.apps.googleusercontent.com,
+    sub=110254166809984966287,
+    email_verified=true,
+    azp=106311042427-dsdd3sc09sitf9hqq3jb0øfsfmebe21o.apps.googleusercontent.com,
+    iss=accounts.google.com,
+    exp=1000627382,
+    iat=1000623782,
+    email=mail@gmail.com}
+
+     */
+
 }

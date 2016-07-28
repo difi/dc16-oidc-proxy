@@ -12,20 +12,20 @@ public interface CookieStorage {
      *
      * @param name        String (e.g. "google-cookie")
      * @param host        String (e.g. "www.google.com")
-     * @param path        String (e.g. "/oauth")
+     * @param idp        String (e.g. "/oauth")
      * @param touchPeriod int (amount of minutes)
      * @param maxExpiry   int (amount of minutes)
      * @param userData    HashMap<String, String> (JWT from authorization server)
      * @return ProxyCookie implemented object
      */
-    ProxyCookie generateCookieInDb(String name, String host, String path, int security,
+    ProxyCookie generateCookieInDb(String name, String host, String idp, int security,
                                    int touchPeriod, int maxExpiry, Map<String, String> userData);
 
     /**
      * If cookie with given uuid exist in 'cookies' list; return object implementing ProxyCookie, otherwise return null.
      * Updates expiry of cookie, by setting lastUpdated to present time.
      */
-    Optional<ProxyCookie> findCookie(String uuid, String host, String path);
+    Optional<ProxyCookie> findCookie(String uuid, String host, String idp);
 
     /**
      * Removes cookie with given UUID. Used primarily for logout functionality,

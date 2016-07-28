@@ -10,7 +10,7 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     private static final int MINUTE = 60 * 1000;
 
-    private String uuid, host, path, name;
+    private String uuid, host, idp, name;
 
     private Map<String, String> userData;
 
@@ -31,17 +31,17 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
      * @param name String (e.g. "google-cookie")
      * @param host String (e.g. "www.google.com")
-     * @param path String (e.g. "/oauth")
+     * @param idp String (e.g. "/oauth")
      * @param touchPeriod int (amount of minutes)
      * @param maxExpiry int (amount of minutes)
      * @param userData HashMap<String, String> (JWT from authorization server)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path, int security,
+    public DefaultProxyCookie(String uuid, String name, String host, String idp, int security,
                               int touchPeriod, int maxExpiry, Map<String, String> userData) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;
-        this.path = path;
+        this.idp = idp;
         this.security = security;
         this.touchPeriod = touchPeriod;
         this.maxExpiry = maxExpiry;
@@ -59,19 +59,19 @@ public class DefaultProxyCookie implements ProxyCookie {
      * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
      * @param name String (e.g. "google-cookie")
      * @param host String (e.g. "www.google.com")
-     * @param path String (e.g. "/oauth")
+     * @param idp String (e.g. "/oauth")
      * @param touchPeriod int (amount of minutes)
      * @param maxExpiry int (amount of minutes)
      * @param userData HashMap<String, String> (JWT from authorization server)
      * @param lastUpdated Date (last time the cookie was "touched" (extended expiry))
      * @param created Date (time of creation)
      */
-    public DefaultProxyCookie(String uuid, String name, String host, String path, int security, int touchPeriod,
+    public DefaultProxyCookie(String uuid, String name, String host, String idp, int security, int touchPeriod,
                               int maxExpiry, Map<String, String> userData, Date created, Date lastUpdated) {
         this.uuid = uuid;
         this.name = name;
         this.host = host;
-        this.path = path;
+        this.idp = idp;
         this.security = security;
         this.touchPeriod = touchPeriod;
         this.maxExpiry = maxExpiry;
@@ -109,8 +109,8 @@ public class DefaultProxyCookie implements ProxyCookie {
     }
 
     @Override
-    public String getPath() {
-        return path;
+    public String getIdp() {
+        return idp;
     }
 
     @Override
@@ -150,6 +150,6 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     @Override
     public String toString() {
-        return String.format("%s@%s%s", uuid, host, path);
+        return String.format("%s@%s-%s", uuid, host, idp);
     }
 }

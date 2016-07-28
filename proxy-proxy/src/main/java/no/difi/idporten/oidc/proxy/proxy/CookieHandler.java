@@ -28,25 +28,25 @@ public class CookieHandler {
 
     private final String host;
 
-    private final String path;
+    private final String idp;
 
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
      *
      * @param cookieConfig:
      * @param host:
-     * @param path:
+     * @param idp:
      */
-    public CookieHandler(CookieConfig cookieConfig, String host, String path) {
+    public CookieHandler(CookieConfig cookieConfig, String host, String idp) {
         this.cookieStorage = cookieConfig.getCookieStorage();
         this.cookieName = cookieConfig.getName();
         this.host = host;
-        this.path = path;
+        this.idp = idp;
     }
 
     public ProxyCookie generateCookie(Map<String, String> userData, int security, int touchPeriod, int maxExpiry) {
         logger.debug("CookieHandler.generateCookie()");
-        return cookieStorage.generateCookieInDb(cookieName, host, path, security, touchPeriod, maxExpiry, userData);
+        return cookieStorage.generateCookieInDb(cookieName, host, idp, security, touchPeriod, maxExpiry, userData);
     }
 
     /**
@@ -63,10 +63,9 @@ public class CookieHandler {
             if (cookieOptional.isPresent()) {
                 Optional<ProxyCookie> pc;
                 for (int i = 0; i < cookieOptional.get().size(); i++) {
-
                     String uuid = cookieOptional.get().get(i).substring(64);
                     logger.debug("Searching database for cookie (UUID: {})", uuid);
-                    pc = cookieStorage.findCookie(uuid, host, path);
+                    pc = cookieStorage.findCookie(uuid, host, idp);
                     if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
                         logger.info("Valid cookie was found ({})", pc.get());
                         return pc;

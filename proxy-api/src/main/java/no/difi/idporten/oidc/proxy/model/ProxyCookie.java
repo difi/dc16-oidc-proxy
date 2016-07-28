@@ -19,7 +19,7 @@ public interface ProxyCookie {
 
     String getHost();
 
-    String getPath();
+    String getIdp();
 
     int getTouchPeriod();
 

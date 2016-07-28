@@ -50,7 +50,7 @@ public class CookieDatabase {
      * UUID - String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
      * name - String of the cookie's name, specific to the host
      * host - String of the hostname
-     * path - String of the path, starting with "/"
+     * idp - String of the idp
      * touchPeriod - int value of amount of minutes a session is initially valid for
      * maxExpiry - int value of amount of minutes a session is maximum valid for, from creation of cookie
      * userData - String of a HashMap.toString() storing the JWT received from the authorization server
@@ -62,16 +62,17 @@ public class CookieDatabase {
         try {
             statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie " +
                 "(" +
-                "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
+                "uuid VARCHAR(36) NOT NULL, " +
                 "name VARCHAR(30) NOT NULL, " +
                 "host VARCHAR(30) NOT NULL, " +
-                "path VARCHAR(30) NOT NULL, " +
+                "idp VARCHAR(30) NOT NULL, " +
                 "security INT NOT NULL, " +
                 "touchPeriod INT NOT NULL, " +
                 "maxExpiry INT NOT NULL, " +
                 "userData VARCHAR(500), " +
                 "created BIGINT NOT NULL, " +
-                "lastUpdated BIGINT NOT NULL" +
+                "lastUpdated BIGINT NOT NULL, " +
+                "PRIMARY KEY (uuid, idp) " +
                 ");");
             statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
         } catch (SQLException e) {
@@ -91,9 +92,9 @@ public class CookieDatabase {
         String userData;
         if (cookie.getUserData() == null || cookie.getUserData().toString().equals("{}")) userData = null;
         else userData = cookie.getUserData().toString();
-        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, security, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
+        String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
                         "VALUES ('%s','%s','%s','%s', %s, %s, %s, '%s', %s, %s);", cookie.getUuid(), cookie.getName(), cookie.getHost(),
-                cookie.getPath(), cookie.getSecurity(), cookie.getTouchPeriod(), cookie.getMaxExpiry(),
+                cookie.getIdp(), cookie.getSecurity(), cookie.getTouchPeriod(), cookie.getMaxExpiry(),
                 userData, cookie.getCreated().getTime(), cookie.getLastUpdated().getTime());
         try {
             statement.executeUpdate(query);
@@ -139,15 +140,15 @@ public class CookieDatabase {
             if (resultSet.next()) {
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
-                String path = resultSet.getString("path");
+                String idp = resultSet.getString("idp");
                 int security = resultSet.getInt("security");
                 int touchPeriod = resultSet.getInt("touchPeriod");
                 int maxExpiry = resultSet.getInt("maxExpiry");
                 Map<String, String> userData = stringToMap(resultSet.getString("userData"));
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
-
-                cookie = new DefaultProxyCookie(uuid, name, host, path, security, touchPeriod, maxExpiry, userData, created, lastUpdated);
+                System.err.println("\nUserData:\n"+userData);
+                cookie = new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -183,7 +184,7 @@ public class CookieDatabase {
                 String uuid = resultSet.getString("uuid");
                 String name = resultSet.getString("name");
                 String host = resultSet.getString("host");
-                String path = resultSet.getString("path");
+                String idp = resultSet.getString("idp");
                 int security = resultSet.getInt("security");
                 int touchPeriod = resultSet.getInt("touchPeriod");
                 int maxExpiry = resultSet.getInt("maxExpiry");
@@ -192,7 +193,7 @@ public class CookieDatabase {
                 Date created = new Date(resultSet.getLong("created"));
                 Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
 
-                cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, path, security, touchPeriod, maxExpiry, userData, created, lastUpdated));
+                cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -244,7 +245,7 @@ public class CookieDatabase {
         System.out.println("\ncookie.toString(): " + cookie);
         System.out.println("cookie.getName(): " + cookie.getName());
         System.out.println("cookie.getHost(): " + cookie.getHost());
-        System.out.println("cookie.getPath(): " + cookie.getPath());
+        System.out.println("cookie.getIdp(): " + cookie.getIdp());
         System.out.println("cookie.getSecurity(): " + cookie.getSecurity());
         System.out.println("cookie.getTouchPeriod(): " + cookie.getTouchPeriod());
         System.out.println("cookie.getMaxExpiry(): " + cookie.getMaxExpiry());
