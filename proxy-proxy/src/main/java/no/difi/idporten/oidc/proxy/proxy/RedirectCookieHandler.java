@@ -6,6 +6,7 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,5 +65,16 @@ public class RedirectCookieHandler {
     private static boolean checkEncodedRedirectCookie(String hash, String path, String salt, String userAgent) {
         String encoded = CookieHandler.encodeValue(path, salt, userAgent) + path;
         return hash.equals(encoded);
+    }
+
+    public static void deleteRedirectCookieFromBrowser(HttpRequest httpRequest, HttpResponse httpResponse, SecurityConfig securityConfig, String value) {
+        String cookieValue = CookieHandler.encodeValue(value, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT)) + value;
+
+        Cookie cookie = new DefaultCookie(redirectCookieName, cookieValue);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+
+        httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+
     }
 }

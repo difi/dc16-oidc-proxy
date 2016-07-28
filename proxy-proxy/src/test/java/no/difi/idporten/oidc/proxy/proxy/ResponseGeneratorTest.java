@@ -102,7 +102,7 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         // Because of exceptions we need to wrap tests in these ugly try/catch things
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath, new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "MUSTFIX"));
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath, new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/google"));
         } catch (NullPointerException exc) {
 
         } finally {
@@ -129,7 +129,7 @@ public class ResponseGeneratorTest {
         ResponseGenerator responseGeneratorSpy = Mockito.spy(responseGenerator);
         Mockito.doReturn(validRedirectUrl).when(identityProviderMock).generateRedirectURI();
         try {
-            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath, new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "MUSTFIX"));
+            responseGeneratorSpy.generateRedirectResponse(ctxMock, identityProviderMock, securityConfigMock, securedPath, new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/google"));
         } catch (NullPointerException exc) {
 
         } finally {

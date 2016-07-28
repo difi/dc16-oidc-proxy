@@ -3,13 +3,11 @@ package no.difi.idporten.oidc.proxy.proxy;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.cookie.ClientCookieEncoder;
-import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import io.netty.handler.codec.http.cookie.*;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,29 +87,19 @@ public class CookieHandler {
      * the cookie, into the response's header. The response is sent to the client and the cookie is
      * stored int he clients browser.
      *
-     * @param httpResponse:
-     * @param cookieName:
+     * @param httpResponse: The response the cookie is inserted into.
+     * @param cookieName:   The name of the cookie.
+     * @param value:        The value of the cookie.
+     * @param salt:         The salt used to hash the cookie.
+     * @param userAgent:    The useragent from the request header.
      */
-    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String uuid) {
-        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
-    }
 
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
         String cookieValue = encodeValue(value, salt, userAgent) + value;
         logger.info("Inserting cookie in response with value: {}", cookieName);
-        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
+        httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
-    /**
-     * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
-     * object or an empty optional.
-     *
-     * @param httpRequest:
-     * @return
-     */
-    private Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest) {
-        return getCookieFromRequest(httpRequest, cookieName);
-    }
 
     /**
      * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
@@ -212,6 +200,18 @@ public class CookieHandler {
 
     public void removeCookie(String uuid) {
         cookieStorage.removeCookie(uuid);
+    }
+
+    public static void deleteProxyCookieFromBrowser(SecurityConfig securityConfig, ProxyCookie proxyCookie, HttpRequest httpRequest, HttpResponse httpResponse) {
+        String cookieName = proxyCookie.getName();
+        String value = proxyCookie.getUuid();
+        String cookieValue = encodeValue(value, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT)) + value;
+
+        Cookie cookie = new DefaultCookie(cookieName, cookieValue);
+        cookie.setMaxAge(0);
+
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+
     }
 
 }
