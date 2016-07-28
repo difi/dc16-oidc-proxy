@@ -39,7 +39,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static no.difi.idporten.oidc.proxy.proxy.util.Utils.*;
 
 
-
 public class IntegrationTestWithMockServer {
 
     private static final String BASEURL = "http://localhost:8080";
@@ -128,6 +127,11 @@ public class IntegrationTestWithMockServer {
                         .withStatus(HttpResponseStatus.OK.code())
                         .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
                         .withBody(googleApiResponseContent)));
+        stubFor(post(urlPathEqualTo(googleApiPath)).withRequestBody(matching(".*anInvalidCode.*")) // getting token but code is invalid
+                .willReturn(aResponse()
+                        .withStatus(HttpResponseStatus.BAD_REQUEST.code())
+                        .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
+                        .withBody("{}")));
         stubFor(get(urlPathMatching(idportenLoginPath)) // logging in with idporten
                 .willReturn(aResponse()
                         .withStatus(HttpResponseStatus.FOUND.code())
@@ -436,6 +440,21 @@ public class IntegrationTestWithMockServer {
         httpClient.execute(getRequest);
     }
 
+    @Test
+    public void testRequestWithInvalidCodeShouldRedirectToLogin() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/google" + invalidCodeUrlSuffix);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("Should be a redirect to login",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+        MatcherAssert.assertThat("Should have a location header",
+                getHeadersAsMap(response.getAllHeaders()).keySet(), Matchers.hasItem(HttpHeaderNames.LOCATION.toString()));
+        MatcherAssert.assertThat("Should have a redirect url to IDP login, this time without code.",
+                getHeadersAsMap(response.getAllHeaders()).get(HttpHeaderNames.LOCATION.toString()), Matchers.containsString(googleLoginPath));
+    }
+
+
     /**
      * Makes a request so that the next execution on that client has a valid Google cookie.
      *
@@ -464,7 +483,6 @@ public class IntegrationTestWithMockServer {
 
         return getRequest;
     }
-
 
     /**
      * Using reflection to change the urls of the GoogleIdentityProvider to use the mock server url instead.

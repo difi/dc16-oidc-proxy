@@ -25,6 +25,8 @@ public class Utils {
 
     public static String googleLoginPath = "/o/oauth2/auth";
 
+    public static String invalidCodeUrlSuffix = "?code=anInvalidCode";
+
     public static String idportenApiPath = "/idporten-oidc-provider/token";
 
     public static String idportenLoginPath = "/idporten-oidc-provider/authorize";
