@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,6 +69,8 @@ public class IntegrationTestWithMockServer {
 
     private static String idportenLoginPath = "/idporten-oidc-provider/authorize";
 
+    private static String logoutPath = "/logout";
+
     private static String originalGoogleApiUrl;
 
     private static String originalGoogleLoginUrl;
@@ -75,6 +78,7 @@ public class IntegrationTestWithMockServer {
     private static String originalIdportenLoginUrl;
 
     private static String originalIdportenApiUrl;
+
 
     private Thread thread;
 
@@ -129,6 +133,7 @@ public class IntegrationTestWithMockServer {
                 "}";
 
         // Configuring what the mock server should respond to requests.
+        wireMockServer.resetRequests();
         configureFor(8081);
         stubFor(get(urlPathMatching("/idporten.*")) // using idporten idp
                 .willReturn(aResponse()
@@ -372,7 +377,7 @@ public class IntegrationTestWithMockServer {
         String totallyUnsecuredPathToUse = "/something/totally/unsecured/like/a/logo/or/something.svg";
         HttpGet getRequest = getRequestWithValidGoogleCookie(totallyUnsecuredPathToUse);
 
-        HttpResponse response = notFollowHttpClient.execute(getRequest);
+        notFollowHttpClient.execute(getRequest);
 
         verify(1, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse)));
         verify(0, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse))
@@ -382,6 +387,10 @@ public class IntegrationTestWithMockServer {
         );
     }
 
+    /**
+     * Should be redirected to login again if requesting a resource with higher security than the current one.
+     * @throws Exception
+     */
     @Test
     public void testRequestingResourceWithHigherSecurityThanCurrent() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/idporten");
@@ -389,7 +398,10 @@ public class IntegrationTestWithMockServer {
         HttpResponse redirectResponse = notFollowHttpClient.execute(getRequest);
 
         Assert.assertEquals(redirectResponse.getStatusLine().getStatusCode(), HttpResponseStatus.FOUND.code());
-        /* Get strange "Multiple entries with same key:" exception when trying to test this.
+
+        getRequest = new HttpGet(BASEURL + "/idporten");
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
         HttpResponse finalResponse = httpClient.execute(getRequest);
 
         verify(1, getRequestedFor(urlPathEqualTo(idportenLoginPath)));
@@ -397,9 +409,12 @@ public class IntegrationTestWithMockServer {
         Assert.assertEquals(finalResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
         String responseContent = IOUtils.toString(finalResponse.getEntity().getContent(), "UTF-8");
         Assert.assertEquals(responseContent, "du bruker idporten idp");
-        */
     }
 
+    /**
+     * Should insert Difi headers into request when requesting unsecured resource when logged in.
+     * @throws Exception
+     */
     @Test
     public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
@@ -412,7 +427,46 @@ public class IntegrationTestWithMockServer {
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
                 .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
         );
+    }
 
+    /**
+     * Logging out should delete the cookie stored in our system and make the client log in again when requesting
+     * something new later.
+     * @throws Exception
+     */
+    @Test
+    public void testCanLogout() throws Exception {
+        HttpGet getRequest = getRequestWithValidGoogleCookie(logoutPath);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("Logging out should give a redirect response to a configured url",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+
+        getRequest.setURI(URI.create(BASEURL + "/google"));
+        response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("After logging out, the cookie in the request should not be valid anymore, and the" +
+                        "server should send a redirect to the login page for the IDP again.",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+        MatcherAssert.assertThat("Response should have a location header.",
+                getHeadersAsMap(response.getAllHeaders()).keySet(), Matchers.hasItem(HttpHeaderNames.LOCATION.toString()));
+        MatcherAssert.assertThat("Response should be redirected to the IDP login",
+                response.getFirstHeader(HttpHeaderNames.LOCATION.toString()).getValue(), Matchers.startsWith(mockServerAddress + googleLoginPath));
+    }
+
+    /**
+     * Should be able to handle many requests without crashing.
+     * @throws Exception
+     */
+    @Test
+    public void testLoginManyTimes() throws Exception {
+        HttpGet getRequest = getRequestWithValidGoogleCookie("/path" + 0);
+        for (int i = 1; i < 20; i++) {
+            httpClient = HttpClientBuilder.create().build();
+            getRequest = getRequestWithValidGoogleCookie("/path" + i);
+        }
+        httpClient.execute(getRequest);
     }
 
     private static HttpGet getRequestWithValidGoogleCookie(String path) throws Exception {
