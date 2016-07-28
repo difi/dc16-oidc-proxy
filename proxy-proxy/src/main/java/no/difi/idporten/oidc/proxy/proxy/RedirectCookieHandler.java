@@ -1,13 +1,11 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

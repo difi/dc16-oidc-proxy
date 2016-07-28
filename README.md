@@ -41,6 +41,19 @@ Google Guice
 </dependency>
 ```
 
+Then include the JitPack repository in your pom.xml to build the OIDC-Proxy in your project:
+It should be at the bottom of your pom.xml file, after <profiles>.
+
+JitPack:
+```xml
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+```
+
 ###Create and set up your configuration file:
 
 The configuration file consists of one or many hosts, one or many identity providers and some global variables.
