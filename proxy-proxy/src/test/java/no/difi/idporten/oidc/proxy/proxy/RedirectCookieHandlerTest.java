@@ -13,9 +13,11 @@ import java.util.Optional;
 
 public class RedirectCookieHandlerTest {
 
-    private String host;
-
     private String path;
+
+    private String salt;
+
+    private String useragent;
 
     @Mock
     private CookieConfig cookieConfigMock;
@@ -23,8 +25,9 @@ public class RedirectCookieHandlerTest {
     @BeforeMethod
     public void setUp() {
         this.cookieConfigMock = Mockito.mock(CookieConfig.class);
-        this.host = "configured.host.com";
         this.path = "/secured-path";
+        this.salt = "salt";
+        this.useragent = "useragent";
     }
 
     @Test
@@ -33,12 +36,12 @@ public class RedirectCookieHandlerTest {
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
 
-        Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED").isPresent());
+        Assert.assertFalse(RedirectCookieHandler.findRedirectCookiePath(httpRequest, salt, useragent).isPresent());
 
-        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse, "salt", "MUSTBEFIXED");
+        Cookie insertedCookie = redirectCookieHandler.insertCookieToResponse(httpResponse, salt, useragent);
         CookieHandler.insertCookieToRequest(httpRequest, insertedCookie.name(), insertedCookie.value());
 
-        Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, "salt", "MUSTBEFIXED");
+        Optional<String> retrievedPathFromCookieOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, salt, useragent);
 
         Assert.assertTrue(retrievedPathFromCookieOptional.isPresent());
 

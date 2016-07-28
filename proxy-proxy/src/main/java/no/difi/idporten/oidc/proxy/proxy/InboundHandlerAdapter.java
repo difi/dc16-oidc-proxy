@@ -68,7 +68,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
-                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
                 logger.debug("Has security config: {}", securityConfig);
 
@@ -128,7 +128,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
 
-                            Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+                            Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
                             if (originalPathOptional.isPresent()) {
                                 logger.debug("Request had original redirect. Creating new redirect.");

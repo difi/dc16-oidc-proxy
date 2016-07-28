@@ -5,17 +5,14 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class ResponseGenerator {
 
@@ -55,7 +52,7 @@ public class ResponseGenerator {
                     .insertCookieToResponse(
                             response,
                             securityConfig.getSalt(),
-                            httpRequest.headers().get("User-Agent"));
+                            httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
@@ -117,16 +114,12 @@ public class ResponseGenerator {
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
 
-        RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
 
         response.headers().set(HttpHeaderNames.LOCATION, httpRequest.setUri(redirectUrlPath).uri());
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                 "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        response.headers().set(HttpHeaderNames.SET_COOKIE,
-                ServerCookieEncoder.STRICT.encode(proxyCookie.getName(), proxyCookie.getUuid()));
 
-        System.out.println("HEST " +response.headers().entries());
 
         CookieHandler.insertCookieToResponse(
                 response,
@@ -134,8 +127,8 @@ public class ResponseGenerator {
                 proxyCookie.getUuid(),
                 securityConfig.getSalt(),
                 httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+        RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
 
-        System.out.println("HEST2 " +response.headers().entries());
 
 
         logger.debug(String.format("Created redirect response:\n%s", response));
@@ -204,43 +197,23 @@ public class ResponseGenerator {
 
         outboundChannel = f.channel();
         logger.debug(String.format("Made outbound channel: %s", outboundChannel));
-        f.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    logger.debug("Outbound channel operation success");
-                    outboundChannel.writeAndFlush(httpRequest).addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) {
-                                ctx.channel().read();
-                            } else {
-                                future.channel().close();
-                            }
-                        }
-                    });
-                } else {
-                    logger.debug("Outbound channel operation failure");
-                    inboundChannel.close();
-                }
+        f.addListener((ChannelFutureListener) future -> {
+            if (future.isSuccess()) {
+                logger.debug("Outbound channel operation success");
+                outboundChannel.writeAndFlush(httpRequest).addListener((ChannelFutureListener) future1 -> {
+                    if (future1.isSuccess()) {
+                        ctx.channel().read();
+                    } else {
+                        future1.channel().close();
+                    }
+                });
+            } else {
+                logger.debug("Outbound channel operation failure");
+                inboundChannel.close();
             }
         });
         return outboundChannel;
 
     }
-
-    /**
-     * Help method for generateProxyResponse.
-     * Checks if the path is unsecured and should not receive the userdata.
-     *
-     * @param unsecuredPaths:
-     * @param path:
-     * @return
-     */
-
-    private boolean checkForUnsecuredPaths(List<String> unsecuredPaths, String path) {
-        return unsecuredPaths.stream().filter(path::startsWith).findFirst().isPresent();
-    }
-
 
 }
