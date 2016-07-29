@@ -12,7 +12,6 @@ import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
 import no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.CookieStore;
@@ -33,12 +32,11 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static no.difi.idporten.oidc.proxy.proxy.util.Utils.*;
 
 
 public class IntegrationTestWithMockServer {
@@ -50,30 +48,6 @@ public class IntegrationTestWithMockServer {
     private static HttpClient httpClient;
 
     private static HttpClient notFollowHttpClient;
-
-    private static String specificPathWithGoogle = "/google/a/specific/path";
-
-    private static String unsecuredPath = "/unsecured";
-
-    private static String contentOfASpecificPath = "content of a specific path";
-
-    private static String contentOfAnUnsecuredPath = "content of an unsecured path";
-
-    private static String mockServerHostName = "www.mockhost.com";
-
-    private static String mockServerAddress = "http://localhost:8081";
-
-    private static String cookieName = "PROXYCOOKIE";
-
-    private static String googleApiPath = "/oauth2/v3/token";
-
-    private static String googleLoginPath = "/o/oauth2/auth";
-
-    private static String idportenApiPath = "/idporten-oidc-provider/token";
-
-    private static String idportenLoginPath = "/idporten-oidc-provider/authorize";
-
-    private static String logoutPath = "/logout";
 
     private static String originalGoogleApiUrl;
 
@@ -87,11 +61,6 @@ public class IntegrationTestWithMockServer {
     private Thread thread;
 
     private WireMockServer wireMockServer;
-
-    private static Map<String, String> getHeadersAsMap(Header[] headers) {
-        return Arrays.stream(headers)
-                .collect(Collectors.toMap(Header::getName, Header::getValue));
-    }
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -158,6 +127,11 @@ public class IntegrationTestWithMockServer {
                         .withStatus(HttpResponseStatus.OK.code())
                         .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
                         .withBody(googleApiResponseContent)));
+        stubFor(post(urlPathEqualTo(googleApiPath)).withRequestBody(matching(".*anInvalidCode.*")) // getting token but code is invalid
+                .willReturn(aResponse()
+                        .withStatus(HttpResponseStatus.BAD_REQUEST.code())
+                        .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
+                        .withBody("{}")));
         stubFor(get(urlPathMatching(idportenLoginPath)) // logging in with idporten
                 .willReturn(aResponse()
                         .withStatus(HttpResponseStatus.FOUND.code())
@@ -466,6 +440,21 @@ public class IntegrationTestWithMockServer {
         httpClient.execute(getRequest);
     }
 
+    @Test
+    public void testRequestWithInvalidCodeShouldRedirectToLogin() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/google" + invalidCodeUrlSuffix);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("Should be a redirect to login",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+        MatcherAssert.assertThat("Should have a location header",
+                getHeadersAsMap(response.getAllHeaders()).keySet(), Matchers.hasItem(HttpHeaderNames.LOCATION.toString()));
+        MatcherAssert.assertThat("Should have a redirect url to IDP login, this time without code.",
+                getHeadersAsMap(response.getAllHeaders()).get(HttpHeaderNames.LOCATION.toString()), Matchers.containsString(googleLoginPath));
+    }
+
+
     /**
      * Makes a request so that the next execution on that client has a valid Google cookie.
      *
@@ -494,7 +483,6 @@ public class IntegrationTestWithMockServer {
 
         return getRequest;
     }
-
 
     /**
      * Using reflection to change the urls of the GoogleIdentityProvider to use the mock server url instead.

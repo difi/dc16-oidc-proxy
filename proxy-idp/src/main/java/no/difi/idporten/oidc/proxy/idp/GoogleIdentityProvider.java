@@ -6,6 +6,7 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -124,6 +125,9 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         logger.debug("Post parameters: {}", params);
         logger.debug("Got response back:\n{}", httpResponse);
 
+        if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            throw new IdentityProviderException("Bad response from IdentityProvider API");
+        }
 
         JsonObject jsonResponse;
 
