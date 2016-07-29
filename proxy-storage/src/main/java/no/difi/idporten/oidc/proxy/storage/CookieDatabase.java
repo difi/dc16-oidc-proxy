@@ -5,10 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.*;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 public class CookieDatabase {
 
@@ -32,7 +30,7 @@ public class CookieDatabase {
      * Starting the database with specified driver, URL, user and password
      */
     public CookieDatabase() {
-        System.out.println("CookieDatabase.constructor");
+        logger.debug("CookieDatabase constructor");
         try {
             Class.forName(JDBC_DRIVER);
             Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -58,7 +56,6 @@ public class CookieDatabase {
      * lastUpdated - BigInt (long) of lastUpdated's Date.getTime() method, indicating creation-time in milliseconds
      */
     public void createTable() {
-        System.out.println("CookieDatabase.createTable()");
         try {
             statement.execute("CREATE TABLE IF NOT EXISTS PUBLIC.cookie " +
                 "(" +
@@ -74,12 +71,12 @@ public class CookieDatabase {
                 "lastUpdated BIGINT NOT NULL, " +
                 "PRIMARY KEY (uuid, idp) " +
                 ");");
-            statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS \"cookie_uuid_uindex\" ON PUBLIC.cookie (uuid);");
+            statement.execute("CREATE INDEX IF NOT EXISTS dbindex ON PUBLIC.cookie (uuid);");
         } catch (SQLException e) {
+            logger.error("SQLException caught in CookieDatabase.createTable(): {}", e.getMessage());
             e.printStackTrace();
-            logger.error("SQLException caught in CookieDatabase.createTable(): {}", e.getMessage(), e);
         }
-        logger.debug("DB: Database initialized with cookie table");
+        logger.info("Database initialized with cookie table and index on uuid");
     }
 
     /**
@@ -88,7 +85,6 @@ public class CookieDatabase {
      * @param cookie ProxyCookie
      */
     public void insertCookie(ProxyCookie cookie) {
-        System.out.println("CookieDatabase.insertCookie");
         String userData;
         if (cookie.getUserData() == null || cookie.getUserData().toString().equals("{}")) userData = null;
         else userData = cookie.getUserData().toString();
@@ -99,8 +95,8 @@ public class CookieDatabase {
         try {
             statement.executeUpdate(query);
         } catch (SQLException e) {
+            logger.warn("SQLException caught in CookieDatabase.insertCookie(): {}", e.getMessage());
             e.printStackTrace();
-            logger.warn("SQLException caught in CookieDatabase.insertCookie(): {}", e.getMessage(), e);
         }
     }
 
@@ -132,6 +128,7 @@ public class CookieDatabase {
      * @param uuid String
      * @return Optional<ProxyCookie>
      */
+    /*
     public Optional<ProxyCookie> findCookie(String uuid) {
         System.out.println("CookieDatabase.findCookie(String "+ uuid + ")");
         ProxyCookie cookie = null;
@@ -155,14 +152,38 @@ public class CookieDatabase {
             logger.warn("SQLException caught in CookieDatabase.findCookie(): {}", e.getMessage(), e);
         }
         return Optional.ofNullable(cookie);
+    }*/
+
+    public Optional<List<ProxyCookie>> findCookies(String uuid) {
+        logger.debug("Find cookie(s) in database with given uuid ({})", uuid);
+        List<ProxyCookie> cookie = new ArrayList<>();
+        try {
+            resultSet = statement.executeQuery("SELECT * from PUBLIC.cookie WHERE uuid = '" + uuid + "';");
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                String host = resultSet.getString("host");
+                String idp = resultSet.getString("idp");
+                int security = resultSet.getInt("security");
+                int touchPeriod = resultSet.getInt("touchPeriod");
+                int maxExpiry = resultSet.getInt("maxExpiry");
+                Map<String, String> userData = stringToMap(resultSet.getString("userData"));
+                Date created = new Date(resultSet.getLong("created"));
+                Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
+
+                cookie.add(new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            logger.warn("SQLException caught in CookieDatabase.findCookie(): {}", e.getMessage(), e);
+        }
+        return Optional.ofNullable(cookie);
     }
 
     public void removeCookie(String uuid) {
-        System.out.println("CookieDatabase.removeCookie(String "+uuid+")");
+        logger.debug("Removing cookie from database with given uuid ({})", uuid);
         try {
             statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid = '" + uuid + "';");
         } catch (SQLException e) {
-            e.printStackTrace();
             logger.warn("SQLException caught in CookieDatabase.removeCookie()");
             e.printStackTrace();
         }
@@ -228,23 +249,24 @@ public class CookieDatabase {
      *
      * @param uuid String
      */
-    public void extendCookieExpiry(String uuid, Date lastUpdated) {
-        System.out.println("CookieDatabase.extendCookieExpiry()");
+    public void extendCookieExpiry(String uuid, String idp, Date lastUpdated) {
+        logger.debug("Extending cookie with given uuid ({}) and idp ({}), if it exists", uuid, idp);
         try {
             long now = lastUpdated.getTime(); // present time in milliseconds
-            String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "';";
+            String query = "UPDATE PUBLIC.cookie SET lastUpdated = " + now + " WHERE uuid = '" + uuid + "' AND idp = '" + idp + "';";
             statement.executeUpdate(query);
         } catch (SQLException e) {
-            e.printStackTrace();
             logger.warn("SQLException caught in CookieDatabase.touchCookie(): {}", e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 
     // Debug
     public static void printCookie(ProxyCookie cookie) {
         System.out.println("\ncookie.toString(): " + cookie);
-        System.out.println("cookie.getName(): " + cookie.getName());
+        System.out.println("cookie.getUuid(): " + cookie.getUuid());
         System.out.println("cookie.getHost(): " + cookie.getHost());
+        System.out.println("cookie.getName(): " + cookie.getName());
         System.out.println("cookie.getIdp(): " + cookie.getIdp());
         System.out.println("cookie.getSecurity(): " + cookie.getSecurity());
         System.out.println("cookie.getTouchPeriod(): " + cookie.getTouchPeriod());
