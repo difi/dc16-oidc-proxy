@@ -125,13 +125,12 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                                 // This is made to handle the case where the url contains an invalid code.
                                 logger.warn("Could not get token from {}", securityConfig.getIdp());
                                 logger.warn(exc.getMessage(), exc);
-                                responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, trimmedPath, httpRequest);
+                                responseGenerator.generateRedirectToIdentityProviderResponse(ctx, idp, securityConfig, trimmedPath, httpRequest);
                                 return;
                             }
 
-                            // Host's config (falls back to default config if not present)
-                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
-                            int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();  // in minutes
+                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
+                            int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();
 
                             logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
@@ -141,13 +140,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             if (originalPathOptional.isPresent()) {
                                 logger.debug("Request had original redirect. Creating new redirect.");
-                                responseGenerator.generateRedirectResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
+                                responseGenerator.generateRedirectBackToOriginalPathResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
                             } else {
                                 outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                             }
 
                         } else {
-                            responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
+                            responseGenerator.generateRedirectToIdentityProviderResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
                     } else {
                         responseGenerator.generateServerErrorResponse(ctx,

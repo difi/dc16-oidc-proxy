@@ -148,6 +148,16 @@ public class CookieHandler {
         return Optional.empty();
     }
 
+
+    /**
+     * Encodes the value of the cookie given the value, salt and useragent of the requesting client.
+     * The salt is collected from the configuration file
+     *
+     * @param value:
+     * @param salt:
+     * @param userAgent:
+     * @return Returns the encoded value
+     */
     public static String encodeValue(String value, String salt, String userAgent) {
         String stringToBeHashed = value + userAgent;
         try {
@@ -158,15 +168,15 @@ public class CookieHandler {
 
             StringBuilder stringBuilder = new StringBuilder();
 
-            for (int i = 0; i < bytes.length; i++) {
-                stringBuilder.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            for (byte aByte : bytes) {
+                stringBuilder.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
 
             }
             logger.debug("Encoded value ({}) to hash ({})", stringToBeHashed, stringBuilder.toString());
             return stringBuilder.toString();
 
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
         return null;
 
@@ -198,10 +208,25 @@ public class CookieHandler {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
+
+    /**
+     * Removes the cookie with the given uuid from the database.
+     *
+     * @param uuid:
+     */
     public void removeCookie(String uuid) {
         cookieStorage.removeCookie(uuid);
     }
 
+
+    /**
+     * Deletes a ProxyCookie from the browser of the requesting client.
+     *
+     * @param securityConfig:
+     * @param proxyCookie:
+     * @param httpRequest:
+     * @param httpResponse:
+     */
     public static void deleteProxyCookieFromBrowser(SecurityConfig securityConfig, ProxyCookie proxyCookie, HttpRequest httpRequest, HttpResponse httpResponse) {
         String cookieName = proxyCookie.getName();
         String value = proxyCookie.getUuid();

@@ -46,10 +46,13 @@ public class RedirectCookieHandler {
 
     public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest, String salt, String userAgent) {
         Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
+
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
-            logger.debug("Found redirect cookie: {}", redirectCookieValue);
             String path = redirectCookieValue.substring(redirectCookieValue.indexOf('/'));
+
+            logger.debug("Found redirect cookie: {}", redirectCookieValue);
+
             if (hashToPathMap.containsKey(redirectCookieValue) && checkEncodedRedirectCookie(redirectCookieValue, path, salt, userAgent)) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);

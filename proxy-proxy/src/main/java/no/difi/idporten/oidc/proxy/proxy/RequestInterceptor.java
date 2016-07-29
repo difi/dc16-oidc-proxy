@@ -22,7 +22,7 @@ public class RequestInterceptor {
      * @param userData:
      */
     public static void insertUserDataToHeader(HttpRequest httpRequest, Map<String, String> userData) {
-        userData.entrySet().stream().forEach(userDataEntry -> {
+        userData.entrySet().forEach(userDataEntry -> {
             httpRequest.headers().add(HEADERNAME + userDataEntry.getKey(), userDataEntry.getValue());
         });
         logger.debug("Inserted header to request:\n{}", httpRequest);
