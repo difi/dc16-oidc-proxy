@@ -28,7 +28,7 @@ OIDC-PROXY
 <dependency>
     <groupId>com.github.difi.dc16-oidc-proxy</groupId>
     <artifactId>proxy</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
