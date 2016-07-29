@@ -2,7 +2,6 @@ package no.difi.idporten.oidc.proxy.storage;
 
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -13,10 +12,6 @@ import static no.difi.idporten.oidc.proxy.storage.CookieDatabase.mapToString;
 
 public class CookieDatabaseTest {
 
-
-    @BeforeMethod
-    public void setUp() {
-    }
 
     @Test
     public void testStringToMapSimple() {

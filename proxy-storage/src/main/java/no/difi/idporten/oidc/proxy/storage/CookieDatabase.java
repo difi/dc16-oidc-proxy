@@ -1,9 +1,12 @@
 package no.difi.idporten.oidc.proxy.storage;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +26,8 @@ public class CookieDatabase {
     private static Logger logger = LoggerFactory.getLogger(CookieDatabase.class);
 
     private static final int MINUTE = 60 * 1000;
+
+    private static Gson gson = new Gson();
 
     private Statement statement;
 
@@ -82,9 +87,7 @@ public class CookieDatabase {
      * @param cookie ProxyCookie
      */
     public void insertCookie(ProxyCookie cookie) {
-        String userData;
-        if (cookie.getUserData() == null) userData = null;
-        else userData = cookie.getUserData().toString();
+        String userData = mapToString(cookie.getUserData());
         String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, path, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
                         "VALUES ('%s','%s','%s','%s','%s','%s', '%s', '%s', '%s');", cookie.getUuid(), cookie.getName(), cookie.getHost(),
                 cookie.getPath(), cookie.getTouchPeriod(), cookie.getMaxExpiry(), userData,
@@ -97,6 +100,20 @@ public class CookieDatabase {
     }
 
     /**
+     * Makes a string that can be inserted into the database and parsed later of a UserData map.
+     *
+     * @param userData
+     * @return
+     */
+    public static String mapToString(Map<String, String> userData) {
+        if (userData == null) {
+            return null;
+        } else {
+            return gson.toJson(userData);
+        }
+    }
+
+    /**
      * DefaultUserData is current saved in the database as VARCHAR(400) with value HashMaps.toString().
      * This method is used for converting the String back til a HashMap.
      *
@@ -104,16 +121,9 @@ public class CookieDatabase {
      * @return HashMap
      */
     public static Map<String, String> stringToMap(String str) {
-        // If HashMap is empty (only containing "{}"), the object should be null
-        if (str == null || str.equals("null") || str.equals("{}")) return null;
-        // Removing curly braces, spaces and escape characters
-        String keyValues = str.replaceAll("[\\s\\{\\}]+", "");
-        HashMap<String, String> hashMap = new HashMap<>();
-        for (String pair : keyValues.split(",")) {
-            String[] elem = pair.split("=");
-            hashMap.put(elem[0], elem[1]);
-        }
-        return hashMap;
+        Type collectionType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        return gson.fromJson(str, collectionType);
     }
 
     /**
