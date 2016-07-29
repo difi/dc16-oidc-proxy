@@ -149,8 +149,8 @@ host.localhost = {
     [
       {
         path: /fakulteter
-        security: 2
-        idp: google
+        security: 3
+        idp: idporten
       }
     ]
   logout_post_uri: /logout
