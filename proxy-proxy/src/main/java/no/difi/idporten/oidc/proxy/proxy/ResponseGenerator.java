@@ -27,9 +27,8 @@ public class ResponseGenerator {
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
      *
-     * @return
      */
-    protected void generateRedirectResponse(
+    protected void generateRedirectToIdentityProviderResponse(
             ChannelHandlerContext ctx,
             IdentityProvider identityProvider,
             SecurityConfig securityConfig,
@@ -57,8 +56,9 @@ public class ResponseGenerator {
             logger.debug(String.format("Created redirect response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 
-        } catch (IdentityProviderException exc) {
-            exc.printStackTrace();
+        } catch (IdentityProviderException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
             generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()));
         }
     }
@@ -85,14 +85,27 @@ public class ResponseGenerator {
             logger.debug(String.format("Created logout response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 
-        } catch (Exception exc) {
-            exc.printStackTrace();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
         }
     }
+
+    /**
+     * Generates a response when theres a problem with the server.
+     * @param ctx:
+     * @param message:
+     */
 
     protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message) {
         generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+
+    /**
+     *
+     * @param ctx:
+     * @param message:
+     */
 
     protected void generateUnknownHostResponse(ChannelHandlerContext ctx, String message) {
         generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
@@ -104,11 +117,11 @@ public class ResponseGenerator {
      *
      * @return
      */
-    protected void generateRedirectResponse(ChannelHandlerContext ctx,
-                                            SecurityConfig securityConfig,
-                                            HttpRequest httpRequest,
-                                            String redirectUrlPath,
-                                            ProxyCookie proxyCookie) {
+    protected void generateRedirectBackToOriginalPathResponse(ChannelHandlerContext ctx,
+                                                              SecurityConfig securityConfig,
+                                                              HttpRequest httpRequest,
+                                                              String redirectUrlPath,
+                                                              ProxyCookie proxyCookie) {
         StringBuilder content = new StringBuilder(httpRequest.setUri(redirectUrlPath).uri());
 
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
@@ -135,7 +148,7 @@ public class ResponseGenerator {
     }
 
     /**
-     * Default response for when nothing is configured for the host
+     * Default response for when nothing is configured for the requested host
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
         FullHttpResponse response = new DefaultFullHttpResponse(
