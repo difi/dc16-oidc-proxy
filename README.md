@@ -80,6 +80,8 @@ host.hostname = {
     redirect_uri: redirect_uri                              <!-- Optional in path -->
     scope: scope                                            <!-- Optional in path -->
     }]
+    logout_post_uri: "/logout"				    <!-- The uri used to logout -->
+    logout_redirect_uri: "http://localhost:8080/logout-this"<!-- Where the client is redirected back to when logging out -->
     unsecured_paths: [/unsecured_path1, /unsecured_path2]   <!-- Unsecured paths are paths that should not receive information about the user-->
 }
 ```
