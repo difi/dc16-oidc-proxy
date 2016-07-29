@@ -6,6 +6,7 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -101,10 +102,14 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
             logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
 
-            JsonObject response;
+            if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                throw new IdentityProviderException("Bad response from IdentityProvider API");
+            }
+
+            JsonObject jsonResponse;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
-                response = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
-                return new DefaultUserData(decodeIDToken(response.get("id_token").getAsString()));
+                jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
+                return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
             } catch (IOException exc) {
                 throw new IdentityProviderException(exc.getMessage(), exc);
             }

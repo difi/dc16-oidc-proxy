@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
+import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
@@ -117,8 +118,16 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                         if (redirectedFromIdp(path)) {
                             logger.debug("TypesafePathConfig contains code: {}", path);
-
-                            Map<String, String> userData = idp.getToken(path).getUserData();
+                            Map<String, String> userData;
+                            try {
+                                userData = idp.getToken(path).getUserData();
+                            } catch (IdentityProviderException exc) {
+                                // This is made to handle the case where the url contains an invalid code.
+                                logger.warn("Could not get token from {}", securityConfig.getIdp());
+                                logger.warn(exc.getMessage(), exc);
+                                responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, trimmedPath, httpRequest);
+                                return;
+                            }
 
                             // Host's config (falls back to default config if not present)
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
