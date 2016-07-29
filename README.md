@@ -18,7 +18,6 @@ Dersom det er tid/kapasitet bør en utforske mulighetsrommet rundt å benytte de
 
 * Easy to create services that use Open ID connect authentication
 
-
 ## Getting started
 
 Include these dependencies in your pom.xml:`
