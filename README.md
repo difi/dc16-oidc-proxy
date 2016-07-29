@@ -128,6 +128,56 @@ listen = {
 ```
 
 
+Example configuration file with localhost:8080 as host and idporten as identity provider using ntnu.no as backend.
+```xml
+listen = {
+    port: 8080
+}
+
+host.localhost = {
+  hostname: localhost:8080
+  backends: [129.241.56.116]
+  cookie:
+        {
+        name: localhost-cookie,
+        touchPeriod: 20,
+        maxExpiry: 60
+        }
+  paths:
+    [
+      {
+        path: /fakulteter
+        security: 2
+        idp: google
+      }
+    ]
+  logout_post_uri: /logout
+  logout_redirect_uri: http://localhost:8080/logout-localhost
+  unsecured_paths: [/studier, /bilder]
+}
+
+idp.idporten = {
+  class: no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider
+  client_id: dificamp
+  redirect_uri: http://localhost:8080/
+  password: password
+  scope: "openid"
+  user_data_name: [pid, sub]
+  parameters: {
+    security: 3,
+    grant_type: authorization_code
+  }
+}
+
+cookie.name = PROXYCOOKIE
+cookie.touchPeriod = 30
+cookie.maxExpiry = 120
+
+
+salt = 2LMC539EF8nf04O9gndsfERGh3HI4ugjRTHnfAGmlwkSEhfnbi82finsdf
+
+```
+
 ###Set up the server with Guice:
 
 Insert this code snippet into your main class to run the server with the configuration file.
