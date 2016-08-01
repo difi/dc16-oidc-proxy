@@ -128,32 +128,6 @@ public class CookieDatabase {
      * @param uuid String
      * @return Optional<ProxyCookie>
      */
-    /*
-    public Optional<ProxyCookie> findCookie(String uuid) {
-        System.out.println("CookieDatabase.findCookie(String "+ uuid + ")");
-        ProxyCookie cookie = null;
-        try {
-            resultSet = statement.executeQuery("SELECT * from PUBLIC.cookie WHERE uuid = '" + uuid + "';");
-            if (resultSet.next()) {
-                String name = resultSet.getString("name");
-                String host = resultSet.getString("host");
-                String idp = resultSet.getString("idp");
-                int security = resultSet.getInt("security");
-                int touchPeriod = resultSet.getInt("touchPeriod");
-                int maxExpiry = resultSet.getInt("maxExpiry");
-                Map<String, String> userData = stringToMap(resultSet.getString("userData"));
-                Date created = new Date(resultSet.getLong("created"));
-                Date lastUpdated = new Date(resultSet.getLong("lastUpdated"));
-                System.err.println("\nUserData:\n"+userData);
-                cookie = new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            logger.warn("SQLException caught in CookieDatabase.findCookie(): {}", e.getMessage(), e);
-        }
-        return Optional.ofNullable(cookie);
-    }*/
-
     public Optional<List<ProxyCookie>> findCookies(String uuid) {
         logger.debug("Find cookie(s) in database with given uuid ({})", uuid);
         List<ProxyCookie> cookie = new ArrayList<>();

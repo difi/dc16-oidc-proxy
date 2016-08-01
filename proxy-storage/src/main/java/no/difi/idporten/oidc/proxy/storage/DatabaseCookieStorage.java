@@ -63,7 +63,7 @@ public class DatabaseCookieStorage implements CookieStorage {
     }
 
     /**
-     * 
+     *
      *
      * @param uuid
      * @param host
@@ -122,7 +122,7 @@ public class DatabaseCookieStorage implements CookieStorage {
 
                     if (proxyCookie != null) {
                         ((DefaultProxyCookie) proxyCookie).setUserData(userData);
-                        logger.info("Returning valid cookie from database: {}", proxyCookie.toString());
+                        logger.info("Returning fodunvalid cookie from database ({})", proxyCookie.toString());
                         logger.debug("Cookie has userData: ", proxyCookie.getUserData());
                         return Optional.of(proxyCookie);
                     }
@@ -181,57 +181,5 @@ public class DatabaseCookieStorage implements CookieStorage {
     private static Date calculateDate(Date date, int minutes) {
         return new Date(date.getTime() + minutes * 60 * 1000);
     }
-
-    /* Debug and testing
-    public static void main(String[] args) {
-        List<Map.Entry<String, String>> prefIdps = new ArrayList<>(Arrays.asList(
-                new AbstractMap.SimpleEntry<>("google", "email"),
-                new AbstractMap.SimpleEntry<>("idporten", "pid")));
-
-        List<Map.Entry<String, String>> prefIdps2 = new ArrayList<>(Arrays.asList(
-                new AbstractMap.SimpleEntry<>("idporten", "pid"),
-                new AbstractMap.SimpleEntry<>("google", "email")));
-
-
-        Map<String, String> userData = new HashMap<>();
-        userData.put("email", "mail@gmail.com");
-        userData.put("at_hash", "gB6153asgvrA7Casdas22w");
-        userData.put("sub", "99999999999999999999");
-
-        Map<String, String> userData2 = new HashMap<>();
-        userData2.put("pid", "12345600000");
-        userData2.put("exp", "11111111111");
-        userData2.put("sub", "2222222222222222222");
-
-
-        ProxyCookie pc = new DefaultProxyCookie("uuid", "localhost-cookie", "localhost", "google", 4, 30, 120, userData);
-        ProxyCookie pc2 = new DefaultProxyCookie("uuid", "localhost-cookie", "localhost", "idporten", 2, 10, 60, userData2, new Date(), new Date());
-
-        ProxyCookie pc3 = new DefaultProxyCookie("uuid2", "localhost-cookie", "localhost", "google", 4, 30, 120, userData);
-
-        //ourInstance.generateCookieInDb("someCookie", "host.com", "/", 3, 20, 100, new HashMap<>(1));
-
-        ourInstance.generateCookieInDb(pc);
-        ourInstance.generateCookieInDb(pc2);
-        ourInstance.generateCookieInDb(pc3);
-
-        System.err.println("\nCookies inserted to db. Printing\n");
-        ourInstance.printAllCookies();
-        Optional<ProxyCookie> pcc = ourInstance.findCookie("uuid", "localhost", prefIdps);
-        Optional<ProxyCookie> pcc2 = ourInstance.findCookie("uuid", "localhost", prefIdps2);
-//        System.err.println("\nFirst 2 cookies. Printing found objects");
-
-//        if (pcc.isPresent()) System.out.println(pcc.get());
-//        else System.err.println("Didn't find cookie");
-//        if (pcc2.isPresent()) System.out.println(pcc2.get());
-//        else System.err.println("Didn't find cookie");
-
-        ourInstance.findCookie("uuid2", "localhost", prefIdps2);
-        System.out.println("Finding non-existent cookie: ");
-        ourInstance.findCookie("sup", "localhost", prefIdps2);
-
-    }
-*/
-
 
 }

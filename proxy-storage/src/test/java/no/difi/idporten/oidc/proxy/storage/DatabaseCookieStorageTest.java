@@ -17,8 +17,6 @@ public class DatabaseCookieStorageTest {
 
     private int maxExpiry = 120;
 
-    private int security2 = 2;
-
     private int security3 = 3;
 
     private int security4 = 4;

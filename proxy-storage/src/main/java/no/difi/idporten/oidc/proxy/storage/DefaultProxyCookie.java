@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.storage;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -38,6 +39,8 @@ public class DefaultProxyCookie implements ProxyCookie {
      */
     public DefaultProxyCookie(String uuid, String name, String host, String idp, int security,
                               int touchPeriod, int maxExpiry, Map<String, String> userData) {
+        // Remove final from touchPeriod, maxExpiry and created to be able to do this instead?
+        // new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, new Date(), new Date());
         this.uuid = uuid;
         this.name = name;
         this.host = host;
@@ -89,7 +92,7 @@ public class DefaultProxyCookie implements ProxyCookie {
     public boolean isValid() {
         Date now = new Date();
         Date expiry = new Date(lastUpdated.getTime() + touchPeriod * MINUTE);
-        Date maxExpiry = new Date(created.getTime() + getMaxExpiry() * MINUTE);
+        Date maxExpiry = new Date(created.getTime() + this.maxExpiry * MINUTE);
         return expiry.after(now) && maxExpiry.after(now);
     }
 
@@ -133,7 +136,9 @@ public class DefaultProxyCookie implements ProxyCookie {
         return created;
     }
 
-
+    public void setUserData(Map<String, String> userData) {
+        this.userData = userData;
+    }
 
     public Date getLastUpdated() {
         return lastUpdated;
