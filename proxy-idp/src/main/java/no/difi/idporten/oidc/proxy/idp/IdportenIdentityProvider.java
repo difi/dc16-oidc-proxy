@@ -109,7 +109,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             JsonObject jsonResponse;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
-                return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
+                return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()), jsonResponse.get("access_token").getAsString());
             } catch (IOException exc) {
                 throw new IdentityProviderException(exc.getMessage(), exc);
             }
