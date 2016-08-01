@@ -66,7 +66,6 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public List<String> getPreferredIdps() {
-        System.err.println("DefaultSecurityConfig.getPreferredIdps(): "+HOST.getPreferredIdps());
         return HOST.getPreferredIdps();
     }
 
@@ -75,8 +74,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         return PATH.getIdentityProvider();
     }
 
-    private void setPreferredIdpData(IdpConfigProvider idpConfigProvider){
-        System.err.println("\n\nDefaultSecurityConfig.getPreferredIdpData()");
+    private void setPreferredIdpData(IdpConfigProvider idpConfigProvider) {
         preferredIdpData = new ArrayList<>();
 
         if (IDP != null && !getIdp().equals("notConfigured")) {
@@ -93,7 +91,6 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public List<Map.Entry<String, String>> getPreferredIdpData() {
-        System.err.println("PREFIDP:"+preferredIdpData);
         return this.preferredIdpData;
     }
 
@@ -151,12 +148,13 @@ public class DefaultSecurityConfig implements SecurityConfig {
         return parseInt(PATH.getSecurity());
     }
 
-    public static int parseInt(String value){
+    public static int parseInt(String value) {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             System.err.println("NumberFormatException caught in DefaultSecurityConfig.parseInt() while parsing security string to int");
-        } return -1;
+        }
+        return -1;
     }
 
     @Override
@@ -173,7 +171,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public String getLogoutPostUri(){
+    public String getLogoutPostUri() {
         return HOST.getLogoutPostUri();
     }
 
@@ -193,12 +191,12 @@ public class DefaultSecurityConfig implements SecurityConfig {
     @Override
     public String toString() {
         return "DefaultSecurityConfig{" +
-                "hostname='" + hostname + '\'' +
-                ", path='" + path + '\'' +
-                ", PATH=" + PATH +
-                ", HOST=" + HOST +
-                ", IDP=" + IDP +
+                "hostname='" + hostname + "'" +
+                ", path='" + path + "'" +
+                ", PATH=" + PATH + "'" +
+                ", HOST=" + HOST + "'" +
+                ", IDP=" + IDP + "'" +
                 ", preferredIdpData=" + preferredIdpData +
-                '}';
+                "}";
     }
 }

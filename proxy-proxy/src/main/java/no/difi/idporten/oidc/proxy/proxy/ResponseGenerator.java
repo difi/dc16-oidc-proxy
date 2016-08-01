@@ -118,15 +118,16 @@ public class ResponseGenerator {
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                 "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-        response.headers().set(HttpHeaderNames.SET_COOKIE,
-                ServerCookieEncoder.STRICT.encode(proxyCookie.getName(), proxyCookie.getUuid()));
 
-        CookieHandler.insertCookieToResponse(
-                response,
-                proxyCookie.getName(),
-                proxyCookie.getUuid(),
-                securityConfig.getSalt(),
-                httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+        if (proxyCookie != null){
+
+            CookieHandler.insertCookieToResponse(
+                    response,
+                    proxyCookie.getName(),
+                    proxyCookie.getUuid(),
+                    securityConfig.getSalt(),
+                    httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+        }
 
 
         logger.debug(String.format("Created redirect response:\n%s", response));
