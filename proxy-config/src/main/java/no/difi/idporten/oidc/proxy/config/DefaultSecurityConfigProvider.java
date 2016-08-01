@@ -20,7 +20,6 @@ public class DefaultSecurityConfigProvider implements SecurityConfigProvider {
         this.idpConfigProvider = idpConfigProvider;
     }
 
-
     @Override
     public Optional<SecurityConfig> getConfig(String hostname, String path) {
         if (hostConfigProvider.getByHostname(hostname) == null) {

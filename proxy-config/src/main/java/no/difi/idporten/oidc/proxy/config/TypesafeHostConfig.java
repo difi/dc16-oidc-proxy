@@ -28,6 +28,8 @@ public class TypesafeHostConfig implements HostConfig {
 
     private List<PathConfig> paths;
 
+    private List<String> preferredIdps;
+
     private CookieConfig cookieConfig;
 
     private String salt;
@@ -48,6 +50,8 @@ public class TypesafeHostConfig implements HostConfig {
                 .stream()
                 .map(TypesafePathConfig::new)
                 .collect(Collectors.toList());
+
+        this.preferredIdps = hostConfig.getStringList("preferred_idps");
 
         this.cookieConfig = new TypesafeCookieConfig(hostConfig.withFallback(globalConfig).getConfig("cookie"));
 
@@ -111,5 +115,10 @@ public class TypesafeHostConfig implements HostConfig {
     @Override
     public String getLogoutPostUri() {
         return this.logoutPostUri;
+    }
+
+    @Override
+    public List<String> getPreferredIdps() {
+        return this.preferredIdps;
     }
 }
