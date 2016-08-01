@@ -134,7 +134,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         try {
             String responseContent = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
             jsonResponse = gson.fromJson(responseContent, JsonObject.class);
-            return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
+            return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()), jsonResponse.get("access_token").getAsString());
         } catch (Exception exc) {
             logger.error("Could not read response from external server.");
             logger.error("Likely the server tried to us an old (unvalid) code to retrieve user's data from provider");
