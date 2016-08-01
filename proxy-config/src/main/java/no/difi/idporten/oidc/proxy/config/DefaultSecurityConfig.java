@@ -6,15 +6,16 @@ import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
 
 import java.net.SocketAddress;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DefaultSecurityConfig implements SecurityConfig {
 
     private String hostname;
 
     private String path;
+
+    private List<Map.Entry<String, String>> preferredIdpData;
 
     private final PathConfig PATH;
 
@@ -28,6 +29,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.HOST = hostConfigProvider.getByHostname(hostname);
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
+        setPreferredIdpData(idpConfigProvider);
     }
 
     public Optional<IdentityProvider> createIdentityProvider() {
@@ -63,8 +65,36 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public List<String> getPreferredIdps() {
+        System.err.println("DefaultSecurityConfig.getPreferredIdps(): "+HOST.getPreferredIdps());
+        return HOST.getPreferredIdps();
+    }
+
+    @Override
     public String getIdp() {
         return PATH.getIdentityProvider();
+    }
+
+    private void setPreferredIdpData(IdpConfigProvider idpConfigProvider){
+        System.err.println("\n\nDefaultSecurityConfig.getPreferredIdpData()");
+        preferredIdpData = new ArrayList<>();
+
+        if (IDP != null && !getIdp().equals("notConfigured")) {
+            preferredIdpData.add(new AbstractMap.SimpleEntry<>(IDP.getIdentifier(), IDP.getPassAlongData()));
+        }
+
+        preferredIdpData.addAll(
+                getPreferredIdps()
+                        .stream()
+                        .filter(idp -> !idp.equals(getIdp()))
+                        .map(idp -> new AbstractMap.SimpleEntry<>(idp, idpConfigProvider.getByIdentifier(idp).getPassAlongData()))
+                        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<Map.Entry<String, String>> getPreferredIdpData() {
+        System.err.println("PREFIDP:"+preferredIdpData);
+        return this.preferredIdpData;
     }
 
     @Override
@@ -168,6 +198,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
                 ", PATH=" + PATH +
                 ", HOST=" + HOST +
                 ", IDP=" + IDP +
+                ", preferredIdpData=" + preferredIdpData +
                 '}';
     }
 }
