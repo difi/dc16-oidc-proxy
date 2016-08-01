@@ -89,7 +89,7 @@ host.hostname = {
 
 Identity provider:
 
-This is how a identity provider is configured
+This is how an identity provider is configured
 
 ```xml
 idp.identityprovidername = {
