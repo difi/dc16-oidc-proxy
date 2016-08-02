@@ -12,11 +12,13 @@ import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
 import no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -29,11 +31,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.net.URI;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static no.difi.idporten.oidc.proxy.proxy.util.Utils.*;
 
 
 public class IntegrationTestWithMockServer {
@@ -46,28 +49,6 @@ public class IntegrationTestWithMockServer {
 
     private static HttpClient notFollowHttpClient;
 
-    private static String specificPathWithGoogle = "/google/a/specific/path";
-
-    private static String unsecuredPath = "/unsecured";
-
-    private static String contentOfASpecificPath = "content of a specific path";
-
-    private static String contentOfAnUnsecuredPath = "content of an unsecured path";
-
-    private static String mockServerHostName = "www.mockhost.com";
-
-    private static String mockServerAddress = "http://localhost:8081";
-
-    private static String cookieName = "PROXYCOOKIE";
-
-    private static String googleApiPath = "/oauth2/v3/token";
-
-    private static String googleLoginPath = "/o/oauth2/auth";
-
-    private static String idportenApiPath = "/idporten-oidc-provider/token";
-
-    private static String idportenLoginPath = "/idporten-oidc-provider/authorize";
-
     private static String originalGoogleApiUrl;
 
     private static String originalGoogleLoginUrl;
@@ -76,14 +57,10 @@ public class IntegrationTestWithMockServer {
 
     private static String originalIdportenApiUrl;
 
+
     private Thread thread;
 
     private WireMockServer wireMockServer;
-
-    private static Map<String, String> getHeadersAsMap(Header[] headers) {
-        return Arrays.stream(headers)
-                .collect(Collectors.toMap(Header::getName, Header::getValue));
-    }
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -129,6 +106,7 @@ public class IntegrationTestWithMockServer {
                 "}";
 
         // Configuring what the mock server should respond to requests.
+        wireMockServer.resetRequests();
         configureFor(8081);
         stubFor(get(urlPathMatching("/idporten.*")) // using idporten idp
                 .willReturn(aResponse()
@@ -149,6 +127,11 @@ public class IntegrationTestWithMockServer {
                         .withStatus(HttpResponseStatus.OK.code())
                         .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
                         .withBody(googleApiResponseContent)));
+        stubFor(post(urlPathEqualTo(googleApiPath)).withRequestBody(matching(".*anInvalidCode.*")) // getting token but code is invalid
+                .willReturn(aResponse()
+                        .withStatus(HttpResponseStatus.BAD_REQUEST.code())
+                        .withHeader(HttpHeaderNames.CONTENT_TYPE.toString(), "application/json")
+                        .withBody("{}")));
         stubFor(get(urlPathMatching(idportenLoginPath)) // logging in with idporten
                 .willReturn(aResponse()
                         .withStatus(HttpResponseStatus.FOUND.code())
@@ -211,22 +194,22 @@ public class IntegrationTestWithMockServer {
     @Test
     public void testFollowRedirectHasSetCookie() throws Exception {
         logger.info("After logging in when requesting a secured resource, " +
-                "the response should have a 'Set-Cookie header'");
+                "the response should have a 'Set-Cookie' header. This is tested by letting the httpClient " +
+                "set the cookie if it's there and verify with WireMock.");
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         HttpResponse response = httpClient.execute(getRequest);
 
-        verify((getRequestedFor(urlMatching("/google"))));
+        verify((getRequestedFor(urlPathMatching("/google"))));
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
 
-        Assert.assertTrue(response.containsHeader(HttpHeaderNames.SET_COOKIE.toString()));
-        Header setCookieHeader = response.getFirstHeader(HttpHeaderNames.SET_COOKIE.toString());
-        String expectedCookieName = cookieName;
-        MatcherAssert.assertThat("Cookie value should match a hex string with dashes",
-                setCookieHeader.getValue(), RegexMatcher.matchesRegex(expectedCookieName + "=[0-9a-f\\-]+"));
+        httpClient.execute(getRequest);
+
+        verify((getRequestedFor(urlPathEqualTo("/google")).withCookie(cookieName, matching("[0-9a-f\\-]+"))));
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
 
     /**
@@ -281,38 +264,52 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testFollowRedirectHasOriginalPath() throws Exception {
+        String expectedEmailInResponse = "vikfand@gmail.com";
+        String expectedSubInResponse = "108182803704140665355";
+
         String url = BASEURL + specificPathWithGoogle;
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
-        HttpResponse response = notFollowHttpClient.execute(getRequest);
+        HttpResponse response = httpClient.execute(getRequest);
 
-        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_MOVED_TEMPORARILY);
-        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
-        String cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
-
-        getRequest = new HttpGet(BASEURL + "/google?code=aValidCode");
-        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
-
-        response = notFollowHttpClient.execute(getRequest);
-
-        headerMap = getHeadersAsMap(response.getAllHeaders());
-        cookiesString = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
-        getRequest = new HttpGet(BASEURL + headerMap.get(HttpHeaderNames.LOCATION.toString()));
-        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        getRequest.setHeader(HttpHeaderNames.COOKIE.toString(), cookiesString);
-
-        httpClient = HttpClientBuilder.create().build();
-        response = httpClient.execute(getRequest);
-
-        verify(getRequestedFor(urlPathEqualTo(specificPathWithGoogle)));
+        verify(1, getRequestedFor(urlPathEqualTo(specificPathWithGoogle))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInResponse))
+                .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInResponse))
+        );
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
 
         String responseContent = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         MatcherAssert.assertThat("The content of the response should be what the mock server serves for the specific path",
                 responseContent, Matchers.is(contentOfASpecificPath));
+    }
+
+    /**
+     * Tests that the 'Set-Cookie' header for a redirect cookie has '/' as its path, because that is what it needs
+     * to be to actually be set by the browser after being redirected.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testRedirectCookieHasRootAsPath() throws Exception {
+        String expectedRedirectCookieName = "redirectCookie";
+        String url = BASEURL + specificPathWithGoogle;
+        HttpGet getRequest = new HttpGet(url);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
+        MatcherAssert.assertThat("Response should contain a 'Set-Cookie header'",
+                headerMap.keySet(), Matchers.hasItem(HttpHeaderNames.SET_COOKIE.toString()));
+        String setCookieHeader = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
+        MatcherAssert.assertThat("The 'Set-Cookie' header should be for a redirect cookie",
+                setCookieHeader, Matchers.containsString(expectedRedirectCookieName));
+        System.out.println(setCookieHeader);
+        MatcherAssert.assertThat("The path for the cookie should be equal to '/'",
+                setCookieHeader, RegexMatcher.matchesRegex(".*[Pp]ath=/.*"));
     }
 
     /**
@@ -347,7 +344,7 @@ public class IntegrationTestWithMockServer {
         String totallyUnsecuredPathToUse = "/something/totally/unsecured/like/a/logo/or/something.svg";
         HttpGet getRequest = getRequestWithValidGoogleCookie(totallyUnsecuredPathToUse);
 
-        HttpResponse response = notFollowHttpClient.execute(getRequest);
+        notFollowHttpClient.execute(getRequest);
 
         verify(1, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse)));
         verify(0, getRequestedFor(urlPathEqualTo(totallyUnsecuredPathToUse))
@@ -357,6 +354,11 @@ public class IntegrationTestWithMockServer {
         );
     }
 
+    /**
+     * Should be redirected to login again if requesting a resource with higher security than the current one.
+     *
+     * @throws Exception
+     */
     @Test
     public void testRequestingResourceWithHigherSecurityThanCurrent() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/idporten");
@@ -364,7 +366,10 @@ public class IntegrationTestWithMockServer {
         HttpResponse redirectResponse = notFollowHttpClient.execute(getRequest);
 
         Assert.assertEquals(redirectResponse.getStatusLine().getStatusCode(), HttpResponseStatus.FOUND.code());
-        /*
+
+        getRequest = new HttpGet(BASEURL + "/idporten");
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
         HttpResponse finalResponse = httpClient.execute(getRequest);
 
         verify(1, getRequestedFor(urlPathEqualTo(idportenLoginPath)));
@@ -372,10 +377,14 @@ public class IntegrationTestWithMockServer {
         Assert.assertEquals(finalResponse.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
         String responseContent = IOUtils.toString(finalResponse.getEntity().getContent(), "UTF-8");
         Assert.assertEquals(responseContent, "du bruker idporten idp");
-        */
     }
 
-    @Test
+    /**
+     * Should insert Difi headers into request when requesting unsecured resource when logged in.
+     *
+     * @throws Exception
+     */
+    @Test(enabled = false) // TODO handle multiple IDPs
     public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
 
@@ -387,29 +396,118 @@ public class IntegrationTestWithMockServer {
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
                 .withHeader(RequestInterceptor.HEADERNAME + "sub", matching(".*"))
         );
-
     }
 
+    /**
+     * Logging out should delete the cookie stored in our system and make the client log in again when requesting
+     * something new later.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCanLogout() throws Exception {
+        HttpGet getRequest = getRequestWithValidGoogleCookie(logoutPath);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("Logging out should give a redirect response to a configured url",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+
+        getRequest.setURI(URI.create(BASEURL + "/google"));
+        response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("After logging out, the cookie in the request should not be valid anymore, and the" +
+                        "server should send a redirect to the login page for the IDP again.",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+        MatcherAssert.assertThat("Response should have a location header.",
+                getHeadersAsMap(response.getAllHeaders()).keySet(), Matchers.hasItem(HttpHeaderNames.LOCATION.toString()));
+        MatcherAssert.assertThat("Response should be redirected to the IDP login",
+                response.getFirstHeader(HttpHeaderNames.LOCATION.toString()).getValue(), Matchers.startsWith(mockServerAddress + googleLoginPath));
+    }
+
+    /**
+     * Should be able to handle many requests without crashing.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLoginManyTimes() throws Exception {
+        HttpGet getRequest = getRequestWithValidGoogleCookie("/path" + 0);
+        for (int i = 1; i < 20; i++) {
+            httpClient = HttpClientBuilder.create().build();
+            getRequest = getRequestWithValidGoogleCookie("/path" + i);
+        }
+        httpClient.execute(getRequest);
+    }
+
+    @Test
+    public void testRequestWithInvalidCodeShouldRedirectToLogin() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/google" + invalidCodeUrlSuffix);
+
+        HttpResponse response = notFollowHttpClient.execute(getRequest);
+
+        MatcherAssert.assertThat("Should be a redirect to login",
+                response.getStatusLine().getStatusCode(), Matchers.equalTo(HttpResponseStatus.FOUND.code()));
+        MatcherAssert.assertThat("Should have a location header",
+                getHeadersAsMap(response.getAllHeaders()).keySet(), Matchers.hasItem(HttpHeaderNames.LOCATION.toString()));
+        MatcherAssert.assertThat("Should have a redirect url to IDP login, this time without code.",
+                getHeadersAsMap(response.getAllHeaders()).get(HttpHeaderNames.LOCATION.toString()), Matchers.containsString(googleLoginPath));
+    }
+
+    @Test
+    public void testAccessTokenInRequestWhenConfiguredTrue() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/idporten");
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        httpClient.execute(getRequest);
+
+        verify(1, getRequestedFor(urlPathEqualTo("/idporten"))
+                .withHeader(RequestInterceptor.HEADERNAME + "access_token", matching(".*"))
+        );
+    }
+
+    @Test
+    public void testAccessTokenNotInRequestWhenConfiguredFalse() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/google");
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        httpClient.execute(getRequest);
+
+        verify(1, getRequestedFor(urlPathEqualTo("/google")));
+        verify(0, getRequestedFor(urlPathMatching(".*"))
+                .withHeader(RequestInterceptor.HEADERNAME + "access_token", matching(".*"))
+        );
+    }
+
+
+    /**
+     * Makes a request so that the next execution on that client has a valid Google cookie.
+     *
+     * @param path
+     * @return Request on the specified path with host header for the mock server.
+     * @throws Exception
+     */
     private static HttpGet getRequestWithValidGoogleCookie(String path) throws Exception {
+        CookieStore cookieStore = new BasicCookieStore();
+        httpClient = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        HttpResponse response = httpClient.execute(getRequest);
+        httpClient.execute(getRequest);
 
-        Map<String, String> headerMap = getHeadersAsMap(response.getAllHeaders());
+        List<Cookie> cookies = cookieStore.getCookies();
 
-        MatcherAssert.assertThat("Should have a valid cookie at this point",
-                headerMap.keySet().contains(HttpHeaderNames.SET_COOKIE.toString()));
-
-        String acquiredCookie = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
+        Cookie apacheCookie = cookies.stream()
+                .filter(cookie -> cookie.getName().equals(cookieName))
+                .findAny()
+                .orElseThrow(() -> new AssertionError("Should find a cookie"));
 
         getRequest = new HttpGet(BASEURL + path);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
-        getRequest.setHeader("Cookie", acquiredCookie);
+        getRequest.setHeader("Cookie", String.format("%s=%s", apacheCookie.getName(), apacheCookie.getValue()));
 
         return getRequest;
     }
-
 
     /**
      * Using reflection to change the urls of the GoogleIdentityProvider to use the mock server url instead.

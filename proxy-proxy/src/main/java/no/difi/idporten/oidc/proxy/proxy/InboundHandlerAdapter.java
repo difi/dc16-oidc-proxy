@@ -7,8 +7,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
-import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
+import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 String idpName = securityConfig.getIdp();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, securityConfig.getPreferredIdpData());
-                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+                Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
                 logger.debug("Preferred IDPs of request: {}"+securityConfig.getPreferredIdpData());
                 logger.debug("Has security config: {}", securityConfig);
@@ -89,7 +90,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             logger.info("User has valid cookie and has requested logout from a secured path ({})", proxyCookie);
                             cookieHandler.removeCookie(proxyCookie.getUuid());
                             logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
-                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie, httpRequest);
                             return;
                         }
 
@@ -110,30 +111,38 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     }
                     if (idpOptional.isPresent()) {
                         IdentityProvider idp = idpOptional.get();
+
                         logger.debug("Has identity provider: {}", idp);
 
                         // Checks if user tries to log out without valid cookie. Some browsers (i.e. Safari) send a GET request to
                         // the autocomplete'd URL in the browser, causing the server to delete the cookie before user accesses path
                         if (requestsLogout) {
                             logger.warn("User requested logout, but has no valid cookie (probably already deleted). Redirecting to logout-uri");
-                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie, httpRequest);
                             return;
                         }
 
 
                         if (redirectedFromIdp(path)) {
                             logger.debug("TypesafePathConfig contains code: {}", path);
+                            Map<String, String> userData;
+                            try {
+                                userData = idp.getToken(path).getUserData();
+                            } catch (IdentityProviderException exc) {
+                                // This is made to handle the case where the url contains an invalid code.
+                                logger.warn("Could not get token from {}", securityConfig.getIdp());
+                                logger.warn(exc.getMessage(), exc);
+                                responseGenerator.generateRedirectToIdentityProviderResponse(ctx, idp, securityConfig, trimmedPath, httpRequest);
+                                return;
+                            }
 
-                            Map<String, String> userData = idp.getToken(path).getUserData();
-
-                            // Host's config (falls back to default config if not present)
-                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry(); // in minutes
-                            int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();  // in minutes
+                            int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
+                            int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();
                             int security = securityConfig.getSecurity();
 
                             logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
-                            Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().get("User-Agent"));
+                            Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
                             if (validProxyCookieOptional.isPresent()) {
                                 proxyCookie = cookieHandler.generateIdpCookie(validProxyCookieOptional.get().getUuid(), userData, security, touchPeriod, maxExpiry);
@@ -155,7 +164,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             }
 
                         } else {
-                            responseGenerator.generateRedirectResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
+                            responseGenerator.generateRedirectToIdentityProviderResponse(ctx, idp, securityConfig, httpRequest.uri(), httpRequest);
                         }
                     } else {
                         responseGenerator.generateServerErrorResponse(ctx,
@@ -173,7 +182,7 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                             logger.info("User has valid cookie and has requested logout from an unsecured path ({})", proxyCookie);
                             cookieHandler.removeCookie(proxyCookie.getUuid());
                             logger.info("Cookie deleted. Redirecting user to {}", securityConfig.getLogoutRedirectUri());
-                            responseGenerator.generateLogoutResponse(ctx, securityConfig);
+                            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie, httpRequest);
                             return;
                         }
                     }
@@ -186,7 +195,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            e.printStackTrace();
             responseGenerator.generateServerErrorResponse(
                     ctx,
                     String.format("An exception was caught: %s\nPlease check if your configuration is valid", e));

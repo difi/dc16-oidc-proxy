@@ -21,9 +21,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpMessage>
     }
 
     /**
-     *
-     * @param ctx
-     * @param msg Either a HttpRequest, HttpContent or HttpLastContent object.
+     * @param ctx:
+     * @param msg: Either a HttpRequest, HttpContent or HttpLastContent object.
      * @throws Exception
      */
     @Override

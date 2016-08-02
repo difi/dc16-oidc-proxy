@@ -21,10 +21,6 @@ public class NettyHttpListener implements Runnable {
 
     private int port = 8080;
 
-    private int bossGroupSize = 1;
-
-    private int maxConnectionsQueued = 64;
-
     private EventLoopGroup commonEventLoopGroup;
 
     private InboundInitializer inboundInitializer;
@@ -44,6 +40,7 @@ public class NettyHttpListener implements Runnable {
     public void run() {
         logger.info("Starting the server...");
 
+        int bossGroupSize = 1;
         commonEventLoopGroup = new NioEventLoopGroup(bossGroupSize);
         try {
             ServerBootstrap b = new ServerBootstrap();
@@ -56,6 +53,7 @@ public class NettyHttpListener implements Runnable {
             b.option(ChannelOption.TCP_NODELAY, true);
             b.childOption(ChannelOption.TCP_NODELAY, true);
 
+            int maxConnectionsQueued = 64;
             b.option(ChannelOption.SO_BACKLOG, maxConnectionsQueued);
 
             b.option(ChannelOption.SO_KEEPALIVE, true);
@@ -81,6 +79,7 @@ public class NettyHttpListener implements Runnable {
         }
     }
 
+    @Deprecated
     public void destroy() {
         commonEventLoopGroup.shutdownGracefully();
     }

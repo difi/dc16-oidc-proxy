@@ -6,11 +6,14 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +33,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
+    private HttpClient httpClient;
+
     private final SecurityConfig securityConfig;
 
     private static String APIURL = "https://www.googleapis.com/oauth2/v3/token";
@@ -41,6 +46,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     private List<String> tokenExtraParameters;
 
     public GoogleIdentityProvider(SecurityConfig securityConfig) {
+        this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
 
         redirectExtraParameters = new LinkedList<>();
@@ -119,13 +125,16 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         logger.debug("Post parameters: {}", params);
         logger.debug("Got response back:\n{}", httpResponse);
 
+        if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            throw new IdentityProviderException("Bad response from IdentityProvider API");
+        }
 
         JsonObject jsonResponse;
 
         try {
             String responseContent = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
             jsonResponse = gson.fromJson(responseContent, JsonObject.class);
-            return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()));
+            return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()), jsonResponse.get("access_token").getAsString());
         } catch (Exception exc) {
             logger.error("Could not read response from external server.");
             logger.error("Likely the server tried to us an old (unvalid) code to retrieve user's data from provider");

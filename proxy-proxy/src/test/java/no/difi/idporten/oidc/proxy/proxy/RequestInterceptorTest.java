@@ -5,6 +5,7 @@ import com.google.inject.Injector;
 import io.netty.handler.codec.http.*;
 import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
+import no.difi.idporten.oidc.proxy.config.DefaultSecurityConfig;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -46,7 +47,7 @@ public class RequestInterceptorTest {
     public void insertHeaderToRequest() {
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, host + path);
 
-        RequestInterceptor.insertUserDataToHeader(httpRequest, userData);
+        RequestInterceptor.insertUserDataToHeader(httpRequest, userData, provider.getConfig(host, path).get());
 
         HttpHeaders headers = httpRequest.headers();
 

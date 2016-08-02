@@ -1,13 +1,12 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import no.difi.idporten.oidc.proxy.model.CookieConfig;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,10 +46,13 @@ public class RedirectCookieHandler {
 
     public static Optional<String> findRedirectCookiePath(HttpRequest httpRequest, String salt, String userAgent) {
         Optional<Cookie> nettyCookieOptional = CookieHandler.getCookieFromRequest(httpRequest, redirectCookieName);
+
         if (nettyCookieOptional.isPresent()) {
             String redirectCookieValue = nettyCookieOptional.get().value();
-            logger.debug("Found redirect cookie: {}", redirectCookieValue);
             String path = redirectCookieValue.substring(redirectCookieValue.indexOf('/'));
+
+            logger.debug("Found redirect cookie: {}", redirectCookieValue);
+
             if (hashToPathMap.containsKey(redirectCookieValue) && checkEncodedRedirectCookie(redirectCookieValue, path, salt, userAgent)) {
                 String result = hashToPathMap.get(redirectCookieValue);
                 hashToPathMap.remove(redirectCookieValue);
@@ -66,5 +68,16 @@ public class RedirectCookieHandler {
     private static boolean checkEncodedRedirectCookie(String hash, String path, String salt, String userAgent) {
         String encoded = CookieHandler.encodeValue(path, salt, userAgent) + path;
         return hash.equals(encoded);
+    }
+
+    public static void deleteRedirectCookieFromBrowser(HttpRequest httpRequest, HttpResponse httpResponse, SecurityConfig securityConfig, String value) {
+        String cookieValue = CookieHandler.encodeValue(value, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT)) + value;
+
+        Cookie cookie = new DefaultCookie(redirectCookieName, cookieValue);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+
+        httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+
     }
 }

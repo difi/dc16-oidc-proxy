@@ -1,9 +1,12 @@
 package no.difi.idporten.oidc.proxy.storage;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
@@ -21,6 +24,8 @@ public class CookieDatabase {
     private static Logger logger = LoggerFactory.getLogger(CookieDatabase.class);
 
     private static final int MINUTE = 60 * 1000;
+
+    private static Gson gson = new Gson();
 
     private Statement statement;
 
@@ -87,7 +92,7 @@ public class CookieDatabase {
     public void insertCookie(ProxyCookie cookie) {
         String userData;
         if (cookie.getUserData() == null || cookie.getUserData().toString().equals("{}")) userData = null;
-        else userData = cookie.getUserData().toString();
+        else userData = mapToString(cookie.getUserData());
         String query = String.format("INSERT INTO PUBLIC.cookie (uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated) " +
                         "VALUES ('%s','%s','%s','%s', %s, %s, %s, '%s', %s, %s);", cookie.getUuid(), cookie.getName(), cookie.getHost(),
                 cookie.getIdp(), cookie.getSecurity(), cookie.getTouchPeriod(), cookie.getMaxExpiry(),
@@ -101,6 +106,20 @@ public class CookieDatabase {
     }
 
     /**
+     * Makes a string that can be inserted into the database and parsed later of a UserData map.
+     *
+     * @param userData
+     * @return
+     */
+    public static String mapToString(Map<String, String> userData) {
+        if (userData == null) {
+            return null;
+        } else {
+            return gson.toJson(userData);
+        }
+    }
+
+    /**
      * DefaultUserData is current saved in the database as VARCHAR(400) with value HashMaps.toString().
      * This method is used for converting the String back til a HashMap.
      *
@@ -108,16 +127,9 @@ public class CookieDatabase {
      * @return HashMap
      */
     public static Map<String, String> stringToMap(String str) {
-        // If HashMap is empty (only containing "{}"), the object should be null
-        if (str == null || str.equals("null") || str.equals("{}")) return null;
-        // Removing curly braces, spaces and escape characters
-        String keyValues = str.replaceAll("[\\s\\{\\}]+", "");
-        HashMap<String, String> hashMap = new HashMap<>();
-        for (String pair : keyValues.split(",")) {
-            String[] elem = pair.split("=");
-            hashMap.put(elem[0], elem[1]);
-        }
-        return hashMap;
+        Type collectionType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        return gson.fromJson(str, collectionType);
     }
 
     /**
@@ -147,8 +159,8 @@ public class CookieDatabase {
                 cookie.add(new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             logger.warn("SQLException caught in CookieDatabase.findCookie(): {}", e.getMessage(), e);
+            e.printStackTrace();
         }
         return Optional.ofNullable(cookie);
     }
@@ -159,7 +171,7 @@ public class CookieDatabase {
             statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid = '" + uuid + "';");
         } catch (SQLException e) {
             logger.warn("SQLException caught in CookieDatabase.removeCookie()");
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -171,7 +183,6 @@ public class CookieDatabase {
      * @return HashMap
      */
     public Map<String, ProxyCookie> getAllCookies() {
-        System.out.println("CookieDatabase.getAllCookies()");
         HashMap<String, ProxyCookie> cookies = new HashMap<>();
         try {
             resultSet = statement.executeQuery("SELECT * FROM PUBLIC.cookie;");
@@ -191,8 +202,8 @@ public class CookieDatabase {
                 cookies.put(uuid, new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, created, lastUpdated));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             logger.warn("SQLException caught in CookieDatabase.getAllCookies(): {}", e.getMessage(), e);
+            e.printStackTrace();
         }
         return cookies;
     }
@@ -211,8 +222,8 @@ public class CookieDatabase {
             statement.executeUpdate("DELETE FROM PUBLIC.cookie WHERE uuid IN (" + expiredEntries + ");");
             logger.info("DB: Expired cookies removed from database");
         } catch (SQLException e) {
-            e.printStackTrace();
             logger.warn("SQLException caught in CookieDatabase.removeExpiredCookies(): {}", e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 

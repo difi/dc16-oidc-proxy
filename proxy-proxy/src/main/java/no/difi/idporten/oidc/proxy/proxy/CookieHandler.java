@@ -5,8 +5,9 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.cookie.*;
 import no.difi.idporten.oidc.proxy.api.CookieStorage;
-import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.CookieConfig;
+import no.difi.idporten.oidc.proxy.model.ProxyCookie;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +70,7 @@ public class CookieHandler {
             if (cookieOptional.isPresent()) {
                 Optional<ProxyCookie> pc;
                 for (int i = 0; i < cookieOptional.get().size(); i++) {
+
                     String uuid = cookieOptional.get().get(i).substring(64);
                     logger.debug("Searching database for cookie (UUID: {})", uuid);
                     pc = cookieStorage.findCookie(uuid, host, preferredIdps);
@@ -94,33 +96,22 @@ public class CookieHandler {
      * the cookie, into the response's header. The response is sent to the client and the cookie is
      * stored int he clients browser.
      *
-     * @param httpResponse:
-     * @param cookieName:
+     * @param httpResponse: The response the cookie is inserted into.
+     * @param cookieName:   The name of the cookie.
+     * @param value:        The value of the cookie.
+     * @param salt:         The salt used to hash the cookie.
+     * @param userAgent:    The useragent from the request header.
      */
-    public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String uuid) {
-        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, uuid));
-    }
 
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
         String cookieValue = encodeValue(value, salt, userAgent) + value;
+        //logger.info("Inserting cookie in response with value: {}", cookieName);
+        //httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
         Cookie cookieToInsert = new DefaultCookie(cookieName, cookieValue);
         cookieToInsert.setPath("/");
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieToInsert));
-        /*logger.info("Inserting cookie in response with value: {}", cookieName);
-        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
-       */
     }
 
-    /**
-     * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
-     * object or an empty optional.
-     *
-     * @param httpRequest:
-     * @return
-     */
-    private Optional<Cookie> getCookieFromRequest(HttpRequest httpRequest) {
-        return getCookieFromRequest(httpRequest, cookieName);
-    }
 
     /**
      * Looks for a cookie with the name of this CookieHandler's cookieName in a request and returns a Netty cookie
@@ -169,6 +160,16 @@ public class CookieHandler {
         return Optional.empty();
     }
 
+
+    /**
+     * Encodes the value of the cookie given the value, salt and useragent of the requesting client.
+     * The salt is collected from the configuration file
+     *
+     * @param value:
+     * @param salt:
+     * @param userAgent:
+     * @return Returns the encoded value
+     */
     public static String encodeValue(String value, String salt, String userAgent) {
         String stringToBeHashed = value + userAgent;
         try {
@@ -179,15 +180,15 @@ public class CookieHandler {
 
             StringBuilder stringBuilder = new StringBuilder();
 
-            for (int i = 0; i < bytes.length; i++) {
-                stringBuilder.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            for (byte aByte : bytes) {
+                stringBuilder.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
 
             }
             logger.debug("Encoded value ({}) to hash ({})", stringToBeHashed, stringBuilder.toString());
             return stringBuilder.toString();
 
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
         return null;
 
@@ -219,8 +220,35 @@ public class CookieHandler {
         httpRequest.headers().set(HttpHeaderNames.COOKIE, ClientCookieEncoder.STRICT.encode(cookieName, cookieValue));
     }
 
+
+    /**
+     * Removes the cookie with the given uuid from the database.
+     *
+     * @param uuid:
+     */
     public void removeCookie(String uuid) {
         cookieStorage.removeCookie(uuid);
+    }
+
+
+    /**
+     * Deletes a ProxyCookie from the browser of the requesting client.
+     *
+     * @param securityConfig:
+     * @param proxyCookie:
+     * @param httpRequest:
+     * @param httpResponse:
+     */
+    public static void deleteProxyCookieFromBrowser(SecurityConfig securityConfig, ProxyCookie proxyCookie, HttpRequest httpRequest, HttpResponse httpResponse) {
+        String cookieName = proxyCookie.getName();
+        String value = proxyCookie.getUuid();
+        String cookieValue = encodeValue(value, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT)) + value;
+
+        Cookie cookie = new DefaultCookie(cookieName, cookieValue);
+        cookie.setMaxAge(0);
+
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+
     }
 
 }

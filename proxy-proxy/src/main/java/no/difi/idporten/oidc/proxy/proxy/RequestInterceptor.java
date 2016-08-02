@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpRequest;
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +22,14 @@ public class RequestInterceptor {
      * @param httpRequest:
      * @param userData:
      */
-    public static void insertUserDataToHeader(HttpRequest httpRequest, Map<String, String> userData) {
-        userData.entrySet().stream().forEach(userDataEntry -> {
+    public static void insertUserDataToHeader(HttpRequest httpRequest, Map<String, String> userData, SecurityConfig securityConfig) {
+        userData.entrySet()
+                .stream()
+                .filter(entry -> securityConfig.getUserDataNames().contains(entry.getKey()))
+                .forEach(userDataEntry -> {
             httpRequest.headers().add(HEADERNAME + userDataEntry.getKey(), userDataEntry.getValue());
         });
         logger.debug("Inserted header to request:\n{}", httpRequest);
     }
+
 }
