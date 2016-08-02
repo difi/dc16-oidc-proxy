@@ -374,7 +374,7 @@ public class IntegrationTestWithMockServer {
      * @throws Exception
      */
     @Test
-    public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
+    public void testRequestingUnsecuredPathWhenLoggedInWithValidCookie() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
 
         HttpResponse response = notFollowHttpClient.execute(getRequest);
@@ -509,7 +509,7 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnSecuredPath() throws Exception {
-        String googleIdentifierHeaderSuffix = "googleId";
+        String expectedHeaderName = "X-additional-data/google-email";
 
         CookieStore cookieStore = new BasicCookieStore();
         HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
@@ -528,7 +528,7 @@ public class IntegrationTestWithMockServer {
 
         verify(1, getRequestedFor(urlPathEqualTo(pathWithIdportenPreferred))
                 .withHeader(RequestInterceptor.HEADERNAME + "pid", matching("\\d{11}"))
-                .withHeader(RequestInterceptor.HEADERNAME + googleIdentifierHeaderSuffix, matching(emailInGoogleToken))
+                .withHeader(expectedHeaderName, matching(emailInGoogleToken))
         );
     }
 
@@ -540,7 +540,7 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnUnsecuredPath() throws Exception {
-        String googleIdentifierHeaderSuffix = "-googleId";
+        String expectedHeaderName = "X-additional-data/google-email";
 
         CookieStore cookieStore = new BasicCookieStore();
         HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
@@ -559,10 +559,9 @@ public class IntegrationTestWithMockServer {
 
         verify(1, getRequestedFor(urlPathEqualTo(unsecuredPathWithIdportenPreferred))
                 .withHeader(RequestInterceptor.HEADERNAME + "pid", matching("\\d{11}"))
-                .withHeader(RequestInterceptor.HEADERNAME + googleIdentifierHeaderSuffix, matching(emailInGoogleToken))
+                .withHeader(expectedHeaderName, matching(emailInGoogleToken))
         );
     }
-
 
     /**
      * Makes a request so that the next execution on that client has a valid Google cookie.
