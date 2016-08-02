@@ -13,9 +13,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CookieHandlerTest {
 
@@ -37,17 +35,22 @@ public class CookieHandlerTest {
 
     private CookieHandler cookieHandler;
 
+    List<Map.Entry<String, String>> prefIdpsGoogleTwitterIdporten= new ArrayList<>(Arrays.asList(
+            new AbstractMap.SimpleEntry<>("google", "email"),
+            new AbstractMap.SimpleEntry<>("twitter", "username"),
+            new AbstractMap.SimpleEntry<>("idporten", "pid")));
+
     @BeforeTest
     public void injectIdpConfigProvider() {
         this.cookieConfig = new TypesafeCookieConfig(ConfigFactory.load());
 
         this.host = "www.nav.no";
         this.path = "/trydgesoknad";
-        this.idp = "google";
+        this.idp = prefIdpsGoogleTwitterIdporten.get(0).getKey();
         this.security = 3;
         this.cookieName = cookieConfig.getName();
         this.uuid = "aValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLongaValidUuidMustBe64BytesLong";
-        this.cookieHandler = new CookieHandler(cookieConfig, host, idp);
+        this.cookieHandler = new CookieHandler(cookieConfig, host, prefIdpsGoogleTwitterIdporten);
         this.salt = "salt";
     }
 
@@ -65,6 +68,7 @@ public class CookieHandlerTest {
 /*        Assert.assertTrue(nettyCookies.stream()
                 .filter(cookie -> cookie.name().equals(cookieName))
                 .findAny().get().value().equals(cookieValue));*/
+
     }
 
     @Test
@@ -114,6 +118,5 @@ public class CookieHandlerTest {
         // Cookie storage is empty, so it should not get a valid cookie here
         Assert.assertFalse(cookieHandler.getValidProxyCookie(httpRequest, "salt", "MUSTBEFIXED").isPresent());
     }
-
 
 }
