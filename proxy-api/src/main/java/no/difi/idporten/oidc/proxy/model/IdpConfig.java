@@ -5,6 +5,7 @@ import java.util.Optional;
 
 public interface IdpConfig {
 
+    String getPublicSignature();
 
     String getIdentifier();
 

@@ -88,6 +88,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public String getPublicSignature() {
+        return IDP.getPublicSignature();
+    }
+
+    @Override
     public List<String> getUserDataNames() {
         if (IDP != null) {
             return IDP.getUserDataNames();

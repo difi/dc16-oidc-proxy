@@ -40,6 +40,8 @@ public interface SecurityConfig {
 
     String getSalt();
 
+    String getPublicSignature();
+
     List<String> getUserDataNames();
 
     List<String> getUnsecuredPaths();

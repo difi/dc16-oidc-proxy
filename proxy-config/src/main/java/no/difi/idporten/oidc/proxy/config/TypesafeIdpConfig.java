@@ -26,9 +26,13 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     private String redirect_uri;
 
+    private String publicSignature;
+
     private List<String> user_data_names;
 
     private Map<String, String> parameters;
+
+
 
     public TypesafeIdpConfig(String identifier, Config idpConfig) {
         this.identifier = identifier;
@@ -38,10 +42,15 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.scope = idpConfig.getString("scope");
         this.redirect_uri = idpConfig.getString("redirect_uri");
         this.user_data_names = idpConfig.getStringList("user_data_name");
+        this.publicSignature = idpConfig.getString("public_signature");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
 
         logger.debug("Created IdpConfig:\n{}", this);
+    }
+    @Override
+    public String getPublicSignature() {
+        return publicSignature;
     }
 
     @Override
