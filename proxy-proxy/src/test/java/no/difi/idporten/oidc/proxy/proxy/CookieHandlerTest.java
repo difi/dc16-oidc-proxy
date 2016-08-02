@@ -2,6 +2,7 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import com.typesafe.config.ConfigFactory;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.cookie.ClientCookieDecoder;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
@@ -13,9 +14,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CookieHandlerTest {
 
@@ -67,8 +66,10 @@ public class CookieHandlerTest {
         HttpHeaders headers = httpResponse.headers();
         Assert.assertFalse(headers.contains(HttpHeaderNames.SET_COOKIE));
         CookieHandler.insertCookieToResponse(httpResponse, cookieName, cookieValue, salt, useragent);
-        Set<Cookie> nettyCookies = ServerCookieDecoder.STRICT.decode(headers.getAsString(HttpHeaderNames.SET_COOKIE));
-        Assert.assertEquals(nettyCookies.size(), 1);
+        Cookie nettyCookie = ClientCookieDecoder.STRICT.decode(headers.getAsString(HttpHeaderNames.SET_COOKIE));
+        Assert.assertEquals(nettyCookie.name(), cookieName);
+        Assert.assertEquals(nettyCookie.path(), "/");
+
 /*        Assert.assertTrue(nettyCookies.stream()
                 .filter(cookie -> cookie.name().equals(cookieName))
                 .findAny().get().value().equals(cookieValue));*/

@@ -155,10 +155,10 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             if (originalPathOptional.isPresent() && validProxyCookieOptional.isPresent()) {
                                 logger.debug("Redirecting user to original path of request, generated cookie is already in user's browser");
-                                responseGenerator.generateRedirectResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), null);
+                                responseGenerator.generateRedirectBackToOriginalPathResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), null);
                             } else if (originalPathOptional.isPresent() ) {
                                 logger.debug("Redirecting user to original path of request and inserting cookie to user's browser");
-                                responseGenerator.generateRedirectResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
+                                responseGenerator.generateRedirectBackToOriginalPathResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
                             } else {
                                 outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                             }

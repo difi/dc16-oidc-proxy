@@ -185,6 +185,7 @@ public class ResponseGenerator {
         int so_buf = 1048576;
 
         if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
+            System.err.println("UserData inserted to response: "+proxyCookie.getUserData());
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
         }
 
