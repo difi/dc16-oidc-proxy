@@ -384,7 +384,7 @@ public class IntegrationTestWithMockServer {
      *
      * @throws Exception
      */
-    @Test
+    @Test(enabled = false) // TODO handle multiple IDPs
     public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
 
@@ -452,6 +452,31 @@ public class IntegrationTestWithMockServer {
                 getHeadersAsMap(response.getAllHeaders()).keySet(), Matchers.hasItem(HttpHeaderNames.LOCATION.toString()));
         MatcherAssert.assertThat("Should have a redirect url to IDP login, this time without code.",
                 getHeadersAsMap(response.getAllHeaders()).get(HttpHeaderNames.LOCATION.toString()), Matchers.containsString(googleLoginPath));
+    }
+
+    @Test
+    public void testAccessTokenInRequestWhenConfiguredTrue() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/idporten");
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        httpClient.execute(getRequest);
+
+        verify(1, getRequestedFor(urlPathEqualTo("/idporten"))
+                .withHeader(RequestInterceptor.HEADERNAME + "access_token", matching(".*"))
+        );
+    }
+
+    @Test
+    public void testAccessTokenNotInRequestWhenConfiguredFalse() throws Exception {
+        HttpGet getRequest = new HttpGet(BASEURL + "/google");
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        httpClient.execute(getRequest);
+
+        verify(1, getRequestedFor(urlPathEqualTo("/google")));
+        verify(0, getRequestedFor(urlPathMatching(".*"))
+                .withHeader(RequestInterceptor.HEADERNAME + "access_token", matching(".*"))
+        );
     }
 
 
