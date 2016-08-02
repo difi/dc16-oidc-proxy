@@ -384,7 +384,7 @@ public class IntegrationTestWithMockServer {
      *
      * @throws Exception
      */
-    @Test(enabled = false) // TODO handle multiple IDPs
+    @Test
     public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
 

@@ -23,6 +23,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private final IdpConfig IDP;
 
+    private List<String> defaultUserDataNames;
+
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
         this.hostname = hostname;
         this.path = path;
@@ -30,6 +32,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
         setPreferredIdpData(idpConfigProvider);
+        setDefaultUserDataNames(idpConfigProvider);
     }
 
     public Optional<IdentityProvider> createIdentityProvider() {
@@ -89,6 +92,13 @@ public class DefaultSecurityConfig implements SecurityConfig {
                         .collect(Collectors.toList()));
     }
 
+    private void setDefaultUserDataNames(IdpConfigProvider idpConfigProvider) {
+        this.defaultUserDataNames = new LinkedList<>();
+        HOST.getPreferredIdps().stream()
+                .forEach(idpId -> defaultUserDataNames
+                        .addAll(idpConfigProvider.getByIdentifier(idpId).getUserDataNames()));
+    }
+
     @Override
     public List<Map.Entry<String, String>> getPreferredIdpData() {
         return this.preferredIdpData;
@@ -116,12 +126,13 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public List<String> getUserDataNames() {
-        if (IDP != null) {
-            return IDP.getUserDataNames();
+        if (IDP == null) {
+            return defaultUserDataNames;
         } else {
-            return new LinkedList<>();
+            return IDP.getUserDataNames();
         }
     }
+
 
     @Override
     public List<String> getUnsecuredPaths() {
