@@ -17,6 +17,7 @@ public class RequestInterceptor {
     private static Logger logger = LoggerFactory.getLogger(RequestInterceptor.class);
 
     public static final String HEADERNAME = "X-DifiProxy-";
+
     public static final String ADDITIONAL_DATA_HEADERNAME = "X-additional-data";
 
     /**

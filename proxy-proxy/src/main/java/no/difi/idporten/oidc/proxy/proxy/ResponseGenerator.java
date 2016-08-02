@@ -26,7 +26,6 @@ public class ResponseGenerator {
     /**
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
-     *
      */
     protected void generateRedirectToIdentityProviderResponse(
             ChannelHandlerContext ctx,
@@ -93,6 +92,7 @@ public class ResponseGenerator {
 
     /**
      * Generates a response when theres a problem with the server.
+     *
      * @param ctx:
      * @param message:
      */
@@ -102,7 +102,6 @@ public class ResponseGenerator {
     }
 
     /**
-     *
      * @param ctx:
      * @param message:
      */
@@ -141,7 +140,7 @@ public class ResponseGenerator {
                     securityConfig.getSalt(),
                     httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
         }
-            RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
+        RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
 
 
         logger.debug(String.format("Created redirect response:\n%s", response));
@@ -186,7 +185,7 @@ public class ResponseGenerator {
 
         if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
-            logger.debug("UserData inserted to response: "+proxyCookie.getUserData());
+            logger.debug("UserData inserted to response: " + proxyCookie.getUserData());
         }
 
         Channel outboundChannel;
