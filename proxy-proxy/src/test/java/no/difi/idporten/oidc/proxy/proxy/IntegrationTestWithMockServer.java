@@ -17,6 +17,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -561,6 +562,27 @@ public class IntegrationTestWithMockServer {
                 .withHeader(RequestInterceptor.HEADERNAME + "pid", matching("\\d{11}"))
                 .withHeader(expectedHeaderName, matching(emailInGoogleToken))
         );
+    }
+
+    @Test
+    public void testPostRequestOnUnsecuredPath() throws Exception {
+        HttpPost postRequest = new HttpPost(BASEURL + "/unsecured");
+        postRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        httpClient.execute(postRequest);
+
+        verify(1, postRequestedFor(urlPathEqualTo("/unsecured")));
+    }
+
+    @Test(enabled = false) // What to expect here???
+    public void testPostRequestOnSecuredPath() throws Exception {
+        String actualPath = "/idporten/tralala";
+
+        HttpPost postRequest = new HttpPost(BASEURL + actualPath);
+        postRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+        httpClient.execute(postRequest);
+
+        verify(1, getRequestedFor(urlPathEqualTo(actualPath)));
     }
 
     /**
