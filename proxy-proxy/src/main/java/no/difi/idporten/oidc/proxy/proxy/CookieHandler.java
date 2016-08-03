@@ -248,7 +248,12 @@ public class CookieHandler {
         cookie.setMaxAge(0);
 
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+    }
 
+    public static void deleteCookieFromBrowser(String cookieName, HttpResponse httpResponse) {
+        Cookie nettyCookie = new DefaultCookie(cookieName, "");
+        nettyCookie.setMaxAge(0);
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(nettyCookie));
     }
 
 }

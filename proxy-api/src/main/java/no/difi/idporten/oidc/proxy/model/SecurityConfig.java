@@ -49,6 +49,7 @@ public interface SecurityConfig {
 
     List<String> getUnsecuredPaths();
 
+    boolean isLogoutPath();
 
     boolean isSecured();
 

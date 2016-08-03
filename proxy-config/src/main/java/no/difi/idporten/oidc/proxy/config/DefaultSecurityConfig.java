@@ -200,6 +200,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public boolean isLogoutPath() {
+        return this.path.endsWith(getLogoutPostUri());
+    }
+
+    @Override
     public String toString() {
         return "DefaultSecurityConfig{" +
                 "hostname='" + hostname + "'" +

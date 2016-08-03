@@ -70,14 +70,11 @@ public class RedirectCookieHandler {
         return hash.equals(encoded);
     }
 
-    public static void deleteRedirectCookieFromBrowser(HttpRequest httpRequest, HttpResponse httpResponse, SecurityConfig securityConfig, String value) {
-        String cookieValue = CookieHandler.encodeValue(value, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT)) + value;
-
-        Cookie cookie = new DefaultCookie(redirectCookieName, cookieValue);
+    public static void deleteRedirectCookieFromBrowser(HttpResponse httpResponse) {
+        Cookie cookie = new DefaultCookie(redirectCookieName, "");
         cookie.setMaxAge(0);
         cookie.setPath("/");
 
         httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
-
     }
 }
