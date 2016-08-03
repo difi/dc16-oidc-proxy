@@ -21,6 +21,8 @@ public interface IdpConfig {
 
     String getClientId();
 
+    String getPassAlongData();
+
     List<String> getUserDataNames();
 
     Optional<String> getParameter(String key);

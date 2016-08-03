@@ -96,7 +96,7 @@ public class DefaultSecurityConfigProviderTest {
     @Test
     public void testGetExistingParameter() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getParameter("security"));
-        Assert.assertEquals(securityConfigWithIdpPathChecker.getParameter("security"), "3");
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getParameter("security"), "3"); // Gets a string when retrieving value directly
     }
 
     @Test
@@ -107,7 +107,7 @@ public class DefaultSecurityConfigProviderTest {
     @Test
     public void testGetSecurity() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getSecurity());
-        Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), "3");
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), 3);
     }
 
     @Test
@@ -137,13 +137,13 @@ public class DefaultSecurityConfigProviderTest {
     @Test
     public void testGetSecurityFromPath() {
         Assert.assertNotNull(securityConfigWithPathPathChecker.getSecurity());
-        Assert.assertEquals(securityConfigWithPathPathChecker.getSecurity(), "2");
+        Assert.assertEquals(securityConfigWithPathPathChecker.getSecurity(), 2);
     }
 
     @Test
     public void testGetSecurityFromIdp() {
         Assert.assertNotNull(securityConfigWithIdpPathChecker.getSecurity());
-        Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), "3");
+        Assert.assertEquals(securityConfigWithIdpPathChecker.getSecurity(), 3);
     }
 
     @Test

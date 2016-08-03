@@ -26,25 +26,34 @@ public class CookieHandler {
 
     private final String host;
 
-    private final String path;
+    private final String idp;
+
+    private List<Map.Entry<String, String>> preferredIdps;
+
 
     /**
      * Instantiates a new CookieHandler based on some parameters from a HTTP request much like a SecurityConfig
      *
      * @param cookieConfig:
      * @param host:
-     * @param path:
+     * @param preferredIdps: first idp on the list is the path you're requesting access, or first on preferred list if not found
      */
-    public CookieHandler(CookieConfig cookieConfig, String host, String path) {
+    public CookieHandler(CookieConfig cookieConfig, String host, List<Map.Entry<String, String>> preferredIdps) {
         this.cookieStorage = cookieConfig.getCookieStorage();
         this.cookieName = cookieConfig.getName();
         this.host = host;
-        this.path = path;
+        this.idp = preferredIdps.get(0).getKey();
+        this.preferredIdps = preferredIdps;
     }
 
-    public ProxyCookie generateCookie(Map<String, String> userData, int touchPeriod, int maxExpiry) {
-        logger.debug("CookieHandler.generateCookie()");
-        return cookieStorage.generateCookieInDb(cookieName, host, path, touchPeriod, maxExpiry, userData);
+    public ProxyCookie generateCookie(Map<String, String> userData, int security, int touchPeriod, int maxExpiry) {
+        logger.debug("Generating new cookie for idp ({}) on host ({}) with security {}", idp, host, security);
+        return cookieStorage.generateCookieInDb(cookieName, host, idp, security, touchPeriod, maxExpiry, userData);
+    }
+
+    public ProxyCookie generateIdpCookie(String uuid, Map<String, String> userData, int security, int touchPeriod, int maxExpiry) {
+        logger.debug("Generating IdpCookie with uuid ({}) for idp ({}) on host ({}) with security {}", uuid, idp, host, security);
+        return cookieStorage.generateCookieInDb(uuid, cookieName, host, idp, security, touchPeriod, maxExpiry, userData);
     }
 
     /**
@@ -54,7 +63,7 @@ public class CookieHandler {
      * @return
      */
     public Optional<ProxyCookie> getValidProxyCookie(HttpRequest httpRequest, String salt, String userAgent) {
-        logger.debug("Looking for cookie with name {}", cookieName);
+        logger.debug("Looking for valid cookie with name {}", cookieName);
 
         Optional<List<String>> cookieOptional = getCookiesFromRequest(httpRequest, cookieName);
         try {
@@ -63,13 +72,13 @@ public class CookieHandler {
                 for (int i = 0; i < cookieOptional.get().size(); i++) {
 
                     String uuid = cookieOptional.get().get(i).substring(64);
-                    logger.debug("Looking for cookie in database (UUID: {})", uuid);
-                    pc = cookieStorage.findCookie(uuid, host, path);
+                    logger.debug("Searching database for cookie (UUID: {})", uuid);
+                    pc = cookieStorage.findCookie(uuid, host, preferredIdps);
                     if (pc.isPresent() && isCorrectHash(cookieOptional.get().get(i), salt, userAgent)) {
-                        logger.info("Valid cookie was found ({})", pc.get());
+                        logger.info("Valid cookie was found ({}) for idp ({})", pc.get(), pc.get().getIdp());
                         return pc;
                     } else {
-                        logger.debug("This cookie was found not valid (UUID: {})", uuid);
+                        logger.debug("Cookie was not found or not valid (UUID: {})", uuid);
                     }
                 }
             }
@@ -96,8 +105,11 @@ public class CookieHandler {
 
     public static void insertCookieToResponse(HttpResponse httpResponse, String cookieName, String value, String salt, String userAgent) {
         String cookieValue = encodeValue(value, salt, userAgent) + value;
-        logger.info("Inserting cookie in response with value: {}", cookieName);
-        httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
+        //logger.info("Inserting cookie in response with value: {}", cookieName);
+        //httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieName, cookieValue));
+        Cookie cookieToInsert = new DefaultCookie(cookieName, cookieValue);
+        cookieToInsert.setPath("/");
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookieToInsert));
     }
 
 
@@ -136,7 +148,7 @@ public class CookieHandler {
                     if (!cookieValues.contains(cookie)) {
                         cookieValues.add(cookie);
                     } else {
-                        logger.error("Request contains two or more equal cookies");
+                        logger.warn("Request contains two or more equal cookies ({})", cookie);
                     }
                 }
             }
@@ -236,7 +248,12 @@ public class CookieHandler {
         cookie.setMaxAge(0);
 
         httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
+    }
 
+    public static void deleteCookieFromBrowser(String cookieName, HttpResponse httpResponse) {
+        Cookie nettyCookie = new DefaultCookie(cookieName, "");
+        nettyCookie.setMaxAge(0);
+        httpResponse.headers().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(nettyCookie));
     }
 
 }

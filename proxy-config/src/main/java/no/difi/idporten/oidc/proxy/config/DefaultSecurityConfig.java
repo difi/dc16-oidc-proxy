@@ -7,9 +7,8 @@ import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
 
 import java.net.SocketAddress;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DefaultSecurityConfig implements SecurityConfig {
 
@@ -17,11 +16,15 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private String path;
 
+    private List<Map.Entry<String, String>> preferredIdpData;
+
     private final PathConfig PATH;
 
     private final HostConfig HOST;
 
     private final IdpConfig IDP;
+
+    private List<String> defaultUserDataNames;
 
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
         this.hostname = hostname;
@@ -29,6 +32,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
         this.HOST = hostConfigProvider.getByHostname(hostname);
         this.PATH = hostConfigProvider.getByHostname(hostname).getPathFor(path);
         this.IDP = idpConfigProvider.getByIdentifier(getIdp());
+        setPreferredIdpData(idpConfigProvider);
+        setDefaultUserDataNames(idpConfigProvider);
     }
 
     public Optional<IdentityProvider> createIdentityProvider() {
@@ -64,8 +69,40 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public List<String> getPreferredIdps() {
+        return HOST.getPreferredIdps();
+    }
+
+    @Override
     public String getIdp() {
         return PATH.getIdentityProvider();
+    }
+
+    private void setPreferredIdpData(IdpConfigProvider idpConfigProvider) {
+        preferredIdpData = new ArrayList<>();
+
+        if (IDP != null && !getIdp().equals("notConfigured")) {
+            preferredIdpData.add(new AbstractMap.SimpleEntry<>(IDP.getIdentifier(), IDP.getPassAlongData()));
+        }
+
+        preferredIdpData.addAll(
+                getPreferredIdps()
+                        .stream()
+                        .filter(idp -> !idp.equals(getIdp()))
+                        .map(idp -> new AbstractMap.SimpleEntry<>(idp, idpConfigProvider.getByIdentifier(idp).getPassAlongData()))
+                        .collect(Collectors.toList()));
+    }
+
+    private void setDefaultUserDataNames(IdpConfigProvider idpConfigProvider) {
+        this.defaultUserDataNames = new LinkedList<>();
+        HOST.getPreferredIdps().stream()
+                .forEach(idpId -> defaultUserDataNames
+                        .addAll(idpConfigProvider.getByIdentifier(idpId).getUserDataNames()));
+    }
+
+    @Override
+    public List<Map.Entry<String, String>> getPreferredIdpData() {
+        return this.preferredIdpData;
     }
 
     @Override
@@ -95,12 +132,13 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public List<String> getUserDataNames() {
-        if (IDP != null) {
-            return IDP.getUserDataNames();
+        if (IDP == null) {
+            return defaultUserDataNames;
         } else {
-            return new LinkedList<>();
+            return IDP.getUserDataNames();
         }
     }
+
 
     @Override
     public List<String> getUnsecuredPaths() {
@@ -120,12 +158,20 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
 
     @Override
-    public String getSecurity() {
+    public int getSecurity() {
         if (PATH.getSecurity() == null) {
-            return getParameter("security");
-        } else {
-            return PATH.getSecurity();
+            return parseInt(getParameter("security"));
         }
+        return parseInt(PATH.getSecurity());
+    }
+
+    public static int parseInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            System.err.println("NumberFormatException caught in DefaultSecurityConfig.parseInt() while parsing security string to int");
+        }
+        return -1;
     }
 
     @Override
@@ -156,17 +202,23 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public boolean isSecured() {
-        return !getSecurity().equals("0");
+        return getSecurity() != 0;
+    }
+
+    @Override
+    public boolean isLogoutPath() {
+        return this.path.endsWith(getLogoutPostUri());
     }
 
     @Override
     public String toString() {
         return "DefaultSecurityConfig{" +
-                "hostname='" + hostname + '\'' +
-                ", path='" + path + '\'' +
-                ", PATH=" + PATH +
-                ", HOST=" + HOST +
-                ", IDP=" + IDP +
-                '}';
+                "hostname='" + hostname + "'" +
+                ", path='" + path + "'" +
+                ", PATH=" + PATH + "'" +
+                ", HOST=" + HOST + "'" +
+                ", IDP=" + IDP + "'" +
+                ", preferredIdpData=" + preferredIdpData +
+                "}";
     }
 }

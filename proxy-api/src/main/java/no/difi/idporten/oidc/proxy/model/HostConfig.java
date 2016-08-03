@@ -23,4 +23,6 @@ public interface HostConfig {
     String getLogoutRedirectUri();
 
     String getLogoutPostUri();
+
+    List<String> getPreferredIdps();
 }

@@ -14,11 +14,12 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ResponseGenerator {
 
     public static final AsciiString TEXT_HTML = new AsciiString("text/html");
-
-    public static final AsciiString APPLICATION_JSON = new AsciiString("application/json");
 
     private static Logger logger = LoggerFactory.getLogger(InboundHandlerAdapter.class);
 
@@ -26,7 +27,6 @@ public class ResponseGenerator {
     /**
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
-     *
      */
     protected void generateRedirectToIdentityProviderResponse(
             ChannelHandlerContext ctx,
@@ -64,7 +64,7 @@ public class ResponseGenerator {
     }
 
     protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig,
-                                          ProxyCookie proxyCookie, HttpRequest httpRequest) {
+                                          String cookieName) {
         logger.debug("ResponseGenerator.generateLogoutResponse()");
         try {
             String redirectUrl = securityConfig.getLogoutRedirectUri();
@@ -75,7 +75,7 @@ public class ResponseGenerator {
             FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                     HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
 
-            CookieHandler.deleteProxyCookieFromBrowser(securityConfig, proxyCookie, httpRequest, response);
+            CookieHandler.deleteCookieFromBrowser(cookieName, response);
 
             response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -93,6 +93,7 @@ public class ResponseGenerator {
 
     /**
      * Generates a response when theres a problem with the server.
+     *
      * @param ctx:
      * @param message:
      */
@@ -102,7 +103,6 @@ public class ResponseGenerator {
     }
 
     /**
-     *
      * @param ctx:
      * @param message:
      */
@@ -127,20 +127,21 @@ public class ResponseGenerator {
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
 
-
         response.headers().set(HttpHeaderNames.LOCATION, httpRequest.setUri(redirectUrlPath).uri());
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                 "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
 
+        if (proxyCookie != null) {
 
-        CookieHandler.insertCookieToResponse(
-                response,
-                proxyCookie.getName(),
-                proxyCookie.getUuid(),
-                securityConfig.getSalt(),
-                httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
-        RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
+            CookieHandler.insertCookieToResponse(
+                    response,
+                    proxyCookie.getName(),
+                    proxyCookie.getUuid(),
+                    securityConfig.getSalt(),
+                    httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+        }
+        RedirectCookieHandler.deleteRedirectCookieFromBrowser(response);
 
 
         logger.debug(String.format("Created redirect response:\n%s", response));
@@ -166,6 +167,16 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
+                                         SecurityConfig securityConfig) {
+        return generateProxyResponse(ctx, httpRequest, securityConfig, new HashMap<>());
+    }
+
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
+                                         SecurityConfig securityConfig, ProxyCookie proxyCookie) {
+        return generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData());
+    }
+
 
     /**
      * This is what happens when the proxy needs to work as a normal proxy.
@@ -175,17 +186,15 @@ public class ResponseGenerator {
      * @param ctx:
      * @param securityConfig:
      * @param httpRequest:
-     * @param proxyCookie:
+     * @param userData:
      */
-
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
-                                         SecurityConfig securityConfig, ProxyCookie proxyCookie) {
+                                         SecurityConfig securityConfig, Map<String, String> userData) {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
-            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
-        }
+        RequestInterceptor.insertUserDataToHeader(httpRequest, userData, securityConfig);
+        logger.debug("UserData inserted to response: " + userData);
 
         Channel outboundChannel;
         logger.debug(String.format("Bootstrapping channel %s", ctx.channel()));

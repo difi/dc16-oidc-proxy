@@ -29,13 +29,17 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     private String idpClass;
 
-    private String client_id;
+    private String clientId;
 
     private String password;
 
     private String scope;
 
-    private String redirect_uri;
+    private String redirectUri;
+
+    private String passAlongData;
+
+    private List<String> userDataNames;
 
     private JWKSet JSONWebKeys;
 
@@ -48,15 +52,15 @@ public class TypesafeIdpConfig implements IdpConfig {
     public TypesafeIdpConfig(String identifier, Config idpConfig){
         this.identifier = identifier;
         this.idpClass = idpConfig.getString("class");
-        this.client_id = idpConfig.getString("client_id");
+        this.clientId = idpConfig.getString("client_id");
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
-        this.redirect_uri = idpConfig.getString("redirect_uri");
-        this.user_data_names = idpConfig.getStringList("user_data_name");
+        this.redirectUri = idpConfig.getString("redirect_uri");
+        this.passAlongData = idpConfig.getString("pass_along_data");
+        this.userDataNames = idpConfig.getStringList("user_data_name");
         this.JSONWebKeys = getJWKsFromConfig(idpConfig.getString("jwk_uri"));
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
-
         logger.debug("Created IdpConfig:\n{}", this);
     }
 
@@ -103,17 +107,22 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     @Override
     public String getRedirectUri() {
-        return this.redirect_uri;
+        return this.redirectUri;
     }
 
     @Override
     public String getClientId() {
-        return this.client_id;
+        return this.clientId;
+    }
+
+    @Override
+    public String getPassAlongData() {
+        return this.passAlongData;
     }
 
     @Override
     public List<String> getUserDataNames() {
-        return this.user_data_names;
+        return this.userDataNames;
     }
 
     @Override
@@ -124,14 +133,15 @@ public class TypesafeIdpConfig implements IdpConfig {
     @Override
     public String toString() {
         return "TypesafeIdpConfig{" +
-                "identifier='" + identifier + '\'' +
-                ", idpClass='" + idpClass + '\'' +
-                ", client_id='" + client_id + '\'' +
-                ", password='" + password + '\'' +
-                ", scope='" + scope + '\'' +
-                ", redirect_uri='" + redirect_uri + '\'' +
-                ", parameters=" + parameters + '\'' +
-                ", user_data_names" + user_data_names +
-                '}';
+                "identifier='" + identifier + "'" +
+                ", idpClass='" + idpClass + "'" +
+                ", client_id='" + clientId + "'" +
+                ", password='" + password + "'" +
+                ", scope='" + scope + "'" +
+                ", redirect_uri='" + redirectUri + "'" +
+                ", parameters='" + parameters + "'" +
+                ", pass_along_data='" + passAlongData + "'" +
+                ", user_data_names" + userDataNames +
+                "}";
     }
 }

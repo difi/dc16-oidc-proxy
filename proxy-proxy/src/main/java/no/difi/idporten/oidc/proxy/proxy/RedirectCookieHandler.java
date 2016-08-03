@@ -59,7 +59,7 @@ public class RedirectCookieHandler {
                 logger.debug("Found original path for request after redirect: {}", result);
                 return Optional.of(result);
             } else {
-                logger.error("Cookie is not valid and as such didn't find original path after redirect ({})", redirectCookieValue);
+                logger.warn("Cookie is not valid and as such didn't find original path after redirect ({})", redirectCookieValue);
             }
         }
         return Optional.empty();
@@ -70,14 +70,11 @@ public class RedirectCookieHandler {
         return hash.equals(encoded);
     }
 
-    public static void deleteRedirectCookieFromBrowser(HttpRequest httpRequest, HttpResponse httpResponse, SecurityConfig securityConfig, String value) {
-        String cookieValue = CookieHandler.encodeValue(value, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT)) + value;
-
-        Cookie cookie = new DefaultCookie(redirectCookieName, cookieValue);
+    public static void deleteRedirectCookieFromBrowser(HttpResponse httpResponse) {
+        Cookie cookie = new DefaultCookie(redirectCookieName, "");
         cookie.setMaxAge(0);
         cookie.setPath("/");
 
         httpResponse.headers().add(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
-
     }
 }
