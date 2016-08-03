@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -82,7 +83,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ProxyCookie proxyCookie;
         logger.debug("TypesafePathConfig contains code: {}", path);
         Map<String, String> userData;
-        userData = identityProvider.getToken(path).getUserData();
+        try {
+            userData = identityProvider.getToken(path).getUserData();
+        } catch (IdentityProviderException e){
+            String uuidForThisShit = UUID.randomUUID().toString();
+            logger.warn(uuidForThisShit + ": " + e);
+            responseGenerator.generateServerErrorResponse(ctx, e + " " + uuidForThisShit);
+            return;
+        }
 
         int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
         int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();

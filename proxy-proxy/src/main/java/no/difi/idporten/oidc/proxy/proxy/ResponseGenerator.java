@@ -111,6 +111,7 @@ public class ResponseGenerator {
         generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
     }
 
+
     /**
      * Generates redirect response with a 'Set-Cookie' header for a ProxyCookie.
      * Is used when doing a second redirect to the original path after successfully logging in.
