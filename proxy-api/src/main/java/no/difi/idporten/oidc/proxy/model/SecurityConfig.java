@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.model;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.net.SocketAddress;
@@ -40,7 +41,7 @@ public interface SecurityConfig {
 
     String getSalt();
 
-    String getPublicSignature();
+    JWKSet getJSONWebKeys();
 
     List<String> getUserDataNames();
 

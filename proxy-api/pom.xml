@@ -12,4 +12,12 @@
 
     <name>ID-porten OIDC :: Proxy :: API</name>
 
+    <dependencies>
+        <!-- JWT -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+    </dependencies>
+
 </project>

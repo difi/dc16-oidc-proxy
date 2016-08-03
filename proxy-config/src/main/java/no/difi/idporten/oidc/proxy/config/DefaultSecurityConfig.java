@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.config;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
@@ -88,8 +89,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public String getPublicSignature() {
-        return IDP.getPublicSignature();
+    public JWKSet getJSONWebKeys() {
+        return IDP.getJSONWebKeys();
     }
 
     @Override

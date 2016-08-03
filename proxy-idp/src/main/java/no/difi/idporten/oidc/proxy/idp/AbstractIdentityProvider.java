@@ -9,6 +9,7 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import net.minidev.json.JSONObject;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
+import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -16,7 +17,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.nio.charset.StandardCharsets;
-import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
 abstract class AbstractIdentityProvider implements IdentityProvider {
@@ -27,40 +27,28 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
      * Decodes a signed JWT token to a human-readable string.
      *
      * @param idToken
+     * @param jwkSet
      * @return
      * @throws Exception
      */
-    protected String decodeIDToken(String idToken) throws Exception {
-        return JWTParser.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
-    }
-
-    protected void isVerfiedToken(String idToken, String endpointURI) throws Exception{
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet(endpointURI);
-        HttpResponse httpResponse = httpClient.execute(httpGet);
-
+    protected String decodeIDToken(String idToken, JWKSet jwkSet) throws Exception {
         String kid = JWTParser.parse(idToken).getHeader().toJSONObject().get("kid").toString();
-
-        String content = IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
-        JSONObject jsonObject = JSONObjectUtils.parse(content);
-
-        JWK jwk = JWK.parse(jsonObject.get("keys").toString().replace("[", "").replace("]", ""));
-        JWKSet jwkSet = new JWKSet(jwk);
 
         List<JWK> matches = new JWKSelector(new JWKMatcher.Builder()
                 .keyType(KeyType.RSA)
                 .keyID(kid)
                 .build())
                 .select(jwkSet);
-
         SignedJWT signedJWT = SignedJWT.parse(idToken);
 
-        RSASSAVerifier rsassaVerifier = new RSASSAVerifier(((RSAKey)matches.get(0)).toRSAPublicKey());
-        System.out.println("TEST: " + signedJWT.verify(rsassaVerifier));
-        signedJWT.verify(rsassaVerifier);
+        for (JWK match : matches) {
+            RSASSAVerifier rsassaVerifier = new RSASSAVerifier(((RSAKey) match).toRSAPublicKey());
+            if (signedJWT.verify(rsassaVerifier)) {
+                return signedJWT.getJWTClaimsSet().toString().replace("\\", "");
+            }
 
-
+        }
+        throw new IdentityProviderException("The signature of the ID token was not correct");
     }
-
 
 }

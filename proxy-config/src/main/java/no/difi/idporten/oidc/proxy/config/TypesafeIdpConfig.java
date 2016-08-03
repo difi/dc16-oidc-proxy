@@ -1,10 +1,21 @@
 package no.difi.idporten.oidc.proxy.config;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.util.JSONObjectUtils;
 import com.typesafe.config.Config;
+import net.minidev.json.JSONObject;
+import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +37,7 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     private String redirect_uri;
 
-    private String publicSignature;
+    private JWKSet JSONWebKeys;
 
     private List<String> user_data_names;
 
@@ -34,7 +45,7 @@ public class TypesafeIdpConfig implements IdpConfig {
 
 
 
-    public TypesafeIdpConfig(String identifier, Config idpConfig) {
+    public TypesafeIdpConfig(String identifier, Config idpConfig){
         this.identifier = identifier;
         this.idpClass = idpConfig.getString("class");
         this.client_id = idpConfig.getString("client_id");
@@ -42,15 +53,32 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.scope = idpConfig.getString("scope");
         this.redirect_uri = idpConfig.getString("redirect_uri");
         this.user_data_names = idpConfig.getStringList("user_data_name");
-        this.publicSignature = idpConfig.getString("public_signature");
+        this.JSONWebKeys = getJWKsFromConfig(idpConfig.getString("jwk_uri"));
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
 
         logger.debug("Created IdpConfig:\n{}", this);
     }
+
+    private JWKSet getJWKsFromConfig(String jwkUri){
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet httpGet = new HttpGet(jwkUri);
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+
+            String content = IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
+            JSONObject jsonObject = JSONObjectUtils.parse(content);
+
+            JWK jwk = JWK.parse(jsonObject.get("keys").toString().replaceAll("[\\[\\]]+", ""));
+            return new JWKSet(jwk);
+        } catch (Exception e){
+            return null;
+        }
+    }
+
     @Override
-    public String getPublicSignature() {
-        return publicSignature;
+    public JWKSet getJSONWebKeys() {
+        return JSONWebKeys;
     }
 
     @Override

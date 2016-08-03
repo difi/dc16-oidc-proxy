@@ -4,13 +4,11 @@ import com.google.gson.JsonObject;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -111,8 +109,10 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             JsonObject jsonResponse;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
-                isVerfiedToken(jsonResponse.get("id_token").getAsString(), securityConfig.getPublicSignature());
-                return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString()), jsonResponse.get("access_token").getAsString());
+                if (securityConfig.getJSONWebKeys() != null){
+                    return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString(), securityConfig.getJSONWebKeys()), jsonResponse.get("access_token").getAsString());
+                }
+                throw new IdentityProviderException("Configuration of this IDP is wrong");
             } catch (IOException exc) {
                 throw new IdentityProviderException(exc.getMessage(), exc);
             }
