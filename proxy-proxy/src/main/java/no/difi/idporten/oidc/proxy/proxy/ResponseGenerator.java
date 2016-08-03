@@ -26,7 +26,6 @@ public class ResponseGenerator {
     /**
      * Generates redirect response for initial request to server. This is the response containing idp, scope,
      * client_id etc.
-     *
      */
     protected void generateRedirectToIdentityProviderResponse(
             ChannelHandlerContext ctx,
@@ -93,6 +92,7 @@ public class ResponseGenerator {
 
     /**
      * Generates a response when theres a problem with the server.
+     *
      * @param ctx:
      * @param message:
      */
@@ -102,7 +102,6 @@ public class ResponseGenerator {
     }
 
     /**
-     *
      * @param ctx:
      * @param message:
      */
@@ -127,19 +126,20 @@ public class ResponseGenerator {
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
 
-
         response.headers().set(HttpHeaderNames.LOCATION, httpRequest.setUri(redirectUrlPath).uri());
         response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                 "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
 
+        if (proxyCookie != null) {
 
-        CookieHandler.insertCookieToResponse(
-                response,
-                proxyCookie.getName(),
-                proxyCookie.getUuid(),
-                securityConfig.getSalt(),
-                httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+            CookieHandler.insertCookieToResponse(
+                    response,
+                    proxyCookie.getName(),
+                    proxyCookie.getUuid(),
+                    securityConfig.getSalt(),
+                    httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+        }
         RedirectCookieHandler.deleteRedirectCookieFromBrowser(httpRequest, response, securityConfig, redirectUrlPath);
 
 
@@ -185,6 +185,7 @@ public class ResponseGenerator {
 
         if (proxyCookie != null && !securityConfig.isTotallyUnsecured(httpRequest.uri())) {
             RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
+            logger.debug("UserData inserted to response: " + proxyCookie.getUserData());
         }
 
         Channel outboundChannel;

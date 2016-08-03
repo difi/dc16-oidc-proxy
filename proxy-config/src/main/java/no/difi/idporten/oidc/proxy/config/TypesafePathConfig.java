@@ -46,6 +46,9 @@ public class TypesafePathConfig implements PathConfig {
 
     @Override
     public String getIdentityProvider() {
+        if (path.equals("notConfigured")) {
+            return null;
+        }
         return this.idp;
     }
 

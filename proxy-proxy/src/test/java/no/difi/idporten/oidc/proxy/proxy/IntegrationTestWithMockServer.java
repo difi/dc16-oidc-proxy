@@ -95,15 +95,6 @@ public class IntegrationTestWithMockServer {
         notFollowHttpClient = HttpClientBuilder.create().disableRedirectHandling().build(); // Http client that automatically follows redirects
         modifyGoogleIdpUrls();
         modifyIdportenIdpUrls();
-        String googleApiResponseContent = "{'access_token': 'ya29.Ci8dAzAibGLSpSo9h69_eve7JOskC49kmzhqg7E1fwZoSr6XA2B0y9V7ZGbt_FydMA','token_type': 'Bearer','expires_in': 3600,'refresh_token': '1/ZO_GEfsXflVCyiQUIIExKRSfCEnFsrTzwNsvcVQ56iI','id_token': 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjE1MDgzMjdmODUzZGU4OTNlZWFhODZjMjAxNTI2ODk1ZDFlOTUxNDMifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXRfaGFzaCI6Ii16dzZmZlNXclo0LUVidnl0c0tkU1EiLCJhdWQiOiIxMDYzOTEwMjI0ODc3LWRocWQzNmMwOXNpdGY5YWxxM2piMHJmc2ZtZWJlMzVvLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA4MTgyODAzNzA0MTQwNjY1MzU1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF6cCI6IjEwNjM5MTAyMjQ4NzctZGhxZDM2YzA5c2l0ZjlhbHEzamIwcmZzZm1lYmUzNW8uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJlbWFpbCI6InZpa2ZhbmRAZ21haWwuY29tIiwiaWF0IjoxNDY4MjI3ODAzLCJleHAiOjE0NjgyMzE0MDN9.BVxm1dJWX41H2FX8P6fnP2WjJyLP8T9LKVppTqRF2cclKPEj9jDafip55rdYEuxI0p_Hx0UKNLnLp8QWOrhLWLuuXhWzmcxYW-bAGk3AarokTbLcSNJagGXFILPjMDDJ-qaMBLJhSITPy3-VlXkBn98fznYljXIEBZ4hd0OD9c93pkJ_DKF2FZ2WeFZlolrv1LK9xZkw43QtCS1mVqdyLG8KJHqQh2VGdjCyF0y1te2E23A7yPq9zmiS_67YX9T_WhiZ24CqjWtlul9dpUuTRlhMoP9FovUdjJpg7ry9zQRQsIpqt5ijTVAUJ9xuepsH6ZrSOzHqYzBLBzEoTYw0sg'}";
-        String idportenApiResponseContent = "{\n" +
-                "  \"access_token\" : \"f6ce8020-7c2c-4cf0-992d-9d1ba7aa8ff2\",\n" +
-                "  \"id_token\" : \"eyJqa3UiOiJodHRwczpcL1wvZWlkLWV4dHRlc3QuZGlmaS5ub1wvaWRwb3J0ZW4tb2lkYy1wcm92aWRlclwvandrIiwia2lkIjoiaWdiNUN5Rk1BbUZlZWk0TW5YQm82bWM5My03bUVwN29ncklxV2hNVGNLYyIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIyTzMxSnA5RTRNdnNJNGRHaTU4YkZaTGY2dHB1IiwiYXVkIjoidGVzdF9ycF9laWRfZXh0dGVzdF9kaWZpIiwiYWNyIjoiTGV2ZWwzIiwiYW1yIjoiTWluaWQtUElOIiwiaXNzIjoiaHR0cHM6XC9cL2VpZC1leHR0ZXN0LmRpZmkubm9cL2lkcG9ydGVuLW9pZGMtcHJvdmlkZXJcLyIsInBpZCI6IjA4MDIzNTQ5OTMwIiwiZXhwIjoxNDY4OTE0MzAzLCJsb2NhbGUiOiJuYiIsImlhdCI6MTQ2ODkxMDcwM30.Mk2NBA-xCM1qtAHKSEbSFEpSFAhwdK5tWtQguxTjM4aHxi4qEhxJ6z1056vQIbnH3FWnXNZZlzhyDd4Tg5Fb5XQJNstwrTlkGQAEgul0YbTWgKLWoTXiId-kKP2YoXhn-DexAuleAmxVS6XtXoDqjd0HXGvx-JD_ufOzJ_YIr2U\",\n" +
-                "  \"token_type\" : \"Bearer\",\n" +
-                "  \"expires_in\" : 3599,\n" +
-                "  \"refresh_token\" : \"90fc8152-3d1b-40dc-8eae-0114db775bcb\",\n" +
-                "  \"scope\" : \"openid profile\"\n" +
-                "}";
 
         // Configuring what the mock server should respond to requests.
         wireMockServer.resetRequests();
@@ -220,8 +211,6 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testGoogleFollowRedirectHasDifiHeader() throws Exception {
-        String expectedEmailInRequest = "vikfand@gmail.com";
-        String expectedSubInRequest = "108182803704140665355";
         String url = BASEURL + "/google";
         HttpGet getRequest = new HttpGet(url);
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
@@ -229,9 +218,9 @@ public class IntegrationTestWithMockServer {
         HttpResponse response = httpClient.execute(getRequest);
 
         verify(getRequestedFor(urlEqualTo("/google"))
-                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(expectedEmailInRequest))
+                .withHeader(RequestInterceptor.HEADERNAME + "email", equalTo(emailInGoogleToken))
                 .withHeader(RequestInterceptor.HEADERNAME + "email_verified", equalTo("true"))
-                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(expectedSubInRequest))
+                .withHeader(RequestInterceptor.HEADERNAME + "sub", equalTo(subInGoogleToken))
         );
 
         Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
@@ -384,8 +373,8 @@ public class IntegrationTestWithMockServer {
      *
      * @throws Exception
      */
-    @Test(enabled = false) // TODO handle multiple IDPs
-    public void testRequestingUnsecuredPathWithWhenLoggedInWithValidCookie() throws Exception {
+    @Test
+    public void testRequestingUnsecuredPathWhenLoggedInWithValidCookie() throws Exception {
         HttpGet getRequest = getRequestWithValidGoogleCookie("/unsecured");
 
         HttpResponse response = notFollowHttpClient.execute(getRequest);
@@ -440,6 +429,12 @@ public class IntegrationTestWithMockServer {
         httpClient.execute(getRequest);
     }
 
+    /**
+     * Having an invalid code in the url should not result in an error response, but simply redirect to a login for the
+     * IDP needed on the requested path without the code parameter.
+     *
+     * @throws Exception
+     */
     @Test
     public void testRequestWithInvalidCodeShouldRedirectToLogin() throws Exception {
         HttpGet getRequest = new HttpGet(BASEURL + "/google" + invalidCodeUrlSuffix);
@@ -475,10 +470,98 @@ public class IntegrationTestWithMockServer {
 
         verify(1, getRequestedFor(urlPathEqualTo("/google")));
         verify(0, getRequestedFor(urlPathMatching(".*"))
-                .withHeader(RequestInterceptor.HEADERNAME + "access_token", matching(".*"))
+                .withHeader(RequestInterceptor.HEADERNAME + "access_token", matching(".*")));
+    }
+
+    /**
+     * When logged in with two IDPs, Difi Proxy should insert the headers of the preferred IDP into the request.
+     * The preferred IDP is configured for that path in the config file.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLoggedInWithTwoIdpsInsertsHeadersOfPreferredIdp() throws Exception {
+        CookieStore cookieStore = new BasicCookieStore();
+        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
+
+        logInWithIdporten(cookieStore);
+        logInWithGoogle(cookieStore);
+
+        String pathWithIdportenPreferred = "/idporten/idporten/is/preferred";
+        HttpGet getRequest = new HttpGet(BASEURL + pathWithIdportenPreferred);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = client.execute(getRequest);
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.code(),
+                "Should be a success response without further need to login or redirect.");
+
+        verify(1, getRequestedFor(urlPathEqualTo(pathWithIdportenPreferred))
+                .withHeader(RequestInterceptor.HEADERNAME + "pid", matching("\\d{11}"))
         );
     }
 
+    /**
+     * When logged in with two IDPs, the preferred one should have its headers inserted to the request, but there
+     * should be a reference to the other IDPs which the client is logged in for.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnSecuredPath() throws Exception {
+        String expectedHeaderName = "X-additional-data/google-email";
+
+        CookieStore cookieStore = new BasicCookieStore();
+        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
+
+        logInWithIdporten(cookieStore);
+        logInWithGoogle(cookieStore);
+
+        String pathWithIdportenPreferred = "/idporten/idporten/is/preferred";
+        HttpGet getRequest = new HttpGet(BASEURL + pathWithIdportenPreferred);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = client.execute(getRequest);
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.code(),
+                "Should be a success response without further need to login or redirect.");
+
+        verify(1, getRequestedFor(urlPathEqualTo(pathWithIdportenPreferred))
+                .withHeader(RequestInterceptor.HEADERNAME + "pid", matching("\\d{11}"))
+                .withHeader(expectedHeaderName, matching(emailInGoogleToken))
+        );
+    }
+
+    /**
+     * When logged in with two IDPs, the preferred one should have its headers inserted to the request, but there
+     * should be a reference to the other IDPs which the client is logged in for.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnUnsecuredPath() throws Exception {
+        String expectedHeaderName = "X-additional-data/google-email";
+
+        CookieStore cookieStore = new BasicCookieStore();
+        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
+
+        logInWithIdporten(cookieStore);
+        logInWithGoogle(cookieStore);
+
+        String unsecuredPathWithIdportenPreferred = "/unsecured/idporten/preferred";
+        HttpGet getRequest = new HttpGet(BASEURL + unsecuredPathWithIdportenPreferred);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        HttpResponse response = client.execute(getRequest);
+
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.code(),
+                "Should be a success response without further need to login or redirect.");
+
+        verify(1, getRequestedFor(urlPathEqualTo(unsecuredPathWithIdportenPreferred))
+                .withHeader(RequestInterceptor.HEADERNAME + "pid", matching("\\d{11}"))
+                .withHeader(expectedHeaderName, matching(emailInGoogleToken))
+        );
+    }
 
     /**
      * Makes a request so that the next execution on that client has a valid Google cookie.
@@ -508,6 +591,31 @@ public class IntegrationTestWithMockServer {
 
         return getRequest;
     }
+
+    /**
+     * Logs in to the IDP configured for a path, using a Cookie Store to manage the cookies generated from logging in.
+     * The HttpClient that needs to use the valid cookies must be configured with the provided Cookie Store.
+     *
+     * @param url
+     * @param cookieStore
+     * @throws Exception
+     */
+    private static void logIn(String url, CookieStore cookieStore) throws Exception {
+        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
+        HttpGet getRequest = new HttpGet(url);
+        getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
+
+        client.execute(getRequest);
+    }
+
+    private static void logInWithGoogle(CookieStore cookieStore) throws Exception {
+        logIn(BASEURL + "/google", cookieStore);
+    }
+
+    private static void logInWithIdporten(CookieStore cookieStore) throws Exception {
+        logIn(BASEURL + "/idporten", cookieStore);
+    }
+
 
     /**
      * Using reflection to change the urls of the GoogleIdentityProvider to use the mock server url instead.

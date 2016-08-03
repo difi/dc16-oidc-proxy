@@ -4,6 +4,7 @@ import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface SecurityConfig {
@@ -18,7 +19,11 @@ public interface SecurityConfig {
 
     String getPath();
 
-    String getSecurity();
+    int getSecurity();
+
+    List<String> getPreferredIdps();
+
+    List<Map.Entry<String, String>> getPreferredIdpData();
 
     String getRedirectUri();
 

@@ -46,6 +46,10 @@ public class SimpleIntegrationTest {
 
     private String googlePath = "/google";
 
+    private String googleIdp = "google";
+
+    private int security3 = 3;
+
     private String idportenPath = "/idporten";
 
     private String remoteHostName = "www.ntnu.no";
@@ -197,6 +201,6 @@ public class SimpleIntegrationTest {
 
     private ProxyCookie createValidGoogleCookie() {
         Map<String, String> userData = new HashMap<>();
-        return cookieStorage.generateCookieInDb(cookieName, host, googlePath, 10, 10, userData);
+        return cookieStorage.generateCookieInDb(cookieName, host, googleIdp, security3, 10, 10, userData);
     }
 }

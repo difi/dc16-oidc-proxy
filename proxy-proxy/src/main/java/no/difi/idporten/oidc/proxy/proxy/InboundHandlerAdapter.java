@@ -68,9 +68,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
-                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, trimmedPath);
+                String idpName = securityConfig.getIdp();
+                CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, securityConfig.getPreferredIdpData());
                 Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
+                logger.debug("Preferred IDPs of request: {}"+securityConfig.getPreferredIdpData());
                 logger.debug("Has security config: {}", securityConfig);
 
                 if (securityConfig.isSecured() && !securityConfig.isTotallyUnsecured(path)) {
@@ -93,9 +95,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                         }
 
                         // checks if the information in this cookie is enough for what the request needs
+                        // handle login with same cookie on multiple IDPs here
                         boolean cookieHasEnoughInformation = securityConfig.getUserDataNames().stream()
                                 .allMatch(userDataName -> proxyCookie.getUserData().containsKey(userDataName));
-                        if (cookieHasEnoughInformation) {
+                        boolean hasNeededSecurity = proxyCookie.getSecurity() >= securityConfig.getSecurity();
+
+                        logger.debug("Request-cookie has security {} and IDP needs security {}", proxyCookie.getSecurity(), securityConfig.getSecurity());
+
+                        if (cookieHasEnoughInformation && hasNeededSecurity) {
                             logger.debug("Cookie has the correct information required for this path");
                             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
                             return;
@@ -131,15 +138,26 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
                             int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
                             int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();
+                            int security = securityConfig.getSecurity();
 
                             logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
 
-                            proxyCookie = cookieHandler.generateCookie(userData, touchPeriod, maxExpiry);
-
                             Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
-                            if (originalPathOptional.isPresent()) {
-                                logger.debug("Request had original redirect. Creating new redirect.");
+                            if (validProxyCookieOptional.isPresent()) {
+                                proxyCookie = cookieHandler.generateIdpCookie(validProxyCookieOptional.get().getUuid(), userData, security, touchPeriod, maxExpiry);
+                                logger.info("Request contains cookie for another IDP. Generated cookie on same UUID for this IDP ({})", proxyCookie);
+                            } else {
+                                proxyCookie = cookieHandler.generateCookie(userData, security, touchPeriod, maxExpiry);
+                                logger.info("Request contains no cookie. Generated new cookie ({})", proxyCookie);
+                            }
+
+
+                            if (originalPathOptional.isPresent() && validProxyCookieOptional.isPresent()) {
+                                logger.debug("Redirecting user to original path of request, generated cookie is already in user's browser");
+                                responseGenerator.generateRedirectBackToOriginalPathResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), null);
+                            } else if (originalPathOptional.isPresent() ) {
+                                logger.debug("Redirecting user to original path of request and inserting cookie to user's browser");
                                 responseGenerator.generateRedirectBackToOriginalPathResponse(ctx, securityConfig, httpRequest, originalPathOptional.get(), proxyCookie);
                             } else {
                                 outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
