@@ -71,11 +71,10 @@ public class TypesafeIdpConfig implements IdpConfig {
             HttpResponse httpResponse = httpClient.execute(httpGet);
 
             String content = IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
-            JSONObject jsonObject = JSONObjectUtils.parse(content);
-
-            JWK jwk = JWK.parse(jsonObject.get("keys").toString().replaceAll("[\\[\\]]+", ""));
-            return new JWKSet(jwk);
+            JWKSet jwkSet = JWKSet.parse(content);
+            return jwkSet;
         } catch (Exception e){
+            logger.info("Received '{}'.", e.getMessage(), e);
             return null;
         }
     }
