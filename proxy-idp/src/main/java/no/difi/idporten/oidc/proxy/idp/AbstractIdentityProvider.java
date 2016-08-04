@@ -41,7 +41,7 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
      * @return
      * @throws Exception
      */
-    private boolean isValidToken(String idToken, SignedJWT signedJWT, SecurityConfig securityConfig) throws Exception {
+    protected boolean isValidToken(String idToken, SignedJWT signedJWT, SecurityConfig securityConfig) throws Exception {
         JWKSet jwkSet = securityConfig.getJSONWebKeys();
         String kid = JWTParser.parse(idToken).getHeader().toJSONObject().get("kid").toString();
         String issuer = securityConfig.getIssuer();
@@ -61,7 +61,7 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
      * @return
      * @throws Exception
      */
-    private boolean tokenHasValidSignature(String kid, JWKSet jwkSet, SignedJWT signedJWT) throws Exception {
+    protected boolean tokenHasValidSignature(String kid, JWKSet jwkSet, SignedJWT signedJWT) throws Exception {
         List<JWK> matches = new JWKSelector(new JWKMatcher.Builder()
                 .keyType(KeyType.RSA)
                 .keyID(kid)
@@ -85,7 +85,7 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
      * @return
      * @throws Exception
      */
-    private boolean tokenTimesAreCorrect(SignedJWT signedJWT) throws Exception {
+    protected boolean tokenTimesAreCorrect(SignedJWT signedJWT) throws Exception {
         return signedJWT.getJWTClaimsSet().getExpirationTime().after(new Date()) &&
                 signedJWT.getJWTClaimsSet().getIssueTime().before(new Date());
     }
@@ -98,7 +98,7 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
      * @return
      * @throws Exception
      */
-    private boolean tokenHasCorrectIssuer(SignedJWT signedJWT, String issuer) throws Exception {
+    protected boolean tokenHasCorrectIssuer(SignedJWT signedJWT, String issuer) throws Exception {
         return signedJWT.getJWTClaimsSet().getIssuer().equals(issuer);
     }
 
@@ -110,7 +110,7 @@ abstract class AbstractIdentityProvider implements IdentityProvider {
      * @return
      * @throws Exception
      */
-    private boolean tokenHasCorrectAudience(SignedJWT signedJWT, String clientId) throws Exception {
+    protected boolean tokenHasCorrectAudience(SignedJWT signedJWT, String clientId) throws Exception {
         return signedJWT.getJWTClaimsSet().getAudience().contains(clientId);
     }
 
