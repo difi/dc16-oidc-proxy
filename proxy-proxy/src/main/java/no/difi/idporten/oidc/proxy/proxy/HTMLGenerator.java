@@ -1,8 +1,8 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import org.apache.log4j.spi.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class HTMLGenerator {
 
-    private static Logger logger = org.slf4j.LoggerFactory.getLogger(HTMLGenerator.class);
+    private static Logger logger = LoggerFactory.getLogger(HTMLGenerator.class);
 
     private final static String defaultErrorPageUrl = "error-page.html";
 

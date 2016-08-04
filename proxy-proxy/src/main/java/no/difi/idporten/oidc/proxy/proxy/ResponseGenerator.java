@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class ResponseGenerator {
 
@@ -117,12 +118,23 @@ public class ResponseGenerator {
      * Default response for when nothing is configured for the requested host
      */
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus, SecurityConfig securityConfig) {
+        String errorMessageHeader = "X-Difiheader-error-message";
+        // TODO also have uuid
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 responseStatus,
                 Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message, securityConfig), CharsetUtil.UTF_8));
+        Optional<String> errorPageUrlOptional = securityConfig.getErrorPageUrl();
+        if (errorPageUrlOptional.isPresent()) {
+            HttpRequest requestToErrorPage = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, errorPageUrlOptional.get());
+            requestToErrorPage.headers().set(HttpHeaderNames.HOST, securityConfig.getHostname());
+            requestToErrorPage.headers().add(errorMessageHeader, message);
+            requestToErrorPage.headers().add(errorMessageHeader, message);
+            generateProxyResponse(ctx, requestToErrorPage, securityConfig);
+        } else {
+            writeDefaultResponse(ctx, response);
+        }
 
-        writeDefaultResponse(ctx, response);
     }
 
     protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
