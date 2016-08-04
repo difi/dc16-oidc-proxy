@@ -63,7 +63,9 @@ public class TypesafeHostConfig implements HostConfig {
 
         this.logoutPostUri = hostConfig.getString("logout_post_uri");
 
-        this.logoutRedirectUri = hostConfig.getString("logout_redirect_uri");
+        if (hostConfig.entrySet().toString().contains("logout_redirect_uri")){
+            this.logoutRedirectUri = hostConfig.getString("logout_redirect_uri");
+        }
     }
 
     @Override
