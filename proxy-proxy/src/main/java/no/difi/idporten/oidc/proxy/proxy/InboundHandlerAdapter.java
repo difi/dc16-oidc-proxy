@@ -67,10 +67,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         } else if (proxyCookieOptional.isPresent()) {
             cookieHandler.removeCookie(proxyCookieOptional.get().getUuid());
             responseGenerator.generateLogoutProxyResponse(ctx, securityConfig, httpRequest, proxyCookieOptional.get());
-            logger.info("User logged out from all IDPs on host. Cookie deleted from browser and user sent proxyResponse on requested uri, given no configured logoutRedirectUri");
-        } else {
+            logger.info("User logged out from all IDPs on host. Cookie deleted from browser and user sent to requested uri, as no configured logoutRedirectUri exist");
+        } else if (hasSpecifiedLogoutRedirect){
             responseGenerator.generateLogoutRedirectResponse(ctx, securityConfig, null);
             logger.info("Logger requested log out without valid cookie present (likely already removed). Redirected to configured logoutRedirectUri ({})", securityConfig.getLogoutRedirectUri());
+        } else {
+            responseGenerator.generateLogoutProxyResponse(ctx, securityConfig, httpRequest);
+            logger.info("Logger requested log out without valid cookie present (likely already removed). User sent to requested uri, as no configured logoutRedirectUri exist");
         }
 
     }

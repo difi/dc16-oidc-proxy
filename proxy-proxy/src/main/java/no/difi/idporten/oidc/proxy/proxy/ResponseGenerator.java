@@ -64,13 +64,15 @@ public class ResponseGenerator {
         }
     }
 
-    protected void generateLogoutProxyResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig,
-                                                       HttpRequest httpRequest, ProxyCookie proxyCookie) {
-            generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData(), true);
+    protected void generateLogoutProxyResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, HttpRequest httpRequest) {
+        generateProxyResponse(ctx, httpRequest, securityConfig, null, true);
     }
 
-    protected void generateLogoutRedirectResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig,
-                                                                                   ProxyCookie proxyCookie) {
+    protected void generateLogoutProxyResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, HttpRequest httpRequest, ProxyCookie proxyCookie) {
+        generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData(), true);
+    }
+
+    protected void generateLogoutRedirectResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
         try {
             String redirectUrl = securityConfig.getLogoutRedirectUri();
 
@@ -175,7 +177,7 @@ public class ResponseGenerator {
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig) {
-        return generateProxyResponse(ctx, httpRequest, securityConfig, new HashMap<>(), false);
+        return generateProxyResponse(ctx, httpRequest, securityConfig, null, false);
     }
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
@@ -198,8 +200,11 @@ public class ResponseGenerator {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        RequestInterceptor.insertUserDataToHeader(httpRequest, userData, securityConfig);
-        logger.debug("UserData inserted to response: " + userData);
+        if (userData != null){
+            RequestInterceptor.insertUserDataToHeader(httpRequest, userData, securityConfig);
+            logger.debug("UserData inserted to header");
+        } else logger.debug("No userData to insert to header");
+
 
         Channel outboundChannel;
         logger.debug(String.format("Bootstrapping channel %s", ctx.channel()));
