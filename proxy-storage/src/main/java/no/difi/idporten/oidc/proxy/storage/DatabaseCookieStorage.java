@@ -107,7 +107,7 @@ public class DatabaseCookieStorage implements CookieStorage {
                             if (proxyCookie.getUserData() != null) userData.putAll(proxyCookie.getUserData());
                             primaryUserDataFound = true;
                             extendCookieExpiry(proxyCookie);
-                        } else if (cookieIdps.contains(preferredIdp.getKey()) && !userData.containsKey(preferredIdp.getKey())) {
+                        } else if (cookieIdps.contains(preferredIdp.getKey()) && !preferredIdp.getValue().isEmpty() && !userData.containsKey(preferredIdp.getKey())) {
                             logger.debug("Found cookie with idp ({}), but another idp was more preferable ", preferredIdp.getKey());
                             extendCookieExpiry(cookies.get(cookieIdps.indexOf(preferredIdp.getKey())));
                             String additionalData = cookies.get(cookieIdps.indexOf(preferredIdp.getKey())).getUserData().get(preferredIdp.getValue());
