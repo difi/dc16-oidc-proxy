@@ -3,6 +3,7 @@ package no.difi.idporten.oidc.proxy.model;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.net.SocketAddress;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +53,8 @@ public interface SecurityConfig {
     boolean isLogoutPath();
 
     boolean isSecured();
+
+    Optional<String> getErrorPageUrl();
 
     /**
      * Checks if the path is explicitly completely unsecured and should not receive the Difi headers.

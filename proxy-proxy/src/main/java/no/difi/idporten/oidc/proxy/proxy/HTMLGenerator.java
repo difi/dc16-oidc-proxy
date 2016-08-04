@@ -1,5 +1,9 @@
 package no.difi.idporten.oidc.proxy.proxy;
 
+import no.difi.idporten.oidc.proxy.model.SecurityConfig;
+import org.apache.log4j.spi.LoggerFactory;
+import org.slf4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,21 +14,58 @@ import java.util.stream.Collectors;
 
 public class HTMLGenerator {
 
+    private static Logger logger = org.slf4j.LoggerFactory.getLogger(HTMLGenerator.class);
+
+    private final static String defaultErrorPageUrl = "error-page.html";
+
+
     /**
-     * Generates a HTML error page based on the template in resources/error-page.html with the message incluced in it
+     * Returns an error page as a string with the message inserted into the HTML template.
+     * Gets URL for the HTML template from the config using SecurityConfig.
      *
-     * @param message:
-     * @return HTML page as a String
+     * @param message
+     * @param securityConfig
+     * @return
+     */
+    public static String getErrorPage(String message, SecurityConfig securityConfig) {
+        String errorPageUrl = securityConfig.getErrorPageUrl().orElse(defaultErrorPageUrl);
+        try {
+            return getErrorPage(message, errorPageUrl);
+        } catch (NullPointerException exc) {
+            logger.warn("Could not find file for error page HTML template {}", errorPageUrl);
+            return getErrorPage(message);
+        } catch (FileNotFoundException exc) {
+            return String.format("No cannot %s", message);
+        }
+    }
+
+    /**
+     * Returns an error page as a string with the message inserted into the default HTML template.
+     *
+     * @param message
+     * @return
      */
     public static String getErrorPage(String message) {
         try {
-            File file = new File(HTMLGenerator.class.getClassLoader().getResource("error-page.html").getFile());
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-            return bufferedReader.lines().map(line -> replaceVariable(line, message)).collect(Collectors.joining("\n"));
-        } catch (FileNotFoundException | NullPointerException e) {
-            e.printStackTrace();
+            return getErrorPage(message, defaultErrorPageUrl);
+        } catch (Exception exc) {
+            return String.format("No cannot %s", message);
         }
-        return String.format("no cannot %s", message);
+    }
+
+    /**
+     * Utility function to get the HTML error page.
+     *
+     * @param message
+     * @param errorPageUrl
+     * @return
+     * @throws NullPointerException
+     * @throws FileNotFoundException
+     */
+    private static String getErrorPage(String message, String errorPageUrl) throws NullPointerException, FileNotFoundException {
+        File file = new File(HTMLGenerator.class.getClassLoader().getResource(errorPageUrl).getFile());
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+        return bufferedReader.lines().map(line -> replaceVariable(line, message)).collect(Collectors.joining("\n"));
     }
 
     /**
@@ -38,9 +79,6 @@ public class HTMLGenerator {
         Pattern regex = Pattern.compile("\\{\\{(\\w+)\\}\\}");
         Matcher matcher = regex.matcher(line);
         if (matcher.find()) {
-            // Can be used to look up multiple variables from a map
-            // return matcher.replaceAll(String.format("%s", getVariable(matcher.group(1))));
-            // But for now we only need one variable
             return matcher.replaceAll(String.format("%s", message));
         }
         return line;

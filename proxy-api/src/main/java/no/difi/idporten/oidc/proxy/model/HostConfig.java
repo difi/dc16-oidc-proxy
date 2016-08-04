@@ -2,7 +2,9 @@ package no.difi.idporten.oidc.proxy.model;
 
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 public interface HostConfig {
 
@@ -25,4 +27,6 @@ public interface HostConfig {
     String getLogoutPostUri();
 
     List<String> getPreferredIdps();
+
+    Optional<String> getErrorPageUrl();
 }
