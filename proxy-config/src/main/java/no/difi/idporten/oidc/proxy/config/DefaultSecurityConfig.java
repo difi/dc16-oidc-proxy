@@ -87,14 +87,14 @@ public class DefaultSecurityConfig implements SecurityConfig {
         preferredIdpData = new ArrayList<>();
 
         if (IDP != null && !getIdp().equals("notConfigured")) {
-            preferredIdpData.add(new AbstractMap.SimpleEntry<>(IDP.getIdentifier(), IDP.getPassAlongData()));
+            preferredIdpData.add(new AbstractMap.SimpleEntry<>(IDP.getIdentifier(), IDP.getPassAlongData().get()));
         }
 
         preferredIdpData.addAll(
                 getPreferredIdps()
                         .stream()
                         .filter(idp -> !idp.equals(getIdp()))
-                        .map(idp -> new AbstractMap.SimpleEntry<>(idp, idpConfigProvider.getByIdentifier(idp).getPassAlongData()))
+                        .map(idp -> new AbstractMap.SimpleEntry<>(idp, idpConfigProvider.getByIdentifier(idp).getPassAlongData().get()))
                         .collect(Collectors.toList()));
     }
 
@@ -130,23 +130,28 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
-    public String getApiUri() {
+    public Optional<String> getApiUri() {
         return IDP.getApiUri();
     }
 
     @Override
-    public String getLoginUri() {
+    public Optional<String> getLoginUri() {
         return IDP.getLoginUri();
     }
 
     @Override
-    public String getIssuer() {
+    public Optional<String> getIssuer() {
         return IDP.getIssuer();
     }
 
     @Override
-    public JWKSet getJSONWebKeys() {
+    public Optional<JWKSet> getJSONWebKeys() {
         return IDP.getJSONWebKeys();
+    }
+
+    @Override
+    public Optional<String> getJwkUri() {
+        return IDP.getJwkUri();
     }
 
     @Override

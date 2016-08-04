@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.idp;
 
 import com.google.gson.JsonObject;
+import com.nimbusds.jose.jwk.JWKSet;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
@@ -10,6 +11,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,15 +38,30 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     private HttpClient httpClient;
 
+    private String loginUri;
+
+    private String apiUrl;
+
+    private String issuer;
+
+    private String jwkUri;
+
+    private JWKSet jwkSet;
+
     private final SecurityConfig securityConfig;
 
     private List<String> redirectExtraParameters;
 
     private List<String> tokenExtraParameters;
 
-    public GoogleIdentityProvider(SecurityConfig securityConfig) {
+    public GoogleIdentityProvider(SecurityConfig securityConfig) throws Exception {
         this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
+        loginUri = securityConfig.getLoginUri().orElse("https://accounts.google.com/o/oauth2/auth");
+        apiUrl = securityConfig.getApiUri().orElse("https://www.googleapis.com/oauth2/v3/token");
+        issuer = securityConfig.getIssuer().orElse("accounts.google.com");
+        jwkUri = securityConfig.getJwkUri().orElse("https://www.googleapis.com/oauth2/v3/certs");
+        jwkSet = securityConfig.getJSONWebKeys().orElse(getJWKs(jwkUri));
 
         redirectExtraParameters = new LinkedList<>();
         redirectExtraParameters.add("response_type");
@@ -52,6 +70,19 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
         tokenExtraParameters = new LinkedList<>();
         tokenExtraParameters.add("grant_type");
+    }
+    private JWKSet getJWKs(String jwkUri) {
+        try {
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet httpGet = new HttpGet(jwkUri);
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+
+            String content = IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
+            return JWKSet.parse(content);
+        } catch (Exception e) {
+            logger.info("Received '{}'.", e.getMessage(), e);
+            return null;
+        }
     }
 
     /**

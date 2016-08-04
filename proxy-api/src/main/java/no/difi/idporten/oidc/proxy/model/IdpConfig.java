@@ -7,12 +7,6 @@ import java.util.Optional;
 
 public interface IdpConfig {
 
-    String getApiUri();
-
-    String getIssuer();
-
-    String getLoginUri();
-
     String getIdentifier();
 
     String getIdpClass();
@@ -25,12 +19,20 @@ public interface IdpConfig {
 
     String getClientId();
 
-    String getPassAlongData();
+    Optional<String> getApiUri();
 
-    List<String> getUserDataNames();
+    Optional<String> getIssuer();
+
+    Optional<String> getLoginUri();
 
     Optional<String> getParameter(String key);
 
-    JWKSet getJSONWebKeys();
+    Optional<String> getPassAlongData();
+
+    List<String> getUserDataNames();
+
+    Optional<JWKSet> getJSONWebKeys();
+
+    Optional<String> getJwkUri();
 
 }

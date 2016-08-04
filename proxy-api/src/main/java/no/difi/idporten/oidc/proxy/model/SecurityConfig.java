@@ -34,11 +34,11 @@ public interface SecurityConfig {
 
     String getSalt();
 
-    String getApiUri();
+    Optional<String> getApiUri();
 
-    String getLoginUri();
+    Optional<String> getLoginUri();
 
-    String getIssuer();
+    Optional<String> getIssuer();
 
     List<String> getUserDataNames();
 
@@ -48,7 +48,9 @@ public interface SecurityConfig {
 
     List<Map.Entry<String, String>> getPreferredIdpData();
 
-    JWKSet getJSONWebKeys();
+    Optional<JWKSet> getJSONWebKeys();
+
+    Optional<String> getJwkUri();
 
     SocketAddress getBackend();
 

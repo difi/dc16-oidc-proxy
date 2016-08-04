@@ -33,19 +33,21 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     private String redirectUri;
 
-    private String passAlongData;
+    private Map<String, String> parameters;
+
+    private Optional<String> passAlongData;
 
     private List<String> userDataNames;
 
-    private JWKSet JSONWebKeys;
+    private Optional<JWKSet> JSONWebKeys;
 
-    private Map<String, String> parameters;
+    private Optional<String> jwkUri;
 
-    private String issuer;
+    private Optional<String> issuer;
 
-    private String apiUri;
+    private Optional<String> apiUri;
 
-    private String loginUri;
+    private Optional<String> loginUri;
 
 
     public TypesafeIdpConfig(String identifier, Config idpConfig) {
@@ -55,15 +57,33 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
         this.redirectUri = idpConfig.getString("redirect_uri");
-        this.passAlongData = idpConfig.getString("pass_along_data");
-        this.userDataNames = idpConfig.getStringList("user_data_name");
-        this.JSONWebKeys = getJWKsFromConfig(idpConfig.getString("jwk_uri"));
-        this.issuer = idpConfig.getString("issuer");
-        this.apiUri = idpConfig.getString("api_uri");
-        this.loginUri = idpConfig.getString("login_uri");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
+
+        if (checkForStringInConfig(idpConfig.getString("pass_along_data"),idpConfig)){
+            this.passAlongData = Optional.of(idpConfig.getString("pass_along_data"));
+        }
+        if (checkForStringInConfig(idpConfig.getString("user_data_name"),idpConfig)){
+            this.userDataNames = idpConfig.getStringList("user_data_names");
+        }
+        if (checkForStringInConfig(idpConfig.getString("jwk_uri"),idpConfig)){
+            this.jwkUri = Optional.of(idpConfig.getString("jwk_uri"));
+            this.JSONWebKeys = Optional.of(getJWKsFromConfig(idpConfig.getString("jwk_uri")));
+        }
+        if (checkForStringInConfig(idpConfig.getString("issuer"),idpConfig)){
+            this.issuer = Optional.of(idpConfig.getString("issuer"));
+        }
+        if (checkForStringInConfig(idpConfig.getString("api_uri"),idpConfig)){
+            this.apiUri = Optional.of(idpConfig.getString("api_uri"));
+        }
+        if (checkForStringInConfig(idpConfig.getString("login_uri"),idpConfig)){
+            this.loginUri = Optional.of(idpConfig.getString("login_uri"));
+        }
         logger.debug("Created IdpConfig:\n{}", this);
+    }
+
+    private boolean checkForStringInConfig(String stringToBeChecked, Config config) {
+        return (config.entrySet().toString().contains(stringToBeChecked));
     }
 
     private JWKSet getJWKsFromConfig(String jwkUri) {
@@ -81,22 +101,27 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public String getLoginUri() {
+    public Optional<String> getJwkUri() {
+        return jwkUri;
+    }
+
+    @Override
+    public Optional<String> getLoginUri() {
         return loginUri;
     }
 
     @Override
-    public String getIssuer() {
+    public Optional<String> getIssuer() {
         return issuer;
     }
 
     @Override
-    public String getApiUri() {
+    public Optional<String> getApiUri() {
         return apiUri;
     }
 
     @Override
-    public JWKSet getJSONWebKeys() {
+    public Optional<JWKSet> getJSONWebKeys() {
         return JSONWebKeys;
     }
 
@@ -131,7 +156,7 @@ public class TypesafeIdpConfig implements IdpConfig {
     }
 
     @Override
-    public String getPassAlongData() {
+    public Optional<String> getPassAlongData() {
         return this.passAlongData;
     }
 
