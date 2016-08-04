@@ -9,8 +9,11 @@ public class OutboundInitializer extends ChannelInitializer<SocketChannel> {
 
     private Channel inbound;
 
-    public OutboundInitializer(Channel inbound) {
+    private final boolean logout;
+
+    public OutboundInitializer(Channel inbound, boolean logout) {
         this.inbound = inbound;
+        this.logout = logout;
     }
 
     @Override
@@ -18,7 +21,7 @@ public class OutboundInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline()
                 .addLast("codec", new HttpClientCodec(102400, 102400, 102400))
                 .addLast(new HttpResponseHandler())
-                .addLast(new OutboundHandlerAdapter(inbound))
+                .addLast(new OutboundHandlerAdapter(inbound, logout))
         ;
     }
 }

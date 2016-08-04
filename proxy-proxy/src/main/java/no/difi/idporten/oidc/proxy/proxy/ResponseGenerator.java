@@ -9,6 +9,7 @@ import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
+import no.difi.idporten.oidc.proxy.model.CookieConfig;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
@@ -63,26 +64,32 @@ public class ResponseGenerator {
         }
     }
 
-    protected void generateLogoutResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig,
-                                          String cookieName) {
-        logger.debug("ResponseGenerator.generateLogoutResponse()");
+    protected void generateLogoutProxyResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, HttpRequest httpRequest) {
+        generateProxyResponse(ctx, httpRequest, securityConfig, null, true);
+    }
+
+    protected void generateLogoutProxyResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, HttpRequest httpRequest, ProxyCookie proxyCookie) {
+        generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData(), true);
+    }
+
+    protected void generateLogoutRedirectResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
         try {
             String redirectUrl = securityConfig.getLogoutRedirectUri();
-            logger.debug("logoutRedirectUri: {}", redirectUrl);
 
             StringBuilder content = new StringBuilder(redirectUrl);
 
             FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                     HttpResponseStatus.FOUND, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8));
 
-            CookieHandler.deleteCookieFromBrowser(cookieName, response);
+            if (proxyCookie != null) {
+                CookieHandler.deleteCookieFromBrowser(proxyCookie.getName(), response);
+            }
 
             response.headers().set(HttpHeaderNames.LOCATION, redirectUrl);
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, String.format(
                     "%s; %s=%s", HttpHeaderValues.TEXT_PLAIN, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
 
-            logger.debug(String.format("Created logout response:\n%s", response));
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 
         } catch (Exception e) {
@@ -90,6 +97,7 @@ public class ResponseGenerator {
             e.printStackTrace();
         }
     }
+
 
     /**
      * Generates a response when theres a problem with the server.
@@ -169,14 +177,13 @@ public class ResponseGenerator {
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig) {
-        return generateProxyResponse(ctx, httpRequest, securityConfig, new HashMap<>());
+        return generateProxyResponse(ctx, httpRequest, securityConfig, null, false);
     }
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig, ProxyCookie proxyCookie) {
-        return generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData());
+        return generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData(), false);
     }
-
 
     /**
      * This is what happens when the proxy needs to work as a normal proxy.
@@ -189,12 +196,15 @@ public class ResponseGenerator {
      * @param userData:
      */
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
-                                         SecurityConfig securityConfig, Map<String, String> userData) {
+                                         SecurityConfig securityConfig, Map<String, String> userData, boolean logout) {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        RequestInterceptor.insertUserDataToHeader(httpRequest, userData, securityConfig);
-        logger.debug("UserData inserted to response: " + userData);
+        if (userData != null){
+            RequestInterceptor.insertUserDataToHeader(httpRequest, userData, securityConfig);
+            logger.debug("UserData inserted to header");
+        } else logger.debug("No userData to insert to header");
+
 
         Channel outboundChannel;
         logger.debug(String.format("Bootstrapping channel %s", ctx.channel()));
@@ -202,7 +212,7 @@ public class ResponseGenerator {
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel))
+        b.handler(new OutboundInitializer(inboundChannel, logout))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);

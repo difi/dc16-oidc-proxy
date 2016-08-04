@@ -39,10 +39,14 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.password = idpConfig.getString("password");
         this.scope = idpConfig.getString("scope");
         this.redirectUri = idpConfig.getString("redirect_uri");
-        this.passAlongData = idpConfig.getString("pass_along_data");
         this.userDataNames = idpConfig.getStringList("user_data_name");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
+        if (idpConfig.entrySet().toString().contains("pass_along_data")) {
+            this.passAlongData = idpConfig.getString("pass_along_data");
+        } else {
+            this.passAlongData = "";
+        }
         logger.debug("Created IdpConfig:\n{}", this);
     }
 
