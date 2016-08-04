@@ -17,10 +17,6 @@
             <groupId>no.difi.idporten.oidc</groupId>
             <artifactId>proxy-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>no.difi.idporten.oidc</groupId>
-            <artifactId>proxy-config</artifactId>
-        </dependency>
 
         <!-- Gson -->
         <dependency>
@@ -38,12 +34,6 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
-        </dependency>
-
-        <!-- Guice -->
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
         </dependency>
 
         <!-- Logging -->
