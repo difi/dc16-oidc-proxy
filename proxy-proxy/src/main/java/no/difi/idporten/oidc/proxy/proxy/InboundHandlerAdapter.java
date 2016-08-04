@@ -58,13 +58,19 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private void handleLogout(ChannelHandlerContext ctx, ResponseGenerator responseGenerator, SecurityConfig securityConfig, CookieHandler cookieHandler, HttpRequest httpRequest) {
         Optional<ProxyCookie> proxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
+        boolean hasSpecifiedLogoutRedirect = securityConfig.getLogoutRedirectUri() != null;
 
-        if (proxyCookieOptional.isPresent()) {
-            ProxyCookie proxyCookie = proxyCookieOptional.get();
-            cookieHandler.removeCookie(proxyCookie.getUuid());
-            responseGenerator.generateLogoutResponse(ctx, securityConfig, proxyCookie.getName());
+        if (proxyCookieOptional.isPresent() && hasSpecifiedLogoutRedirect) {
+            cookieHandler.removeCookie(proxyCookieOptional.get().getUuid());
+            responseGenerator.generateLogoutRedirectResponse(ctx, securityConfig, proxyCookieOptional.get());
+            logger.info("User logged out from all IDPs on host. Cookie deleted from browser and user redirected to configured logoutRedirectUri({})", securityConfig.getLogoutRedirectUri());
+        } else if (proxyCookieOptional.isPresent()) {
+            cookieHandler.removeCookie(proxyCookieOptional.get().getUuid());
+            responseGenerator.generateLogoutProxyResponse(ctx, securityConfig, httpRequest, proxyCookieOptional.get());
+            logger.info("User logged out from all IDPs on host. Cookie deleted from browser and user sent proxyResponse on requested uri, given no configured logoutRedirectUri");
         } else {
-            responseGenerator.generateLogoutResponse(ctx, securityConfig, securityConfig.getCookieConfig().getName());
+            responseGenerator.generateLogoutRedirectResponse(ctx, securityConfig, null);
+            logger.info("Logger requested log out without valid cookie present (likely already removed). Redirected to configured logoutRedirectUri ({})", securityConfig.getLogoutRedirectUri());
         }
 
     }
