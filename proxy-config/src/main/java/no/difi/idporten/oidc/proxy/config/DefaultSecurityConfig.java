@@ -5,6 +5,9 @@ import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,7 +28,10 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private List<String> defaultUserDataNames;
 
+    private Logger logger;
+
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
+        this.logger = LoggerFactory.getLogger(DefaultSecurityConfig.class);
         this.hostname = hostname;
         this.path = path;
         this.HOST = hostConfigProvider.getByHostname(hostname);
@@ -38,11 +44,10 @@ public class DefaultSecurityConfig implements SecurityConfig {
     public Optional<IdentityProvider> createIdentityProvider() {
         try {
             return Optional.of((IdentityProvider) Class.forName(IDP.getIdpClass()).getConstructor(SecurityConfig.class).newInstance(this));
-        } catch (ClassNotFoundException exc) {
-            exc.printStackTrace();
+        } catch (NullPointerException exc) {
             return Optional.empty();
         } catch (Exception exc) {
-            exc.printStackTrace();
+            logger.error("IdentityProvider not configured correctly:{}", exc);
             return Optional.empty();
         }
     }
