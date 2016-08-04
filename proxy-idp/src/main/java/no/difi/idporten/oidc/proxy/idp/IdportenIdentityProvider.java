@@ -40,10 +40,6 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
     private SecurityConfig securityConfig;
 
-    private static String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
-
-    private static String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
-
     public IdportenIdentityProvider(SecurityConfig securityConfig) {
         this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
@@ -58,7 +54,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
     @Override
     public String generateRedirectURI() throws IdentityProviderException {
         try {
-            return new URIBuilder(LOGINURL)
+            return new URIBuilder(securityConfig.getLoginUri())
                     .addParameter("scope", securityConfig.getScope())
                     .addParameter("client_id", securityConfig.getClientId())
                     .addParameter("response_type", "code")
@@ -89,7 +85,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             contentValues.add(new BasicNameValuePair("code", urlParameters.get("code")));
             String postContent = URLEncodedUtils.format(contentValues, StandardCharsets.UTF_8);
 
-            HttpPost httpPost = new HttpPost(APIURL);
+            HttpPost httpPost = new HttpPost(securityConfig.getApiUri());
             httpPost.setHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded");
             httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getUrlEncoder().encodeToString(
                     (securityConfig.getClientId() + ":" + securityConfig.getPassword()).getBytes()));
@@ -97,7 +93,7 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
 
             HttpResponse httpResponse = httpClient.execute(httpPost);
 
-            logger.debug("\nSending 'POST' request to URL : " + APIURL);
+            logger.debug("\nSending 'POST' request to URL : " + securityConfig.getApiUri());
             logger.debug("Post parameters : " + postContent);
             logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
             logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
@@ -109,9 +105,8 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
             JsonObject jsonResponse;
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                 jsonResponse = gson.fromJson(new InputStreamReader(inputStream), JsonObject.class);
-                System.out.println("HOLLA: "+securityConfig.getJSONWebKeys());
-                if (securityConfig.getJSONWebKeys() != null){
-                    return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString(), securityConfig.getJSONWebKeys()), jsonResponse.get("access_token").getAsString());
+                if (securityConfig.getJSONWebKeys() != null) {
+                    return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString(), securityConfig), jsonResponse.get("access_token").getAsString());
                 }
                 throw new IdentityProviderException("Configuration of this IDP is wrong");
             } catch (IOException exc) {

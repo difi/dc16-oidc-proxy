@@ -11,7 +11,6 @@ import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import no.difi.idporten.oidc.proxy.model.UserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,10 +84,10 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         Map<String, String> userData;
         try {
             userData = identityProvider.getToken(path).getUserData();
-        } catch (IdentityProviderException e){
-            String uuidForThisShit = UUID.randomUUID().toString();
-            logger.warn(uuidForThisShit + ": " + e);
-            responseGenerator.generateServerErrorResponse(ctx, e + " " + uuidForThisShit);
+        } catch (IdentityProviderException e) {
+            String uuidForTokenDebugging = UUID.randomUUID().toString();
+            logger.warn("UUID for exception: " + uuidForTokenDebugging + ". Gave the following exception: " + e);
+            responseGenerator.generateServerErrorResponse(ctx, "Unable to log you in. Code: " + uuidForTokenDebugging);
             return;
         }
 

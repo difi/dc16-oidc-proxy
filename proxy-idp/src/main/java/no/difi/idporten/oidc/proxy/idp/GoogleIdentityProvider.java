@@ -37,10 +37,6 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     private final SecurityConfig securityConfig;
 
-    private static String APIURL = "https://www.googleapis.com/oauth2/v3/token";
-
-    private static String LOGINURL = "https://accounts.google.com/o/oauth2/auth";
-
     private List<String> redirectExtraParameters;
 
     private List<String> tokenExtraParameters;
@@ -67,11 +63,11 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
     @Override
     public String generateRedirectURI() throws IdentityProviderException {
         try {
-            URIBuilder uriBuilder = new URIBuilder(LOGINURL)
+            URIBuilder uriBuilder = new URIBuilder(securityConfig.getLoginUri())
                     .addParameter("scope", securityConfig.getScope())
                     .addParameter("client_id", securityConfig.getClientId())
                     .addParameter("redirect_uri", securityConfig.getRedirectUri());
-            redirectExtraParameters.stream().forEach(parameterKey -> {
+            redirectExtraParameters.forEach(parameterKey -> {
                 uriBuilder.addParameter(parameterKey, securityConfig.getParameter(parameterKey));
             });
             return uriBuilder.build().toString();
@@ -94,7 +90,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         Map<String, String> urlParameters = URLEncodedUtils.parse(URI.create(uri), "UTF-8").stream()
                 .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
 
-        HttpPost postRequest = new HttpPost(APIURL);
+        HttpPost postRequest = new HttpPost(securityConfig.getApiUri());
         List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("code", urlParameters.get("code")));
         params.add(new BasicNameValuePair("redirect_uri", securityConfig.getRedirectUri()));
@@ -102,7 +98,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         params.add(new BasicNameValuePair("client_secret", securityConfig.getPassword()));
         params.add(new BasicNameValuePair("scope", securityConfig.getScope()));
 
-        tokenExtraParameters.stream().forEach(parameterKey -> {
+        tokenExtraParameters.forEach(parameterKey -> {
             params.add(new BasicNameValuePair(parameterKey, securityConfig.getParameter(parameterKey)));
         });
 
@@ -121,7 +117,7 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
             throw new IdentityProviderException(exc.getMessage(), exc);
         }
 
-        logger.debug("Sending 'POST' request to URL: {}", APIURL);
+        logger.debug("Sending 'POST' request to URL: {}", securityConfig.getApiUri());
         logger.debug("Post parameters: {}", params);
         logger.debug("Got response back:\n{}", httpResponse);
 
@@ -134,8 +130,8 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         try {
             String responseContent = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
             jsonResponse = gson.fromJson(responseContent, JsonObject.class);
-            if (securityConfig.getJSONWebKeys() != null){
-                return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString(), securityConfig.getJSONWebKeys()), jsonResponse.get("access_token").getAsString());
+            if (securityConfig.getJSONWebKeys() != null) {
+                return new DefaultUserData(decodeIDToken(jsonResponse.get("id_token").getAsString(), securityConfig), jsonResponse.get("access_token").getAsString());
             }
             throw new IdentityProviderException("The IdentityProvider is not configured correctly");
         } catch (Exception exc) {

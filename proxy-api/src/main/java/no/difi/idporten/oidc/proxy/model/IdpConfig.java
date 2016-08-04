@@ -7,7 +7,11 @@ import java.util.Optional;
 
 public interface IdpConfig {
 
-    JWKSet getJSONWebKeys();
+    String getApiUri();
+
+    String getIssuer();
+
+    String getLoginUri();
 
     String getIdentifier();
 
@@ -26,5 +30,7 @@ public interface IdpConfig {
     List<String> getUserDataNames();
 
     Optional<String> getParameter(String key);
+
+    JWKSet getJSONWebKeys();
 
 }

@@ -1,11 +1,7 @@
 package no.difi.idporten.oidc.proxy.config;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.util.JSONObjectUtils;
 import com.typesafe.config.Config;
-import net.minidev.json.JSONObject;
-import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -43,13 +39,16 @@ public class TypesafeIdpConfig implements IdpConfig {
 
     private JWKSet JSONWebKeys;
 
-    private List<String> user_data_names;
-
     private Map<String, String> parameters;
 
+    private String issuer;
+
+    private String apiUri;
+
+    private String loginUri;
 
 
-    public TypesafeIdpConfig(String identifier, Config idpConfig){
+    public TypesafeIdpConfig(String identifier, Config idpConfig) {
         this.identifier = identifier;
         this.idpClass = idpConfig.getString("class");
         this.clientId = idpConfig.getString("client_id");
@@ -59,24 +58,41 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.passAlongData = idpConfig.getString("pass_along_data");
         this.userDataNames = idpConfig.getStringList("user_data_name");
         this.JSONWebKeys = getJWKsFromConfig(idpConfig.getString("jwk_uri"));
+        this.issuer = idpConfig.getString("issuer");
+        this.apiUri = idpConfig.getString("api_uri");
+        this.loginUri = idpConfig.getString("login_uri");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
         logger.debug("Created IdpConfig:\n{}", this);
     }
 
-    private JWKSet getJWKsFromConfig(String jwkUri){
+    private JWKSet getJWKsFromConfig(String jwkUri) {
         try {
             HttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet httpGet = new HttpGet(jwkUri);
             HttpResponse httpResponse = httpClient.execute(httpGet);
 
             String content = IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
-            JWKSet jwkSet = JWKSet.parse(content);
-            return jwkSet;
-        } catch (Exception e){
+            return JWKSet.parse(content);
+        } catch (Exception e) {
             logger.info("Received '{}'.", e.getMessage(), e);
             return null;
         }
+    }
+
+    @Override
+    public String getLoginUri() {
+        return loginUri;
+    }
+
+    @Override
+    public String getIssuer() {
+        return issuer;
+    }
+
+    @Override
+    public String getApiUri() {
+        return apiUri;
     }
 
     @Override

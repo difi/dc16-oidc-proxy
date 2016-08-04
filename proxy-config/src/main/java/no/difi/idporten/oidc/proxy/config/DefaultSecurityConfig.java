@@ -95,9 +95,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private void setDefaultUserDataNames(IdpConfigProvider idpConfigProvider) {
         this.defaultUserDataNames = new LinkedList<>();
-        HOST.getPreferredIdps().stream()
-                .forEach(idpId -> defaultUserDataNames
-                        .addAll(idpConfigProvider.getByIdentifier(idpId).getUserDataNames()));
+        HOST.getPreferredIdps().forEach(idpId -> defaultUserDataNames
+                .addAll(idpConfigProvider.getByIdentifier(idpId).getUserDataNames()));
     }
 
     @Override
@@ -123,6 +122,21 @@ public class DefaultSecurityConfig implements SecurityConfig {
     @Override
     public String getSalt() {
         return HOST.getSalt();
+    }
+
+    @Override
+    public String getApiUri() {
+        return IDP.getApiUri();
+    }
+
+    @Override
+    public String getLoginUri() {
+        return IDP.getLoginUri();
+    }
+
+    @Override
+    public String getIssuer() {
+        return IDP.getIssuer();
     }
 
     @Override
