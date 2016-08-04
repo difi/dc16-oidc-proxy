@@ -85,8 +85,8 @@ public class IntegrationTestWithMockServer {
 
     @AfterClass
     public void afterClass() throws Exception {
-        resetGoogleIdpUrls();
-        resetIdportenIdpUrls();
+        //resetGoogleIdpUrls();
+        //resetIdportenIdpUrls();
         thread.interrupt();
     }
 
@@ -94,8 +94,8 @@ public class IntegrationTestWithMockServer {
     public void setUp() throws Exception {
         httpClient = HttpClientBuilder.create().build(); // Http client that automatically follows redirects
         notFollowHttpClient = HttpClientBuilder.create().disableRedirectHandling().build(); // Http client that automatically follows redirects
-        modifyGoogleIdpUrls();
-        modifyIdportenIdpUrls();
+        //modifyGoogleIdpUrls();
+        //modifyIdportenIdpUrls();
 
         // Configuring what the mock server should respond to requests.
         wireMockServer.resetRequests();
