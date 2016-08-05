@@ -13,7 +13,7 @@ import java.util.Optional;
 public class HTMLGeneratorTest {
 
     @Mock
-    SecurityConfig securityConfigMock = Mockito.mock(SecurityConfig.class);
+    private SecurityConfig securityConfigMock = Mockito.mock(SecurityConfig.class);
 
     private String templateUrlFromSecurityConfig = "custom-error-page.html";
 

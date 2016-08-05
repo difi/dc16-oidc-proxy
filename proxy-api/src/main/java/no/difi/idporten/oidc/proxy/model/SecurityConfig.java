@@ -3,7 +3,6 @@ package no.difi.idporten.oidc.proxy.model;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.net.SocketAddress;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
