@@ -79,13 +79,13 @@ host.hostname = {
         path: "/login_to_idporten"                             <!-- Root path of the secured area -->
         security: 2                                            <!-- Level of security -->
         idp: "idporten"                                        <!-- What identity provider should be used to log in on the secured area -->
-        redirect_uri: "redirect_uri"                           <!-- Optional in path -->
-        scope: "scope"                                         <!-- Optional in path -->
+        redirect_uri: "redirect_uri"                           <!-- Optional in path, obligatory in idp -->
+        scope: "scope"                                         <!-- Optional in path, obligatory in idp -->
       }
     ]
   preferred_idps: ["identity_provider1", "identity_provider2"] <!-- Preferred idps in descending order. A path's idp (if configured) will override this order, adding itself first -->
   logout_post_uri: "/logout"				                   <!-- The uri used to logout, triggering logout if user accesses url on host ending with this -->
-  logout_redirect_uri: "http://localhost:8080/logout-this"     <!-- Where the client is redirected back to when logging out -->
+  logout_redirect_uri: "http://localhost:8080/logout-this"     <!-- Optional. Where the client is redirected back to after removing cookie. Removes cookie and redirects to this address. Don't configure this if you want want your service to receive logout request on postUri with userData, just use postUri -->
   unsecured_paths: ["/unsecured_path1", "/unsecured_path2"]    <!-- Unsecured paths are paths that should not receive information about the user -->
 }
 ```
@@ -104,7 +104,7 @@ idp.identityProviderName = {
   password: "password"                                                     <!-- Password parameters used in the request towards the identity provider -->
   scope: "scope"                                                           <!-- The scope parameter used in the request towards the identity provider -->
   user_data_name: ["user_data_service_needs1", "user_data_service_needs2"] <!-- What user data collected from the log in should be sent to the service -->
-  pass_along_data: "identifying_data_for_idp"                              <!-- If a user is logged into multiple idps on a host, server returns userData of first preferred idp with cookie and this additional data from other idps with cookie -->
+  pass_along_data: "identifying_data_for_idp"                              <!-- Optional. If a user is logged into multiple idps on a host, server returns userData of first preferred idp with cookie and this additional data from other idps with cookie -->
   parameters: {                                                            <!-- Parameters have to be in the idp, but does not have to contain any parameters -->
     other_parameters: "like",                                              <!-- Other parameters need in the identity provider configuration -->
     security: 3
@@ -121,6 +121,7 @@ cookie.name = "global_cookie_name" <!-- Global name of the cookie the proxy uses
 cookie.touchPeriod = 20            <!-- How long the cookies validity should be expanded every time used -->
 cookie.maxExpiry = 60              <!-- How long the max expiry should be expanded every time used -->
 
+logoutHeader = "X-Logout"          <!-- Optional variable in case the server wants to terminate cookie without user interaction. Set response HTTP header 'logoutHeader: true' -->
 salt = "random_salt"               <!-- The salt is required globally in the conf-file -->
 ```
 
@@ -182,7 +183,7 @@ cookie.name = "proxy_cookie_name"
 cookie.touchPeriod = 30
 cookie.maxExpiry = 120
 
-
+logoutHeader = "X-Logout"
 salt = "2LMC539EF8nf04O9gndsfERGh3HI4ugjRTHnfAGmlwkSEhfnbi82finsdf"
 
 ```
