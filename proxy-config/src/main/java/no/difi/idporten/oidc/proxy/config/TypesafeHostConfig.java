@@ -8,7 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -35,6 +38,8 @@ public class TypesafeHostConfig implements HostConfig {
     private String salt;
 
     private List<String> unsecuredPaths;
+
+    private String errorPageUrl;
 
 
     public TypesafeHostConfig(Config hostConfig, Config globalConfig) {
@@ -64,6 +69,27 @@ public class TypesafeHostConfig implements HostConfig {
         this.logoutPostUri = hostConfig.getString("logout_post_uri");
 
         this.logoutRedirectUri = hostConfig.getString("logout_redirect_uri");
+
+        setErrorPageUrl(hostConfig);
+
+    }
+
+    /**
+     * Sets the error page url and handles both default path and invalid url syntax.
+     *
+     * @param hostConfig
+     */
+    private void setErrorPageUrl(Config hostConfig) {
+        if (hostConfig.hasPath("error_page_uri")) {
+            try {
+                this.errorPageUrl = new URI(hostConfig.getString("error_page_uri")).toString();
+            } catch (URISyntaxException exc) {
+                logger.warn("Could not read error page uri: {}", hostConfig.getString("error_page_uri"));
+                this.errorPageUrl = null;
+            }
+        } else {
+            this.errorPageUrl = null;
+        }
     }
 
     @Override
@@ -120,5 +146,13 @@ public class TypesafeHostConfig implements HostConfig {
     @Override
     public List<String> getPreferredIdps() {
         return this.preferredIdps;
+    }
+
+    public Optional<String> getErrorPageUrl() {
+        if (this.errorPageUrl == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(this.errorPageUrl);
+        }
     }
 }

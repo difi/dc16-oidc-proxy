@@ -62,6 +62,8 @@ public interface SecurityConfig {
 
     boolean isSecured();
 
+    Optional<String> getErrorPageUrl();
+
     /**
      * Checks if the path is explicitly completely unsecured and should not receive the Difi headers.
      *

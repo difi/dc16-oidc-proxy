@@ -230,6 +230,10 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public Optional<String> getErrorPageUrl() {
+        return HOST.getErrorPageUrl();
+    }
+
     public String toString() {
         return "DefaultSecurityConfig{" +
                 "hostname='" + hostname + "'" +
