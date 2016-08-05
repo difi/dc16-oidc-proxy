@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class TestGoogleIdentityProvider extends AbstractIdentityProvider{
+public class TestGoogleIdentityProvider extends AbstractIdentityProvider {
 
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
@@ -55,7 +55,6 @@ public class TestGoogleIdentityProvider extends AbstractIdentityProvider{
         redirectExtraParameters.add("response_type");
         redirectExtraParameters.add("access_type");
         redirectExtraParameters.add("approval_prompt");
-
 
 
         tokenExtraParameters = new LinkedList<>();

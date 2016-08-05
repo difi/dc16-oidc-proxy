@@ -72,7 +72,7 @@ public class TestIdportenIdentityProvider extends AbstractIdentityProvider {
 
     @Override
     protected String decodeIDToken(String idToken, SecurityConfig securityConfig) throws Exception {
-            return SignedJWT.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
+        return SignedJWT.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
     }
 
     /**
