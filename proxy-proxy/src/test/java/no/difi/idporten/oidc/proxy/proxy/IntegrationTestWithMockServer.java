@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -297,7 +298,6 @@ public class IntegrationTestWithMockServer {
         String setCookieHeader = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
         MatcherAssert.assertThat("The 'Set-Cookie' header should be for a redirect cookie",
                 setCookieHeader, Matchers.containsString(expectedRedirectCookieName));
-        System.out.println(setCookieHeader);
         MatcherAssert.assertThat("The path for the cookie should be equal to '/'",
                 setCookieHeader, RegexMatcher.matchesRegex(".*[Pp]ath=/.*"));
     }
@@ -463,9 +463,13 @@ public class IntegrationTestWithMockServer {
      * Having an invalid code in the url should not result in an error response, but simply redirect to a login for the
      * IDP needed on the requested path without the code parameter.
      *
+     *
+     * It has not been decided whether the user should be redirected to login
+     * or if an error page should be presented. This test has therefore been disabled.
+     *
      * @throws Exception
      */
-    @Test
+    @Test (enabled = false)
     public void testRequestWithInvalidCodeShouldRedirectToLogin() throws Exception {
         HttpGet getRequest = new HttpGet(BASEURL + "/google" + invalidCodeUrlSuffix);
 
@@ -539,7 +543,7 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnSecuredPath() throws Exception {
-        String expectedHeaderName = "X-additional-data/google-email";
+        String expectedHeaderName = "X-additional-data/testgoogle-email";
 
         CookieStore cookieStore = new BasicCookieStore();
         HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
@@ -570,7 +574,7 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnUnsecuredPath() throws Exception {
-        String expectedHeaderName = "X-additional-data/google-email";
+        String expectedHeaderName = "X-additional-data/testgoogle-email";
 
         CookieStore cookieStore = new BasicCookieStore();
         HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
