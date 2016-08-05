@@ -99,8 +99,12 @@ This is how an identity provider is configured
 ```xml
 idp.identityProviderName = {
   class: "package.identityProvider.is.in.classname.of.identityProvider"    <!-- Which identity provider class should be used -->
-  client_id: "client_id"                                                   <!-- The client_id parameter used in the request to the identity provider -->
+  issuer: "issuer_url"                                                     <!-- The id/uri og the issuer. Used to validate the token-->
+  api_uri: "api_uri"                                                       <!-- The uri where the api is found. used in the identity provider -->
+  login_uri: "login_uri"                                                   <!-- The uri where the user is sent to log in -->
+  jwk_uri: "jwk_uri"                                                       <!-- Where the JSONWebKey made by the authenticating service is located-->
   redirect_uri: "redirect_uri"                                             <!-- Where the identity provider should redirect back to. Configured in the identity provider-->
+  client_id: "client_id"                                                   <!-- The client_id parameter used in the request to the identity provider -->
   password: "password"                                                     <!-- Password parameters used in the request towards the identity provider -->
   scope: "scope"                                                           <!-- The scope parameter used in the request towards the identity provider -->
   user_data_name: ["user_data_service_needs1", "user_data_service_needs2"] <!-- What user data collected from the log in should be sent to the service -->
@@ -167,8 +171,12 @@ host.localhost = {
 
 idp.idporten = {
   class: "no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider"
-  client_id: "difi"
+  issuer: "https://eid-exttest.difi.no/idporten-oidc-provider/"
+  api_uri: "https://eid-exttest.difi.no/idporten-oidc-provider/token"
+  login_uri: "https://eid-exttest.difi.no/idporten-oidc-provider/authorize"
+  jwk_uri: "https://eid-exttest.difi.no/idporten-oidc-provider/jwk"
   redirect_uri: "http://localhost:8080/"
+  client_id: "difi"
   password: "password"
   scope: "openid"
   user_data_name: ["pid", "sub"]
@@ -206,4 +214,3 @@ Injector injector = Guice.createInjector(new ArrayList<Module>() {{
 
 injector.getInstance(NettyHttpListener.class).run();
 ```
-

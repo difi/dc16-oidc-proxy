@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.config;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
@@ -99,9 +100,8 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private void setDefaultUserDataNames(IdpConfigProvider idpConfigProvider) {
         this.defaultUserDataNames = new LinkedList<>();
-        HOST.getPreferredIdps().stream()
-                .forEach(idpId -> defaultUserDataNames
-                        .addAll(idpConfigProvider.getByIdentifier(idpId).getUserDataNames()));
+        HOST.getPreferredIdps().forEach(idpId -> defaultUserDataNames
+                .addAll(idpConfigProvider.getByIdentifier(idpId).getUserDataNames()));
     }
 
     @Override
@@ -127,6 +127,26 @@ public class DefaultSecurityConfig implements SecurityConfig {
     @Override
     public String getSalt() {
         return HOST.getSalt();
+    }
+
+    @Override
+    public String getApiUri() {
+        return IDP.getApiUri();
+    }
+
+    @Override
+    public String getLoginUri() {
+        return IDP.getLoginUri();
+    }
+
+    @Override
+    public String getIssuer() {
+        return IDP.getIssuer();
+    }
+
+    @Override
+    public JWKSet getJSONWebKeys() {
+        return IDP.getJSONWebKeys();
     }
 
     @Override
@@ -215,6 +235,10 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public Optional<String> getErrorPageUrl() {
+        return HOST.getErrorPageUrl();
+    }
+
     public String toString() {
         return "DefaultSecurityConfig{" +
                 "hostname='" + hostname + "'" +

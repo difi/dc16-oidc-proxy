@@ -14,6 +14,8 @@ import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class ResponseGenerator {
 
     public static final AsciiString TEXT_HTML = new AsciiString("text/html");
@@ -56,7 +58,7 @@ public class ResponseGenerator {
         } catch (IdentityProviderException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
-            generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()));
+            generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()), securityConfig);
         }
     }
 
@@ -94,13 +96,15 @@ public class ResponseGenerator {
         }
     }
 
-
     /**
      * Generates a response when theres a problem with the server.
      *
      * @param ctx:
      * @param message:
      */
+    protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message, SecurityConfig securityConfig) {
+        generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR, securityConfig);
+    }
 
     protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message) {
         generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -110,9 +114,52 @@ public class ResponseGenerator {
      * @param ctx:
      * @param message:
      */
-
     protected void generateUnknownHostResponse(ChannelHandlerContext ctx, String message) {
         generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
+    }
+
+
+    /**
+     * Default response for when nothing is configured for the requested host
+     */
+    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus, SecurityConfig securityConfig) {
+        String errorMessageHeader = "X-Difiheader-error-message";
+        // TODO also have uuid
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                responseStatus,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message, securityConfig), CharsetUtil.UTF_8));
+        Optional<String> errorPageUrlOptional = securityConfig.getErrorPageUrl();
+        if (errorPageUrlOptional.isPresent()) {
+            HttpRequest requestToErrorPage = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, errorPageUrlOptional.get());
+            requestToErrorPage.headers().set(HttpHeaderNames.HOST, securityConfig.getHostname());
+            requestToErrorPage.headers().add(errorMessageHeader, message);
+            requestToErrorPage.headers().add(errorMessageHeader, message);
+            generateProxyResponse(ctx, requestToErrorPage, securityConfig);
+        } else {
+            writeDefaultResponse(ctx, response);
+        }
+
+    }
+
+    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                responseStatus,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message), CharsetUtil.UTF_8));
+
+        writeDefaultResponse(ctx, response);
+    }
+
+    private void writeDefaultResponse(ChannelHandlerContext ctx, FullHttpResponse response) {
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set(
+                HttpHeaderNames.CONTENT_TYPE,
+                String.format("%s; %s=%s", TEXT_HTML, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
+        logger.debug(String.format("Created default response:\n%s", response));
+
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
@@ -152,27 +199,7 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    /**
-     * Default response for when nothing is configured for the requested host
-     */
-    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
-        FullHttpResponse response = new DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                responseStatus,
-                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message), CharsetUtil.UTF_8));
-
-        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
-        response.headers().set(
-                HttpHeaderNames.CONTENT_TYPE,
-                String.format("%s; %s=%s", TEXT_HTML, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-
-        logger.debug(String.format("Created default response:\n%s", response));
-
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
-                                         SecurityConfig securityConfig) {
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest, SecurityConfig securityConfig) {
         return generateProxyResponse(ctx, httpRequest, securityConfig, null, false);
     }
 
@@ -189,10 +216,10 @@ public class ResponseGenerator {
      * @param ctx:
      * @param securityConfig:
      * @param httpRequest:
-     * @param userData:
+     * @param proxyCookie:
      */
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest, SecurityConfig securityConfig,
-                                                                                ProxyCookie proxyCookie, boolean logout) {
+                                         ProxyCookie proxyCookie, boolean logout) {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
@@ -238,7 +265,5 @@ public class ResponseGenerator {
             }
         });
         return outboundChannel;
-
     }
-
 }

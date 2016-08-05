@@ -11,12 +11,12 @@ import no.difi.idporten.oidc.proxy.api.SecurityConfigProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import no.difi.idporten.oidc.proxy.model.UserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Handler for incoming requests. This handler creates the channel which connects to a outbound server.
@@ -91,7 +91,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ProxyCookie proxyCookie;
         logger.debug("TypesafePathConfig contains code: {}", path);
         Map<String, String> userData;
-        userData = identityProvider.getToken(path).getUserData();
+        try {
+            userData = identityProvider.getToken(path).getUserData();
+        } catch (IdentityProviderException e) {
+            String uuidForTokenDebugging = UUID.randomUUID().toString();
+            logger.warn("UUID for exception: " + uuidForTokenDebugging + ". Gave the following exception: " + e);
+            responseGenerator.generateServerErrorResponse(ctx, "Unable to log you in. Code: " + uuidForTokenDebugging);
+            return;
+        }
 
         int maxExpiry = securityConfig.getCookieConfig().getMaxExpiry();
         int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();

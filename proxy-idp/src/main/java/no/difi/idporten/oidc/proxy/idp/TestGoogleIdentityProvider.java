@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.idp;
 
 import com.google.gson.JsonObject;
+import com.nimbusds.jwt.SignedJWT;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
@@ -28,8 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
-public class GoogleIdentityProvider extends AbstractIdentityProvider {
+public class TestGoogleIdentityProvider extends AbstractIdentityProvider {
 
     private static Logger logger = LoggerFactory.getLogger(GoogleIdentityProvider.class);
 
@@ -41,11 +41,11 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
 
     private List<String> tokenExtraParameters;
 
-    private static String APIURL = "https://www.googleapis.com/oauth2/v3/token";
+    private static String APIURL = "http://localhost:8081/oauth2/v3/token";
 
-    private static String LOGINURL = "https://accounts.google.com/o/oauth2/auth";
+    private static String LOGINURL = "http://localhost:8081/o/oauth2/auth";
 
-    public GoogleIdentityProvider(SecurityConfig securityConfig) {
+    public TestGoogleIdentityProvider(SecurityConfig securityConfig) {
         this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
         //this.APIURL = securityConfig.getApiUri();
@@ -55,7 +55,6 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
         redirectExtraParameters.add("response_type");
         redirectExtraParameters.add("access_type");
         redirectExtraParameters.add("approval_prompt");
-
 
 
         tokenExtraParameters = new LinkedList<>();
@@ -83,6 +82,11 @@ public class GoogleIdentityProvider extends AbstractIdentityProvider {
             logger.warn("Could not create redirect URI with secureity config: {}", securityConfig);
             throw new IdentityProviderException(exc.getMessage(), exc);
         }
+    }
+
+    @Override
+    protected String decodeIDToken(String idToken, SecurityConfig securityConfig) throws Exception {
+        return SignedJWT.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
     }
 
     /**

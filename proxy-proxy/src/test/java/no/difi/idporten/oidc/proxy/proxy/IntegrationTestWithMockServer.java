@@ -7,9 +7,7 @@ import com.google.inject.Injector;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import no.difi.idporten.oidc.proxy.config.ConfigModule;
-import no.difi.idporten.oidc.proxy.idp.GoogleIdentityProvider;
 import no.difi.idporten.oidc.proxy.proxy.util.RegexMatcher;
-import no.difi.idporten.oidc.proxy.idp.IdportenIdentityProvider;
 import no.difi.idporten.oidc.proxy.storage.StorageModule;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -31,7 +29,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -50,15 +47,6 @@ public class IntegrationTestWithMockServer {
 
     private static HttpClient notFollowHttpClient;
 
-    private static String originalGoogleApiUrl;
-
-    private static String originalGoogleLoginUrl;
-
-    private static String originalIdportenLoginUrl;
-
-    private static String originalIdportenApiUrl;
-
-
     private Thread thread;
 
     private WireMockServer wireMockServer;
@@ -71,22 +59,13 @@ public class IntegrationTestWithMockServer {
         wireMockServer.start();
 
         thread = new Thread(injector.getInstance(NettyHttpListener.class));
-
         thread.start();
-
-        originalGoogleLoginUrl = getPrivateField(GoogleIdentityProvider.class.getDeclaredField("LOGINURL"));
-        originalGoogleApiUrl = getPrivateField(GoogleIdentityProvider.class.getDeclaredField("APIURL"));
-        originalIdportenLoginUrl = getPrivateField(IdportenIdentityProvider.class.getDeclaredField("LOGINURL"));
-        originalIdportenApiUrl = getPrivateField(IdportenIdentityProvider.class.getDeclaredField("APIURL"));
-
         Thread.sleep(1_000);
     }
 
 
     @AfterClass
     public void afterClass() throws Exception {
-        resetGoogleIdpUrls();
-        resetIdportenIdpUrls();
         thread.interrupt();
     }
 
@@ -94,8 +73,6 @@ public class IntegrationTestWithMockServer {
     public void setUp() throws Exception {
         httpClient = HttpClientBuilder.create().build(); // Http client that automatically follows redirects
         notFollowHttpClient = HttpClientBuilder.create().disableRedirectHandling().build(); // Http client that automatically follows redirects
-        modifyGoogleIdpUrls();
-        modifyIdportenIdpUrls();
 
         // Configuring what the mock server should respond to requests.
         wireMockServer.resetRequests();
@@ -297,7 +274,6 @@ public class IntegrationTestWithMockServer {
         String setCookieHeader = headerMap.get(HttpHeaderNames.SET_COOKIE.toString());
         MatcherAssert.assertThat("The 'Set-Cookie' header should be for a redirect cookie",
                 setCookieHeader, Matchers.containsString(expectedRedirectCookieName));
-        System.out.println(setCookieHeader);
         MatcherAssert.assertThat("The path for the cookie should be equal to '/'",
                 setCookieHeader, RegexMatcher.matchesRegex(".*[Pp]ath=/.*"));
     }
@@ -462,10 +438,14 @@ public class IntegrationTestWithMockServer {
     /**
      * Having an invalid code in the url should not result in an error response, but simply redirect to a login for the
      * IDP needed on the requested path without the code parameter.
+     * <p>
+     * <p>
+     * It has not been decided whether the user should be redirected to login
+     * or if an error page should be presented. This test has therefore been disabled.
      *
      * @throws Exception
      */
-    @Test
+    @Test(enabled = false)
     public void testRequestWithInvalidCodeShouldRedirectToLogin() throws Exception {
         HttpGet getRequest = new HttpGet(BASEURL + "/google" + invalidCodeUrlSuffix);
 
@@ -539,7 +519,7 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnSecuredPath() throws Exception {
-        String expectedHeaderName = "X-additional-data/google-email";
+        String expectedHeaderName = "X-additional-data/testgoogle-email";
 
         CookieStore cookieStore = new BasicCookieStore();
         HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
@@ -570,7 +550,7 @@ public class IntegrationTestWithMockServer {
      */
     @Test
     public void testLoggedInWithTwoIdpsInsertsIdentifierOfSecondaryIdpOnUnsecuredPath() throws Exception {
-        String expectedHeaderName = "X-additional-data/google-email";
+        String expectedHeaderName = "X-additional-data/testgoogle-email";
 
         CookieStore cookieStore = new BasicCookieStore();
         HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).disableRedirectHandling().build();
@@ -701,40 +681,5 @@ public class IntegrationTestWithMockServer {
         getRequest.setHeader(HttpHeaderNames.HOST.toString(), mockServerHostName);
 
         return clientForCaller.execute(getRequest);
-    }
-
-    /**
-     * Using reflection to change the urls of the GoogleIdentityProvider to use the mock server url instead.
-     *
-     * @throws Exception
-     */
-    private static void modifyGoogleIdpUrls() throws Exception {
-        setPrivateField(GoogleIdentityProvider.class.getDeclaredField("APIURL"), mockServerAddress + googleApiPath);
-        setPrivateField(GoogleIdentityProvider.class.getDeclaredField("LOGINURL"), mockServerAddress + googleLoginPath);
-    }
-
-    private static void modifyIdportenIdpUrls() throws Exception {
-        setPrivateField(IdportenIdentityProvider.class.getDeclaredField("APIURL"), mockServerAddress + idportenApiPath);
-        setPrivateField(IdportenIdentityProvider.class.getDeclaredField("LOGINURL"), mockServerAddress + idportenLoginPath);
-    }
-
-    private static void resetGoogleIdpUrls() throws Exception {
-        setPrivateField(GoogleIdentityProvider.class.getDeclaredField("APIURL"), originalGoogleApiUrl);
-        setPrivateField(GoogleIdentityProvider.class.getDeclaredField("LOGINURL"), originalGoogleLoginUrl);
-    }
-
-    private static void resetIdportenIdpUrls() throws Exception {
-        setPrivateField(IdportenIdentityProvider.class.getDeclaredField("APIURL"), originalIdportenApiUrl);
-        setPrivateField(IdportenIdentityProvider.class.getDeclaredField("LOGINURL"), originalIdportenLoginUrl);
-    }
-
-    private static void setPrivateField(Field field, Object newValue) throws Exception {
-        field.setAccessible(true);
-        field.set(null, newValue);
-    }
-
-    private static String getPrivateField(Field field) throws Exception {
-        field.setAccessible(true);
-        return (String) field.get(null);
     }
 }

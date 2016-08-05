@@ -1,5 +1,6 @@
 package no.difi.idporten.oidc.proxy.model;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 
 import java.net.SocketAddress;
@@ -9,21 +10,9 @@ import java.util.Optional;
 
 public interface SecurityConfig {
 
-    CookieConfig getCookieConfig();
-
-    Optional<IdentityProvider> createIdentityProvider();
-
-    SocketAddress getBackend();
-
     String getHostname();
 
     String getPath();
-
-    int getSecurity();
-
-    List<String> getPreferredIdps();
-
-    List<Map.Entry<String, String>> getPreferredIdpData();
 
     String getRedirectUri();
 
@@ -47,13 +36,35 @@ public interface SecurityConfig {
 
     String getSalt();
 
+    String getApiUri();
+
+    String getLoginUri();
+
+    String getIssuer();
+
     List<String> getUserDataNames();
 
     List<String> getUnsecuredPaths();
 
+    List<String> getPreferredIdps();
+
+    List<Map.Entry<String, String>> getPreferredIdpData();
+
+    JWKSet getJSONWebKeys();
+
+    SocketAddress getBackend();
+
+    Optional<IdentityProvider> createIdentityProvider();
+
+    CookieConfig getCookieConfig();
+
+    int getSecurity();
+
     boolean isLogoutPath();
 
     boolean isSecured();
+
+    Optional<String> getErrorPageUrl();
 
     /**
      * Checks if the path is explicitly completely unsecured and should not receive the Difi headers.
