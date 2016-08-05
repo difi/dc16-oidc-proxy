@@ -18,6 +18,8 @@ public interface HostConfig {
 
     String getSalt();
 
+    String getLogoutHeader();
+
     boolean isTotallyUnsecured(String path);
 
     String getLogoutRedirectUri();

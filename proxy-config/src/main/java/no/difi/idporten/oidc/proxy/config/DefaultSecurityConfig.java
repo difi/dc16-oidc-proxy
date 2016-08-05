@@ -200,6 +200,11 @@ public class DefaultSecurityConfig implements SecurityConfig {
     }
 
     @Override
+    public String getLogoutHeader() {
+        return HOST.getLogoutHeader();
+    }
+
+    @Override
     public boolean isSecured() {
         return getSecurity() != 0;
     }

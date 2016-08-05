@@ -43,6 +43,8 @@ public interface SecurityConfig {
 
     String getPassword();
 
+    String getLogoutHeader();
+
     String getSalt();
 
     List<String> getUserDataNames();

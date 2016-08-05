@@ -32,6 +32,8 @@ public class TypesafeHostConfig implements HostConfig {
 
     private CookieConfig cookieConfig;
 
+    private String logoutHeader;
+
     private String salt;
 
     private List<String> unsecuredPaths;
@@ -63,7 +65,11 @@ public class TypesafeHostConfig implements HostConfig {
 
         this.logoutPostUri = hostConfig.getString("logout_post_uri");
 
-        if (hostConfig.entrySet().toString().contains("logout_redirect_uri")){
+        if (hostConfig.entrySet().toString().contains("logoutHeader") || globalConfig.entrySet().toString().contains("logoutHeader")) {
+            this.logoutHeader = hostConfig.withFallback(globalConfig).getString("logoutHeader");
+        }
+
+        if (hostConfig.entrySet().toString().contains("logout_redirect_uri")) {
             this.logoutRedirectUri = hostConfig.getString("logout_redirect_uri");
         }
     }
@@ -122,5 +128,10 @@ public class TypesafeHostConfig implements HostConfig {
     @Override
     public List<String> getPreferredIdps() {
         return this.preferredIdps;
+    }
+
+    @Override
+    public String getLogoutHeader() {
+        return this.logoutHeader;
     }
 }
