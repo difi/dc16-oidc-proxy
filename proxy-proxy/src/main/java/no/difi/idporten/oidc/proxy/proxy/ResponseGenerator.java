@@ -7,16 +7,12 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
-import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
-import no.difi.idporten.oidc.proxy.model.CookieConfig;
+import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ResponseGenerator {
 
@@ -69,7 +65,7 @@ public class ResponseGenerator {
     }
 
     protected void generateLogoutProxyResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, HttpRequest httpRequest, ProxyCookie proxyCookie) {
-        generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData(), true);
+        generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie, true);
     }
 
     protected void generateLogoutRedirectResponse(ChannelHandlerContext ctx, SecurityConfig securityConfig, ProxyCookie proxyCookie) {
@@ -182,7 +178,7 @@ public class ResponseGenerator {
 
     public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
                                          SecurityConfig securityConfig, ProxyCookie proxyCookie) {
-        return generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData(), false);
+        return generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie, false);
     }
 
     /**
@@ -195,14 +191,14 @@ public class ResponseGenerator {
      * @param httpRequest:
      * @param userData:
      */
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
-                                         SecurityConfig securityConfig, Map<String, String> userData, boolean logout) {
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest, SecurityConfig securityConfig,
+                                                                                ProxyCookie proxyCookie, boolean logout) {
         int connect_timeout_millis = 15000;
         int so_buf = 1048576;
 
-        if (userData != null){
-            RequestInterceptor.insertUserDataToHeader(httpRequest, userData, securityConfig);
-            logger.debug("UserData inserted to header");
+        if (proxyCookie != null && !proxyCookie.getUserData().isEmpty()) {
+            RequestInterceptor.insertUserDataToHeader(httpRequest, proxyCookie.getUserData(), securityConfig);
+            logger.debug("UserData inserted to header: {}", proxyCookie.getUserData());
         } else logger.debug("No userData to insert to header");
 
 
@@ -212,7 +208,7 @@ public class ResponseGenerator {
 
         Bootstrap b = new Bootstrap();
         b.group(inboundChannel.eventLoop()).channel(ctx.channel().getClass());
-        b.handler(new OutboundInitializer(inboundChannel, logout))
+        b.handler(new OutboundInitializer(inboundChannel, securityConfig, proxyCookie, logout))
                 .option(ChannelOption.AUTO_READ, false);
 
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
