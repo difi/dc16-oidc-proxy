@@ -114,6 +114,7 @@ public class ResponseGenerator {
         generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
     }
 
+
     /**
      * Default response for when nothing is configured for the requested host
      */

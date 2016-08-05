@@ -1,6 +1,7 @@
 package no.difi.idporten.oidc.proxy.idp;
 
 import com.google.gson.JsonObject;
+import com.nimbusds.jwt.SignedJWT;
 import no.difi.idporten.oidc.proxy.lang.IdentityProviderException;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
 import no.difi.idporten.oidc.proxy.model.UserData;
@@ -30,20 +31,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
-public class IdportenIdentityProvider extends AbstractIdentityProvider {
+public class TestIdportenIdentityProvider extends AbstractIdentityProvider {
 
     private static Logger logger = LoggerFactory.getLogger(IdportenIdentityProvider.class);
 
     private HttpClient httpClient;
 
-    private static String APIURL = "https://eid-exttest.difi.no/idporten-oidc-provider/token";
+    private static String APIURL = "http://localhost:8081/idporten-oidc-provider/token";
 
-    private static String LOGINURL = "https://eid-exttest.difi.no/idporten-oidc-provider/authorize";
+    private static String LOGINURL = "http://localhost:8081/idporten-oidc-provider/authorize";
 
     private SecurityConfig securityConfig;
 
-    public IdportenIdentityProvider(SecurityConfig securityConfig) {
+    public TestIdportenIdentityProvider(SecurityConfig securityConfig) {
         this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
         //this.APIURL = securityConfig.getApiUri();
@@ -68,6 +68,11 @@ public class IdportenIdentityProvider extends AbstractIdentityProvider {
         } catch (URISyntaxException e) {
             throw new IdentityProviderException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    protected String decodeIDToken(String idToken, SecurityConfig securityConfig) throws Exception {
+        return SignedJWT.parse(idToken).getJWTClaimsSet().toString().replace("\\", "");
     }
 
     /**
