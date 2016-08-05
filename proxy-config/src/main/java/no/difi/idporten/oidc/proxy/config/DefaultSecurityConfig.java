@@ -5,7 +5,6 @@ import no.difi.idporten.oidc.proxy.api.HostConfigProvider;
 import no.difi.idporten.oidc.proxy.api.IdentityProvider;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +28,9 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     private List<String> defaultUserDataNames;
 
-    private Logger logger;
+    private static Logger logger = LoggerFactory.getLogger(DefaultSecurityConfig.class);
 
     public DefaultSecurityConfig(String hostname, String path, HostConfigProvider hostConfigProvider, IdpConfigProvider idpConfigProvider) {
-        this.logger = LoggerFactory.getLogger(DefaultSecurityConfig.class);
         this.hostname = hostname;
         this.path = path;
         this.HOST = hostConfigProvider.getByHostname(hostname);
@@ -48,7 +46,7 @@ public class DefaultSecurityConfig implements SecurityConfig {
         } catch (NullPointerException exc) {
             return Optional.empty();
         } catch (Exception exc) {
-            logger.error("IdentityProvider not configured correctly:{}", exc);
+            logger.error("IdentityProvider not configured correctly:{}", exc.getMessage(), exc);
             return Optional.empty();
         }
     }
@@ -178,17 +176,17 @@ public class DefaultSecurityConfig implements SecurityConfig {
 
     @Override
     public int getSecurity() {
-        if (PATH.getSecurity() == null) {
-            return parseInt(getParameter("security"));
+        if (PATH.getSecurity() >= 0) {
+            return PATH.getSecurity();
         }
-        return parseInt(PATH.getSecurity());
+        return parseInt(getParameter("security"));
     }
 
     public static int parseInt(String value) {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            System.err.println("NumberFormatException caught in DefaultSecurityConfig.parseInt() while parsing security string to int");
+            logger.error("NumberFormatException caught in DefaultSecurityConfig.parseInt() while parsing security string to int");
         }
         return -1;
     }

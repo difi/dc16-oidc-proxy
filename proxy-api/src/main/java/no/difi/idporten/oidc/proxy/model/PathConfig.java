@@ -8,11 +8,11 @@ public interface PathConfig {
 
     String getIdentityProvider();
 
-    String getSecurity();
-
     String getRedirectUri();
 
     String getScope();
+
+    int getSecurity();
 
 
 }

@@ -16,8 +16,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +31,6 @@ import java.util.stream.Collectors;
 
 public class TestIdportenIdentityProvider extends AbstractIdentityProvider {
 
-    private static Logger logger = LoggerFactory.getLogger(IdportenIdentityProvider.class);
 
     private HttpClient httpClient;
 
@@ -46,8 +43,7 @@ public class TestIdportenIdentityProvider extends AbstractIdentityProvider {
     public TestIdportenIdentityProvider(SecurityConfig securityConfig) {
         this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
-        //this.APIURL = securityConfig.getApiUri();
-        //this.LOGINURL = securityConfig.getLoginUri();
+
     }
 
     /**
@@ -102,11 +98,6 @@ public class TestIdportenIdentityProvider extends AbstractIdentityProvider {
             httpPost.setEntity(new StringEntity(postContent));
 
             HttpResponse httpResponse = httpClient.execute(httpPost);
-
-            logger.debug("\nSending 'POST' request to URL : " + APIURL);
-            logger.debug("Post parameters : " + postContent);
-            logger.debug("Response Code : " + httpResponse.getStatusLine().getStatusCode());
-            logger.debug("Response message : " + httpResponse.getStatusLine().getReasonPhrase());
 
             if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 throw new IdentityProviderException("Bad response from IdentityProvider API");

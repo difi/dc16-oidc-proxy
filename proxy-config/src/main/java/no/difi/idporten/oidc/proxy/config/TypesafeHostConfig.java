@@ -99,8 +99,6 @@ public class TypesafeHostConfig implements HostConfig {
 
     @Override
     public PathConfig getPathFor(String path) {
-        logger.debug("Getting path object for {}{}", hostname, path);
-        logger.debug("All paths: ({})\n{}", paths.size(), paths);
         return paths.stream()
                 .filter(pathObject -> path.startsWith(pathObject.getPath()))
                 .findFirst()

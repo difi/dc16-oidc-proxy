@@ -48,8 +48,6 @@ public class TestGoogleIdentityProvider extends AbstractIdentityProvider {
     public TestGoogleIdentityProvider(SecurityConfig securityConfig) {
         this.httpClient = HttpClientBuilder.create().build();
         this.securityConfig = securityConfig;
-        //this.APIURL = securityConfig.getApiUri();
-        //this.LOGINURL = securityConfig.getLoginUri();
 
         redirectExtraParameters = new LinkedList<>();
         redirectExtraParameters.add("response_type");
@@ -117,10 +115,6 @@ public class TestGoogleIdentityProvider extends AbstractIdentityProvider {
         HttpResponse httpResponse;
         try {
             postRequest.setEntity(new UrlEncodedFormEntity(params));
-            logger.debug("Created post request:\n{}\n{}\n{}",
-                    postRequest,
-                    postRequest.getAllHeaders(),
-                    postRequest.getEntity());
             httpResponse = httpClient.execute(postRequest);
         } catch (UnsupportedEncodingException exc) {
             throw new IdentityProviderException(exc.getMessage(), exc);
@@ -128,10 +122,6 @@ public class TestGoogleIdentityProvider extends AbstractIdentityProvider {
             logger.warn("Could not send post request to external server");
             throw new IdentityProviderException(exc.getMessage(), exc);
         }
-
-        logger.debug("Sending 'POST' request to URL: {}", APIURL);
-        logger.debug("Post parameters: {}", params);
-        logger.debug("Got response back:\n{}", httpResponse);
 
         if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
             throw new IdentityProviderException("Bad response from IdentityProvider API");

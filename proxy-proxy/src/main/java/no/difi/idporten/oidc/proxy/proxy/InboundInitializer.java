@@ -22,7 +22,6 @@ public class InboundInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel ch) throws Exception {
         ch.pipeline()
                 .addLast(new HttpServerCodec(102400, 102400, 102400))
-                .addLast(new HttpRequestHandler())
                 .addLast(injector.getInstance(InboundHandlerAdapter.class))
         ;
     }

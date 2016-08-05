@@ -39,7 +39,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug(String.format("Activating source handler channel %s", ctx.channel()));
         ctx.read();
     }
 
@@ -80,7 +79,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
 
         Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
         ProxyCookie proxyCookie;
-        logger.debug("TypesafePathConfig contains code: {}", path);
         Map<String, String> userData;
         try {
             userData = identityProvider.getToken(path).getUserData();
@@ -95,16 +93,14 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         int touchPeriod = securityConfig.getCookieConfig().getTouchPeriod();
         int security = securityConfig.getSecurity();
 
-        logger.debug("Provider @{}{} uses touchPeriod {} and maxExpiry {}", securityConfig.getHostname(), securityConfig.getPath(), touchPeriod, maxExpiry);
-
         Optional<String> originalPathOptional = RedirectCookieHandler.findRedirectCookiePath(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
 
         if (validProxyCookieOptional.isPresent()) {
             proxyCookie = cookieHandler.generateIdpCookie(validProxyCookieOptional.get().getUuid(), userData, security, touchPeriod, maxExpiry);
-            logger.info("Request contains cookie for another IDP. Generated cookie on same UUID for this IDP ({})", proxyCookie);
+            logger.debug("Request contains cookie for another IDP. Generated cookie on same UUID for this IDP ({})", proxyCookie);
         } else {
             proxyCookie = cookieHandler.generateCookie(userData, security, touchPeriod, maxExpiry);
-            logger.info("Request contains no cookie. Generated new cookie ({})", proxyCookie);
+            logger.debug("Request contains no cookie. Generated new cookie ({})", proxyCookie);
         }
 
         String redirectPath = originalPathOptional.orElse(trimmedPath);
@@ -118,17 +114,13 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                                CookieHandler cookieHandler,
                                IdentityProvider identityProvider,
                                HttpRequest httpRequest) {
-        String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
         String path = httpRequest.uri();
 
         Optional<ProxyCookie> validProxyCookieOptional = cookieHandler.getValidProxyCookie(httpRequest, securityConfig.getSalt(), httpRequest.headers().getAsString(HttpHeaderNames.USER_AGENT));
         ProxyCookie proxyCookie;
 
-        logger.debug("{}{} is secured", host, path);
-
         if (validProxyCookieOptional.isPresent() && isLoggedIn(validProxyCookieOptional.get(), securityConfig)) {
             proxyCookie = validProxyCookieOptional.get();
-            logger.debug("Has valid ProxyCookie with sufficient user data and security {}", proxyCookie);
             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
         } else if (redirectedFromIdp(path)) {
             try {
@@ -152,7 +144,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
         ProxyCookie proxyCookie;
         if (validProxyCookieOptional.isPresent()) {
             proxyCookie = validProxyCookieOptional.get();
-            logger.debug("Has valid ProxyCookie {}", proxyCookie);
             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie);
         } else {
             outboundChannel = responseGenerator.generateProxyResponse(ctx, httpRequest, securityConfig);
@@ -169,22 +160,16 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      * source client.
      */
     private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest httpRequest) throws Exception {
-        logger.debug("Handle HTTP request '{}{}'", httpRequest.headers().getAsString(HttpHeaderNames.HOST), httpRequest.uri());
-
         String path = httpRequest.uri();
         String host = httpRequest.headers().getAsString(HttpHeaderNames.HOST);
         ResponseGenerator responseGenerator = new ResponseGenerator();
         Optional<SecurityConfig> securityConfigOptional = securityConfigProvider.getConfig(host, path);
 
         try {
-            logger.info("Request on: {}{}", httpRequest.headers().getAsString(HttpHeaderNames.HOST), path);
-
             if (securityConfigOptional.isPresent()) {
                 SecurityConfig securityConfig = securityConfigOptional.get();
                 CookieHandler cookieHandler = new CookieHandler(securityConfig.getCookieConfig(), host, securityConfig.getPreferredIdpData());
                 Optional<IdentityProvider> identityProviderOptional = securityConfig.createIdentityProvider();
-                logger.debug("Preferred IDPs of request: {}" + securityConfig.getPreferredIdpData());
-                logger.debug("Has security config: {}", securityConfig);
 
                 if (securityConfig.isTotallyUnsecured(path)) {
                     handleTotallyUnsecured(ctx, responseGenerator, securityConfig, httpRequest);
@@ -193,11 +178,9 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                 } else if (securityConfig.isSecured() && identityProviderOptional.isPresent()) {
                     handleSecured(ctx, responseGenerator, securityConfig, cookieHandler, identityProviderOptional.get(), httpRequest);
                 } else {
-                    logger.debug("TypesafePathConfig is not secured: {}{}", host, path);
                     handleUnsecured(ctx, responseGenerator, securityConfig, cookieHandler, httpRequest);
                 }
             } else {
-                logger.debug("Could not get SecurityConfig of host {}", host);
                 responseGenerator.generateUnknownHostResponse(ctx, String.format("Host is unconfigured: %s", host));
             }
 
@@ -215,8 +198,6 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
      */
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.debug(String.format("Reading incoming request: %s", msg.getClass()));
-
         if (msg instanceof HttpRequest) {
             handleHttpRequest(ctx, (HttpRequest) msg);
         } else if (outboundChannel != null && outboundChannel.isActive()) {
@@ -227,14 +208,11 @@ public class InboundHandlerAdapter extends AbstractHandlerAdapter {
                     future.channel().close();
                 }
             });
-        } else {
-            logger.debug("Outbound Channel Not Active");
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("Channel Inactive");
         if (outboundChannel != null) {
             closeOnFlush(outboundChannel);
         }

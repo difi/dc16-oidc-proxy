@@ -2,8 +2,6 @@ package no.difi.idporten.oidc.proxy.proxy;
 
 import io.netty.handler.codec.http.HttpRequest;
 import no.difi.idporten.oidc.proxy.model.SecurityConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -13,8 +11,6 @@ import java.util.Map;
  * should be in the header.
  */
 public class RequestInterceptor {
-
-    private static Logger logger = LoggerFactory.getLogger(RequestInterceptor.class);
 
     public static final String HEADERNAME = "X-DifiProxy-";
 
@@ -29,13 +25,12 @@ public class RequestInterceptor {
                 .stream()
                 .filter(entry -> securityConfig.getUserDataNames().contains(entry.getKey()))
                 .forEach(userDataEntry -> {
-            httpRequest.headers().add(HEADERNAME + userDataEntry.getKey(), userDataEntry.getValue());
-        });
+                    httpRequest.headers().add(HEADERNAME + userDataEntry.getKey(), userDataEntry.getValue());
+                });
         userData.entrySet()
                 .stream()
                 .filter(entry -> entry.getKey().startsWith(ADDITIONAL_DATA_HEADERNAME))
                 .forEach(entry -> httpRequest.headers().add(entry.getKey(), entry.getValue()));
-        logger.debug("Inserted header to request:\n{}", httpRequest);
     }
 
 }

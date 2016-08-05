@@ -5,9 +5,11 @@ import no.difi.idporten.oidc.proxy.model.PathConfig;
 
 public class TypesafePathConfig implements PathConfig {
 
-    private String path, security, redirect_uri, scope, idp;
+    private String path, redirect_uri, scope, idp;
 
-    private TypesafePathConfig(String path, String security, String idp) {
+    private int security;
+
+    private TypesafePathConfig(String path, int security, String idp) {
         this.path = path;
         this.security = security;
         this.idp = idp;
@@ -18,7 +20,7 @@ public class TypesafePathConfig implements PathConfig {
         this.idp = config.getString("idp");
 
         if (checkForStringInConfig("security", config)) {
-            this.security = config.getString("security");
+            this.security = config.getInt("security");
         }
 
         if (checkForStringInConfig("redirect_uri", config)) {
@@ -32,7 +34,7 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     public static PathConfig getUnsecuredPath() {
-        return new TypesafePathConfig("/", "0", "none");
+        return new TypesafePathConfig("/", 0, "none");
     }
 
     private boolean checkForStringInConfig(String stringToBeChecked, Config config) {
@@ -53,7 +55,7 @@ public class TypesafePathConfig implements PathConfig {
     }
 
     @Override
-    public String getSecurity() {
+    public int getSecurity() {
         return this.security;
     }
 

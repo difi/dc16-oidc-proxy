@@ -32,11 +32,6 @@ public class NettyHttpListener implements Runnable {
         port = config.getInt("listen.port");
     }
 
-    @Deprecated
-    public NettyHttpListener() {
-        // No action.
-    }
-
     public void run() {
         logger.info("Starting the server...");
 
@@ -72,15 +67,10 @@ public class NettyHttpListener implements Runnable {
                 logger.info("Starting Inbound Http Listener on port {}.", this.port);
                 channel.closeFuture().sync();
             } catch (InterruptedException e) {
-                logger.info("Interuption received.");
+                logger.info("Interruption received.");
             }
         } finally {
             logger.info("Shutting down.");
         }
-    }
-
-    @Deprecated
-    public void destroy() {
-        commonEventLoopGroup.shutdownGracefully();
     }
 }

@@ -63,7 +63,6 @@ public class TypesafeIdpConfig implements IdpConfig {
         this.loginUri = idpConfig.getString("login_uri");
         this.parameters = idpConfig.getConfig("parameters").entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().unwrapped().toString()));
-        logger.debug("Created IdpConfig:\n{}", this);
     }
 
     private JWKSet getJWKsFromConfig(String jwkUri) {
@@ -75,7 +74,7 @@ public class TypesafeIdpConfig implements IdpConfig {
             String content = IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
             return JWKSet.parse(content);
         } catch (Exception e) {
-            logger.info("Received '{}'.", e.getMessage(), e);
+            logger.warn("Received '{}'.", e.getMessage(), e);
             return null;
         }
     }

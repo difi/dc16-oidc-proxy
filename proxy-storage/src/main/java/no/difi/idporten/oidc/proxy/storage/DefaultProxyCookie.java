@@ -3,7 +3,6 @@ package no.difi.idporten.oidc.proxy.storage;
 import no.difi.idporten.oidc.proxy.model.ProxyCookie;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -15,13 +14,13 @@ public class DefaultProxyCookie implements ProxyCookie {
 
     private Map<String, String> userData;
 
-    private final int touchPeriod; // in minutes
+    private int touchPeriod;
 
-    private final int maxExpiry;  // in minutes
+    private int maxExpiry;
 
     private int security;
 
-    private final Date created;
+    private Date created;
 
     private Date lastUpdated;
 
@@ -29,28 +28,17 @@ public class DefaultProxyCookie implements ProxyCookie {
      * Constructor used for instantiating an object, with created and lastUpdated set to present time.
      * Used in every case, except when an object is instantiated with values from the database.
      *
-     * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
-     * @param name String (e.g. "google-cookie")
-     * @param host String (e.g. "www.google.com")
-     * @param idp String (e.g. "/oauth")
+     * @param uuid        String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
+     * @param name        String (e.g. "google-cookie")
+     * @param host        String (e.g. "www.google.com")
+     * @param idp         String (e.g. "/oauth")
      * @param touchPeriod int (amount of minutes)
-     * @param maxExpiry int (amount of minutes)
-     * @param userData HashMap<String, String> (JWT from authorization server)
+     * @param maxExpiry   int (amount of minutes)
+     * @param userData    HashMap<String, String> (JWT from authorization server)
      */
     public DefaultProxyCookie(String uuid, String name, String host, String idp, int security,
                               int touchPeriod, int maxExpiry, Map<String, String> userData) {
-        // Remove final from touchPeriod, maxExpiry and created to be able to do this instead?
-        // new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, new Date(), new Date());
-        this.uuid = uuid;
-        this.name = name;
-        this.host = host;
-        this.idp = idp;
-        this.security = security;
-        this.touchPeriod = touchPeriod;
-        this.maxExpiry = maxExpiry;
-        this.userData = userData;
-        this.created = new Date();
-        this.lastUpdated = new Date();
+        new DefaultProxyCookie(uuid, name, host, idp, security, touchPeriod, maxExpiry, userData, new Date(), new Date());
     }
 
     /**
@@ -59,15 +47,15 @@ public class DefaultProxyCookie implements ProxyCookie {
      * values. In every other case, use other constructor to create a cookie with created and
      * lastUpdated values set to time of instantiation.
      *
-     * @param uuid String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
-     * @param name String (e.g. "google-cookie")
-     * @param host String (e.g. "www.google.com")
-     * @param idp String (e.g. "/oauth")
+     * @param uuid        String of a 128 bit, type 4 (pseudo randomly generated) Universally Unique ID
+     * @param name        String (e.g. "google-cookie")
+     * @param host        String (e.g. "www.google.com")
+     * @param idp         String (e.g. "/oauth")
      * @param touchPeriod int (amount of minutes)
-     * @param maxExpiry int (amount of minutes)
-     * @param userData HashMap<String, String> (JWT from authorization server)
+     * @param maxExpiry   int (amount of minutes)
+     * @param userData    HashMap<String, String> (JWT from authorization server)
      * @param lastUpdated Date (last time the cookie was "touched" (extended expiry))
-     * @param created Date (time of creation)
+     * @param created     Date (time of creation)
      */
     public DefaultProxyCookie(String uuid, String name, String host, String idp, int security, int touchPeriod,
                               int maxExpiry, Map<String, String> userData, Date created, Date lastUpdated) {

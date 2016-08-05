@@ -15,7 +15,7 @@ import java.util.ArrayList;
 
 public class Main {
 
-    public static void main(String... args) throws CmdLineException{
+    public static void main(String... args) throws CmdLineException {
         Main main = new Main();
         new CmdLineParser(main).parseArgument(args);
         main.run();

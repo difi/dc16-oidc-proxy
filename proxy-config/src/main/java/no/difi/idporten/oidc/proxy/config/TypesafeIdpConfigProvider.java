@@ -4,8 +4,6 @@ import com.google.inject.Inject;
 import com.typesafe.config.Config;
 import no.difi.idporten.oidc.proxy.api.IdpConfigProvider;
 import no.difi.idporten.oidc.proxy.model.IdpConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -14,7 +12,6 @@ import java.util.stream.Collectors;
 
 public class TypesafeIdpConfigProvider implements IdpConfigProvider {
 
-    private static Logger logger = LoggerFactory.getLogger(TypesafeIdpConfigProvider.class);
 
     private Map<String, IdpConfig> idps;
 
@@ -27,8 +24,6 @@ public class TypesafeIdpConfigProvider implements IdpConfigProvider {
 
     @Override
     public IdpConfig getByIdentifier(String identifier) {
-        logger.debug("Getting idp by identifier: {}", identifier);
-        logger.debug("Map of idps:\n{}", idps);
         return idps.get(identifier);
     }
 

@@ -16,7 +16,6 @@ public class OutboundHandlerAdapter extends AbstractHandlerAdapter {
 
     private static Logger logger = LoggerFactory.getLogger(OutboundHandlerAdapter.class);
 
-
     /**
      * @param inboundChannel Channel on which to write responses
      */
