@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class ResponseGenerator {
 
@@ -59,7 +60,7 @@ public class ResponseGenerator {
         } catch (IdentityProviderException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
-            generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()));
+            generateServerErrorResponse(ctx, String.format("Could not create redirect response to %s", securityConfig.getIdp()), securityConfig);
         }
     }
 
@@ -97,6 +98,9 @@ public class ResponseGenerator {
      * @param ctx:
      * @param message:
      */
+    protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message, SecurityConfig securityConfig) {
+        generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR, securityConfig);
+    }
 
     protected void generateServerErrorResponse(ChannelHandlerContext ctx, String message) {
         generateDefaultResponse(ctx, message, HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -106,9 +110,51 @@ public class ResponseGenerator {
      * @param ctx:
      * @param message:
      */
-
     protected void generateUnknownHostResponse(ChannelHandlerContext ctx, String message) {
         generateDefaultResponse(ctx, message, HttpResponseStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Default response for when nothing is configured for the requested host
+     */
+    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus, SecurityConfig securityConfig) {
+        String errorMessageHeader = "X-Difiheader-error-message";
+        // TODO also have uuid
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                responseStatus,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message, securityConfig), CharsetUtil.UTF_8));
+        Optional<String> errorPageUrlOptional = securityConfig.getErrorPageUrl();
+        if (errorPageUrlOptional.isPresent()) {
+            HttpRequest requestToErrorPage = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, errorPageUrlOptional.get());
+            requestToErrorPage.headers().set(HttpHeaderNames.HOST, securityConfig.getHostname());
+            requestToErrorPage.headers().add(errorMessageHeader, message);
+            requestToErrorPage.headers().add(errorMessageHeader, message);
+            generateProxyResponse(ctx, requestToErrorPage, securityConfig);
+        } else {
+            writeDefaultResponse(ctx, response);
+        }
+
+    }
+
+    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                responseStatus,
+                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message), CharsetUtil.UTF_8));
+
+        writeDefaultResponse(ctx, response);
+    }
+
+    private void writeDefaultResponse(ChannelHandlerContext ctx, FullHttpResponse response) {
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set(
+                HttpHeaderNames.CONTENT_TYPE,
+                String.format("%s; %s=%s", TEXT_HTML, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
+
+        logger.debug(String.format("Created default response:\n%s", response));
+
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
@@ -148,27 +194,7 @@ public class ResponseGenerator {
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    /**
-     * Default response for when nothing is configured for the requested host
-     */
-    protected void generateDefaultResponse(ChannelHandlerContext ctx, String message, HttpResponseStatus responseStatus) {
-        FullHttpResponse response = new DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                responseStatus,
-                Unpooled.copiedBuffer(HTMLGenerator.getErrorPage(message), CharsetUtil.UTF_8));
-
-        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
-        response.headers().set(
-                HttpHeaderNames.CONTENT_TYPE,
-                String.format("%s; %s=%s", TEXT_HTML, HttpHeaderValues.CHARSET, CharsetUtil.UTF_8));
-
-        logger.debug(String.format("Created default response:\n%s", response));
-
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest,
-                                         SecurityConfig securityConfig) {
+    public Channel generateProxyResponse(ChannelHandlerContext ctx, HttpRequest httpRequest, SecurityConfig securityConfig) {
         return generateProxyResponse(ctx, httpRequest, securityConfig, new HashMap<>());
     }
 
@@ -176,7 +202,6 @@ public class ResponseGenerator {
                                          SecurityConfig securityConfig, ProxyCookie proxyCookie) {
         return generateProxyResponse(ctx, httpRequest, securityConfig, proxyCookie.getUserData());
     }
-
 
     /**
      * This is what happens when the proxy needs to work as a normal proxy.
@@ -232,7 +257,5 @@ public class ResponseGenerator {
             }
         });
         return outboundChannel;
-
     }
-
 }
